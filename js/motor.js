@@ -991,7 +991,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.6.0";
+var VERSION_ALGORITMO = "1.6.1";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -1984,17 +1984,18 @@ function validar(n, esProductoSalado = false) {
       }
     }
   }
-  if (hay(n.sal_g) && v(n.sal_g) > 10 && v(n.sal_g) <= 100 && !esProductoSalado) {
+  if (hay(n.sal_g) && !esProductoSalado && v(n.sal_g) > 6 && v(n.sal_g) <= 100) {
+    const grave = v(n.sal_g) > 12;
     inc.push({
       codigo: "sal_disparatada",
-      gravedad: "error",
+      gravedad: grave ? "error" : "aviso",
       campos: ["sal_g"],
-      mensaje: `${r13(v(n.sal_g))} g de sal por 100 g es una barbaridad para cualquier producto que no sea sal o un caldo concentrado.`,
+      mensaje: grave ? `${r13(v(n.sal_g))} g de sal por 100 g es una barbaridad para cualquier producto que no sea sal o un caldo concentrado.` : `${r13(v(n.sal_g))} g de sal por 100 g es muchísimo: son ${Math.round(v(n.sal_g) / 5 * 100)} % del límite diario de la OMS en cien gramos. Comprueba que la cifra sea esa.`,
       correccion: {
         campo: "sal_g",
         valorActual: v(n.sal_g),
-        valorPropuesto: r2(v(n.sal_g) / 1e3),
-        motivo: "La cifra encaja si estaba en miligramos."
+        valorPropuesto: v(n.sal_g) > 100 ? r2(v(n.sal_g) / 1e3) : r2(v(n.sal_g) / 10),
+        motivo: "Suele venir de una coma decimal que se ha perdido al leer."
       }
     });
   }
@@ -2026,6 +2027,48 @@ function validar(n, esProductoSalado = false) {
   const avisos = inc.filter((i) => i.gravedad === "aviso").length;
   const indiceCoherencia = Math.max(0, 1 - errores * 0.28 - avisos * 0.08);
   return { incidencias: inc, errores, avisos, coherente: errores === 0, indiceCoherencia };
+}
+function menorQueMalLeido(valor, campo) {
+  const texto = String(valor);
+  if (!/^[23]\d*[.,]?\d*$/.test(texto)) return void 0;
+  const sinPrimera = parseFloat(texto.slice(1).replace(",", "."));
+  if (!Number.isFinite(sinPrimera) || sinPrimera >= 1 || sinPrimera <= 0) return void 0;
+  return {
+    campo,
+    valorActual: valor,
+    valorPropuesto: sinPrimera,
+    motivo: 'Muchas etiquetas ponen "menos de 0,5" con el símbolo «<», y el lector lo confunde con un 2. La cifra encaja si era «<' + sinPrimera.toString().replace(".", ",") + "»."
+  };
+}
+function validarContraIngredientes(n, ctx) {
+  const inc = [];
+  if (ctx.total === 0) return inc;
+  if (hay(n.azucares_g) && v(n.azucares_g) > 5 && !ctx.hayFuenteAzucar && !ctx.hayLacteo && !ctx.hayFruta) {
+    inc.push({
+      codigo: "azucar_sin_origen",
+      gravedad: "aviso",
+      campos: ["azucares_g"],
+      mensaje: `La tabla declara ${r13(v(n.azucares_g))} g de azúcares, pero en la lista de ingredientes no hay nada de donde puedan salir: ni azúcar añadido, ni fruta, ni lácteo. Una de las dos cifras está mal leída.`,
+      correccion: menorQueMalLeido(v(n.azucares_g), "azucares_g")
+    });
+  }
+  if (hay(n.grasas_g) && v(n.grasas_g) > 15 && !ctx.hayGrasaAnadida) {
+    inc.push({
+      codigo: "grasa_sin_origen",
+      gravedad: "aviso",
+      campos: ["grasas_g"],
+      mensaje: `La tabla declara ${r13(v(n.grasas_g))} g de grasa, pero en los ingredientes no aparece ningún aceite ni grasa. Comprueba la cifra.`
+    });
+  }
+  if (hay(n.sal_g) && v(n.sal_g) > 1.5 && !ctx.haySal) {
+    inc.push({
+      codigo: "sal_sin_origen",
+      gravedad: "aviso",
+      campos: ["sal_g"],
+      mensaje: `La tabla declara ${r13(v(n.sal_g))} g de sal, pero la sal no figura en la lista de ingredientes. Comprueba la cifra.`
+    });
+  }
+  return inc;
 }
 
 // src/nucleo/confianza.ts
@@ -2383,8 +2426,21 @@ function analizarProducto(p, ahora = /* @__PURE__ */ new Date()) {
   const n = normalizarNutrientes(p.nutrientes);
   const ing = analizarIngredientes(p.ingredientes ?? []);
   const nova = clasificarNova(ing);
-  const esProductoSalado = ing.lista.some((i) => /\b(sal|caldo|pastilla|concentrado|cubito|sazonador)\b/.test(i.textoNormalizado)) && ing.total <= 4;
+  const primero = ing.lista[0]?.textoNormalizado ?? "";
+  const esProductoSalado = /^(sal|sal marina|sal yodada|cloruro sodico)\b/.test(primero) || ing.lista.some((i) => /\b(caldo|pastilla de caldo|cubito|concentrado de carne|sazonador|salsa de soja)\b/.test(i.textoNormalizado));
   const validacion = validar(n, esProductoSalado);
+  validacion.incidencias.push(...validarContraIngredientes(n, {
+    total: ing.total,
+    hayFuenteAzucar: ing.fuentesAzucar.length > 0,
+    hayLacteo: ing.lista.some((i) => /\b(leche|lacteo|yogur|nata|suero|queso|lactosa)\b/.test(i.textoNormalizado)),
+    hayFruta: ing.lista.some((i) => /\b(fruta|zumo|pure|manzana|platano|naranja|fresa|melocoton|pera|uva)\b/.test(i.textoNormalizado)),
+    hayGrasaAnadida: ing.grasas.length > 0,
+    haySal: ing.salPresente
+  }));
+  validacion.errores = validacion.incidencias.filter((i) => i.gravedad === "error").length;
+  validacion.avisos = validacion.incidencias.filter((i) => i.gravedad === "aviso").length;
+  validacion.coherente = validacion.errores === 0;
+  validacion.indiceCoherencia = Math.max(0, 1 - validacion.errores * 0.28 - validacion.avisos * 0.08);
   const contieneEdulcorante = ing.aditivos.some((a) => a.aditivo.funcion === "edulcorante");
   const ns = calcularNutriScore(n, { categoria, esAgua: p.es_agua, contieneEdulcorante });
   const limitar = construirLimitar(n, ing, nova, categoria);
@@ -3261,7 +3317,11 @@ var SINONIMOS = [
     "glucidos",
     "glicidos",
     "carbohydrate",
-    "hidratos"
+    "hidratos",
+    // El lector se come letras del principio ("tdmtos de carbono"), pero
+    // "de carbono" sobrevive y es lo bastante distintivo para fiarse.
+    "de carbono",
+    "de carboni"
   ]],
   ["fibra_g", ["fibra alimentaria", "fibra dietetica", "fibra alimentar", "fibra", "fibre", "fibra"]],
   ["proteinas_g", ["proteinas", "proteines", "proteinas", "protein", "proteina"]],
@@ -3276,9 +3336,20 @@ var CABECERAS_ENVASE = ["por envase", "envase entero", "per envas", "por paquete
 function normalizar(s) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[·•‧∙]/g, " ").replace(/\s+/g, " ").trim();
 }
+var UNIDADES = "kcal|kcai|kca|keal|kj|kilojulios|kilocalorias|mg|mcg|ug|µg|g|ml|%";
+function normalizarUnidad(u) {
+  const x = u.toLowerCase();
+  if (/^(kcal|kcai|kca|keal|kilocalorias)$/.test(x)) return "kcal";
+  if (/^(kj|kilojulios)$/.test(x)) return "kj";
+  if (/^(µg|ug|mcg)$/.test(x)) return "ug";
+  return x;
+}
 function extraerNumeros(texto) {
   const out = [];
-  const re = /([<>~]?\s?\d{1,3}(?:[ .]\d{3})+(?:[.,]\d{1,2})?|[<>~]?\s?\d+(?:[.,]\d{1,3})?)\s*(kcal|kj|mg|µg|ug|mcg|g|ml|%)?/gi;
+  const re = new RegExp(
+    `([<>~]?\\s?\\d{1,3}(?:[ .]\\d{3})+(?:[.,]\\d{1,2})?|[<>~]?\\s?\\d+(?:[.,]\\d{1,3})?)\\s*(${UNIDADES})?`,
+    "gi"
+  );
   let m;
   while ((m = re.exec(texto)) !== null) {
     const bruto = m[0].trim();
@@ -3286,7 +3357,7 @@ function extraerNumeros(texto) {
     crudo = crudo.replace(/[ ](?=\d{3}\b)/g, "").replace(/\.(?=\d{3}\b)/g, "");
     const valor = parseFloat(crudo.replace(",", "."));
     if (!Number.isFinite(valor)) continue;
-    out.push({ valor, unidad: (m[2] ?? "").toLowerCase(), bruto });
+    out.push({ valor, unidad: normalizarUnidad(m[2] ?? ""), bruto });
   }
   return out;
 }
@@ -3309,7 +3380,11 @@ function marcadores(linea) {
       break;
     }
   }
-  return out.sort((a, b) => a.desde - b.desde);
+  const porCampo = /* @__PURE__ */ new Map();
+  for (const m of out.sort((a, b) => a.desde - b.desde)) {
+    if (!porCampo.has(m.campo)) porCampo.set(m.campo, m);
+  }
+  return [...porCampo.values()].sort((a, b) => a.desde - b.desde);
 }
 function detectarColumnas(lineas) {
   for (const l of lineas) {
@@ -3350,25 +3425,42 @@ function detectarColumnas(lineas) {
   return { base: "desconocida", indice100: 0 };
 }
 function unirNombresConValores(lineas) {
-  const soloNumeros = (l) => /\d/.test(l) && l.replace(/\d+(?:[.,]\d+)?/g, " ").replace(/\b(kcal|kj|mg|µg|ug|mcg|g|ml)\b/gi, " ").replace(/[\s.,:;%/<>~+()·-]/g, "").length === 0;
+  const soloNumeros = (l) => /\d/.test(l) && l.replace(/\d+(?:[.,]\d+)?/g, " ").replace(new RegExp(`\\b(${UNIDADES})\\b`, "gi"), " ").replace(/[^\x20-\x7E]/g, "").replace(/[\s.,:;%/<>~+()·-]/g, "").length === 0;
+  const esBasura = (l) => marcadores(l).length === 0 && !soloNumeros(l) && !/\d+[.,]\d/.test(l);
   const out = [];
+  const dudosos = /* @__PURE__ */ new Set();
+  let anteriorFueNombreSinValor = false;
   for (let i = 0; i < lineas.length; i++) {
     const actual = lineas[i];
-    const siguiente = lineas[i + 1];
     const tieneNombre = marcadores(actual).length > 0;
     const sinNumero = !/\d/.test(actual);
-    if (tieneNombre && sinNumero && siguiente && soloNumeros(siguiente)) {
-      out.push(`${actual} ${siguiente}`);
-      i++;
+    if (tieneNombre && sinNumero) {
+      let j = i + 1;
+      let saltados = 0;
+      while (j < lineas.length && saltados < 1 && esBasura(lineas[j])) {
+        j++;
+        saltados++;
+      }
+      if (j < lineas.length && soloNumeros(lineas[j])) {
+        if (anteriorFueNombreSinValor) dudosos.add(out.length);
+        out.push(`${actual} ${lineas[j]}`);
+        for (let k = i + 1; k < j; k++) out.push(lineas[k]);
+        i = j;
+        anteriorFueNombreSinValor = false;
+        continue;
+      }
+      anteriorFueNombreSinValor = true;
+      out.push(actual);
       continue;
     }
+    anteriorFueNombreSinValor = false;
     out.push(actual);
   }
-  return out;
+  return { lineas: out, dudosos };
 }
 function analizarTabla(textoCrudo) {
   const lineasCrudas = textoCrudo.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 0);
-  const lineas = unirNombresConValores(lineasCrudas.map(normalizar));
+  const { lineas, dudosos } = unirNombresConValores(lineasCrudas.map(normalizar));
   const { base: baseDetectada, indice100, racion } = detectarColumnas(lineas);
   const valores = [];
   const usadas = /* @__PURE__ */ new Set();
@@ -3424,6 +3516,7 @@ function analizarTabla(textoCrudo) {
       if (!n.unidad) confianza2 -= 0.2;
       if (nums.length > 2) confianza2 -= 0.15;
       if (marcas.length > 2) confianza2 -= 0.1;
+      if (dudosos.has(iLinea)) confianza2 = Math.min(confianza2, 0.4);
       valores.push({
         campo: marca.campo,
         valor,
@@ -3475,6 +3568,12 @@ function analizarTabla(textoCrudo) {
     avisos.push(`La columna leída es "${base === "por_racion" ? "por ración" : "por envase"}". Para comparar productos hacen falta los valores por 100 g.`);
   }
   const lineasSinUsar = lineas.filter((_, i) => !usadas.has(i));
+  if (dudosos.size > 0) {
+    const campos = valores.filter((v2) => v2.confianza <= 0.4).map((v2) => v2.campo);
+    if (campos.length > 0) {
+      avisos.push("Algún campo se ha quedado sin valor al leer, así que las cifras que vienen después podrían pertenecer al campo de arriba. Comprueba sobre todo: " + [...new Set(campos)].join(", ") + ".");
+    }
+  }
   const OBLIGATORIOS = [
     "energia_kcal",
     "grasas_g",
@@ -3648,5 +3747,6 @@ export {
   redimensionar,
   resumenCatalogo,
   validar,
+  validarContraIngredientes,
   validarCopia
 };

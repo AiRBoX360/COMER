@@ -484,3 +484,30 @@ button{touch-action:manipulation}
 }
 .pegar::placeholder{color:var(--ceniza-tenue)}
 .pegar:focus{border-color:var(--ceniza); outline:none}
+
+/* --- Cifras leídas y sus dudas -------------------------------------------- */
+/* Las unidades no se escriben en mayúsculas: "1,09 g", no "1,09 G". */
+.diagnostico b.valor{text-transform:none; letter-spacing:.02em; color:var(--hueso)}
+.diagnostico li.dudoso b.valor{color:var(--amarillo)}
+.diagnostico li.dudoso--error b.valor{color:var(--naranja)}
+.diagnostico li.dudoso span::after{content:" ·"; color:var(--amarillo)}
+
+.incidencias{list-style:none; margin:0; padding:0}
+.incidencia{
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--amarillo);
+  border-radius:var(--radio-s);
+  font-size:0.98rem; color:var(--ceniza); line-height:1.45;
+}
+.incidencia--error{border-left-color:var(--naranja)}
+.incidencia b{color:var(--hueso); font-weight:600}
+.incidencia .cifra{color:var(--verde-claro); font-size:0.95rem}
+.apunte{
+  display:block; font-style:normal;
+  font-family:var(--datos); font-size:0.7rem;
+  letter-spacing:.05em; text-transform:uppercase;
+  color:var(--amarillo); margin-top:2px;
+}

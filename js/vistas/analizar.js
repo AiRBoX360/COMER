@@ -1,7 +1,7 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { leerTexto, lectorDisponible } from '../lector.js';
-import { analizarTabla, analizarIngredientesTexto } from '../motor.js';
+import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
 /**
  * Las tres tomas.
@@ -123,14 +123,59 @@ export function analizarActivo(raiz, { repintar }) {
   const estado = raiz.querySelector('#estadoLectura');
   const resumen = raiz.querySelector('#resumenLectura');
 
+  /** Cifra con coma decimal, que es como se escribe en español. */
+  function conComa(v) {
+    return String(v).replace('.', ',');
+  }
+
   function pintarResumen() {
     const t = leido.tabla;
     const i = leido.ingredientes;
     if (!t && !i) { resumen.innerHTML = ''; return; }
 
+    // El validador se ejecuta AQUÍ, sobre lo que se acaba de leer. Enseñar los
+    // números sin comprobarlos antes fue un error: la app llegó a mostrar 8 g
+    // de sal en un aperitivo sin decir una palabra.
+    let incidencias = [];
+    if (t) {
+      const primero = (i?.ingredientes?.[0]?.texto ?? '').toLowerCase();
+      const esSalado = /^sal\b/.test(primero) ||
+        (i?.ingredientes ?? []).some((x) => /caldo|cubito|concentrado|sazonador/i.test(x.texto));
+      const n = normalizarNutrientes(t.nutrientes);
+      incidencias = validar(n, esSalado).incidencias;
+      if (i?.ingredientes?.length) {
+        const texto = i.ingredientes.map((x) => x.texto.toLowerCase()).join(' | ');
+        incidencias = incidencias.concat(validarContraIngredientes(n, {
+          total: i.ingredientes.length,
+          hayFuenteAzucar: /azucar|azúcar|jarabe|dextrosa|glucosa|fructosa|maltodextrina|miel|melaza|sacarosa|panela|sirope/.test(texto),
+          hayLacteo: /leche|lacteo|lácteo|yogur|nata|suero|queso|lactosa/.test(texto),
+          hayFruta: /fruta|zumo|pure|puré|manzana|platano|plátano|naranja|fresa|melocoton|melocotón|pera|uva|datil|dátil/.test(texto),
+          hayGrasaAnadida: /aceite|grasa|mantequilla|manteca|margarina/.test(texto),
+          haySal: /\bsal\b|salmuera/.test(texto),
+        }));
+      }
+    }
+    const porCampo = new Map();
+    for (const inc of incidencias) for (const c of inc.campos) porCampo.set(c, inc.gravedad);
+
     const campos = t ? Object.entries(t.nutrientes) : [];
-    const filas = campos.map(([k, d]) => `
-      <li><span>${esc(NOMBRES[k] ?? k)}</span><b class="cifra">${d.valor} ${UNIDAD[k] ?? ''}</b></li>`).join('');
+    const filas = campos.map(([k, d]) => {
+      const marca = porCampo.get(k);
+      // Un campo leído con poca confianza se marca aunque no haya incidencia:
+      // el aviso puede llegar tarde y la cifra ya está en pantalla.
+      const flojo = typeof d.confianzaOCR === 'number' && d.confianzaOCR <= 0.5;
+      const clase = marca === 'error' ? 'dudoso dudoso--error'
+        : (marca === 'aviso' || flojo) ? 'dudoso' : '';
+      const nota = flojo && !marca ? ' <em class="apunte">lectura dudosa</em>' : '';
+      return `<li class="${clase}"><span>${esc(NOMBRES[k] ?? k)}${nota}</span>` +
+             `<b class="valor cifra">${conComa(d.valor)} ${UNIDAD[k] ?? ''}</b></li>`;
+    }).join('');
+
+    const problemas = incidencias.map((inc) => `
+      <li class="incidencia incidencia--${inc.gravedad}">
+        <b>${inc.gravedad === 'error' ? 'No cuadra' : 'Revisa esto'}</b><br>${esc(inc.mensaje)}
+        ${inc.correccion ? `<br><span class="cifra">${conComa(inc.correccion.valorActual)} → ${conComa(inc.correccion.valorPropuesto)}</span>` : ''}
+      </li>`).join('');
 
     const avisos = [...(t?.avisos ?? []), ...(i?.avisos ?? [])]
       .map((a) => `<li>${esc(a)}</li>`).join('');
@@ -138,6 +183,7 @@ export function analizarActivo(raiz, { repintar }) {
     resumen.innerHTML = `
       <h2 class="subtitulo">Lo que se ha entendido</h2>
       ${t ? `<div class="tarjeta"><ul class="diagnostico">${filas || '<li>Nada reconocible en la tabla</li>'}</ul></div>` : ''}
+      ${problemas ? `<h3 class="rotulo" style="margin-top:20px">Cifras que no encajan</h3><ul class="incidencias">${problemas}</ul>` : ''}
       ${i ? `<p class="texto" style="margin-top:12px"><strong>${i.ingredientes.length} ingrediente(s):</strong> ${esc(i.ingredientes.map((x) => x.texto).join(', ')) || 'ninguno'}</p>` : ''}
       ${i && i.trazas.length ? `<p class="texto">Trazas declaradas: ${esc(i.trazas.join(', '))}</p>` : ''}
       ${avisos ? `<div class="pendiente" style="margin-top:12px"><ul style="margin:0;padding-left:1.1em">${avisos}</ul></div>` : ''}`;
