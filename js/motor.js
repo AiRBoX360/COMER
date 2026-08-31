@@ -3349,9 +3349,26 @@ function detectarColumnas(lineas) {
   }
   return { base: "desconocida", indice100: 0 };
 }
+function unirNombresConValores(lineas) {
+  const soloNumeros = (l) => /\d/.test(l) && l.replace(/\d+(?:[.,]\d+)?/g, " ").replace(/\b(kcal|kj|mg|µg|ug|mcg|g|ml)\b/gi, " ").replace(/[\s.,:;%/<>~+()·-]/g, "").length === 0;
+  const out = [];
+  for (let i = 0; i < lineas.length; i++) {
+    const actual = lineas[i];
+    const siguiente = lineas[i + 1];
+    const tieneNombre = marcadores(actual).length > 0;
+    const sinNumero = !/\d/.test(actual);
+    if (tieneNombre && sinNumero && siguiente && soloNumeros(siguiente)) {
+      out.push(`${actual} ${siguiente}`);
+      i++;
+      continue;
+    }
+    out.push(actual);
+  }
+  return out;
+}
 function analizarTabla(textoCrudo) {
   const lineasCrudas = textoCrudo.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 0);
-  const lineas = lineasCrudas.map(normalizar);
+  const lineas = unirNombresConValores(lineasCrudas.map(normalizar));
   const { base: baseDetectada, indice100, racion } = detectarColumnas(lineas);
   const valores = [];
   const usadas = /* @__PURE__ */ new Set();
@@ -3457,7 +3474,7 @@ function analizarTabla(textoCrudo) {
   } else if (base !== "por_100") {
     avisos.push(`La columna leída es "${base === "por_racion" ? "por ración" : "por envase"}". Para comparar productos hacen falta los valores por 100 g.`);
   }
-  const lineasSinUsar = lineasCrudas.filter((_, i) => !usadas.has(i));
+  const lineasSinUsar = lineas.filter((_, i) => !usadas.has(i));
   const OBLIGATORIOS = [
     "energia_kcal",
     "grasas_g",
