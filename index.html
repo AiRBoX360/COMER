@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comer después de usar</title>
+<meta name="description" content="Analiza la etiqueta de un producto y descubre qué conviene limitar y qué merece la pena.">
+
+<!-- Aplicación instalable -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#101319">
+
+<!-- iOS: sin estas dos líneas la app abre con la barra de Safari encima -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Comer">
+<link rel="apple-touch-icon" href="./iconos/icono-180.png">
+<link rel="icon" href="./iconos/favicon.png" type="image/png">
+
+<link rel="stylesheet" href="./css/estilo.css">
+</head>
+<body>
+
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header class="cabecera">
+  <div class="cabecera__marca">
+    <span class="marca__tramos" aria-hidden="true">
+      <i></i><i></i><i class="es-actual"></i><i></i><i></i>
+    </span>
+    <span class="marca__nombre">Comer <em>después de usar</em></span>
+  </div>
+  <span class="cabecera__version" id="etiquetaVersion">v0.1</span>
+</header>
+
+<main class="principal" id="principal" tabindex="-1">
+  <div id="contenedorVista" class="vista"></div>
+</main>
+
+<nav class="barra" role="tablist" aria-label="Secciones">
+  <button class="barra__pestana" role="tab" data-vista="inicio" aria-selected="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V20h12v-9.5"/></svg>
+    <span>Inicio</span>
+  </button>
+  <button class="barra__pestana" role="tab" data-vista="analizar" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    <span>Analizar</span>
+  </button>
+  <button class="barra__pestana" role="tab" data-vista="resultado" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11"/><path d="M4 12h16"/><path d="M4 18h8"/></svg>
+    <span>Resultado</span>
+  </button>
+  <button class="barra__pestana" role="tab" data-vista="conocimiento" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M17 7h2v13H8"/></svg>
+    <span>Saber</span>
+  </button>
+  <button class="barra__pestana" role="tab" data-vista="despensa" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>
+    <span>Despensa</span>
+  </button>
+</nav>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

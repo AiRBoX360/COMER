@@ -1,0 +1,486 @@
+/* ==========================================================================
+   VERDICTO · Sistema visual
+   Regla que no se rompe: si algo tiene color saturado, significa algo.
+   La interfaz es hueso sobre tinta. El único color es el veredicto.
+   ========================================================================== */
+
+/* --- Tipografías, servidas desde la propia app ---------------------------- */
+@font-face{font-family:Archivo;src:url(../fuentes/archivo-600.woff2)format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:Archivo;src:url(../fuentes/archivo-800.woff2)format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Plex Sans";src:url(../fuentes/plex-sans-400.woff2)format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex Sans";src:url(../fuentes/plex-sans-600.woff2)format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url(../fuentes/plex-mono-400.woff2)format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url(../fuentes/plex-mono-600.woff2)format("woff2");font-weight:600;font-display:swap}
+
+:root{
+  /* Neutros */
+  --tinta:#101319;
+  --carbon:#191D26;
+  --carbon-alto:#212633;
+  --linea:#262C38;
+  --hueso:#E9EBEF;
+  --ceniza:#878E9E;
+  --ceniza-tenue:#5C6474;
+
+  /* Veredicto: los únicos colores saturados de toda la aplicación */
+  --rojo:#D93B34;
+  --naranja:#E4771D;
+  --amarillo:#E8B617;
+  --verde-claro:#78B341;
+  --verde-parchis:#17A05A;
+
+  /* Tipografía */
+  --display:Archivo,"Segoe UI",system-ui,sans-serif;
+  --cuerpo:"Plex Sans","Segoe UI",system-ui,sans-serif;
+  --datos:"Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  /* Escala. Todo el tamaño de la interfaz cuelga de aquí.
+     La cambia el propio usuario desde Inicio y se recuerda entre sesiones. */
+  --escala:1;
+
+  /* Ritmo, en rem para que crezca junto con el texto */
+  --e1:0.25rem; --e2:0.5rem; --e3:0.7rem; --e4:1rem;
+  --e5:1.4rem; --e6:1.9rem; --e7:2.8rem;
+  --radio:0.85rem;
+  --radio-s:0.5rem;
+
+  --alto-barra:4rem;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+/* 17px de base en vez de 16: en un móvil a un brazo de distancia se agradece.
+   El multiplicador permite subirlo sin tocar una sola regla más. */
+html{
+  -webkit-text-size-adjust:100%;
+  font-size:calc(17px * var(--escala));
+}
+
+body{
+  margin:0;
+  background:var(--tinta);
+  color:var(--hueso);
+  font-family:var(--cuerpo);
+  font-size:1rem;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+
+/* Nada de zoom accidental al tocar dos veces */
+button{touch-action:manipulation}
+
+/* --- Accesibilidad -------------------------------------------------------- */
+.saltar{
+  position:absolute; left:-9999px; top:0; z-index:100;
+  background:var(--hueso); color:var(--tinta);
+  padding:var(--e3) var(--e4); border-radius:0 0 var(--radio-s) 0;
+  font-weight:600;
+}
+.saltar:focus{left:0}
+
+:focus-visible{
+  outline:2px solid var(--hueso);
+  outline-offset:2px;
+  border-radius:var(--radio-s);
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* --- Cabecera ------------------------------------------------------------- */
+.cabecera{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
+  background:rgba(16,19,25,.86);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--linea);
+}
+.cabecera__marca{display:flex; align-items:center; gap:var(--e3)}
+.marca__tramos{display:flex; flex-direction:column; gap:2px; width:1.55rem}
+.marca__tramos i{height:0.2rem; border-radius:2px; width:58%; opacity:.45}
+.marca__tramos i:nth-child(1){background:var(--rojo)}
+.marca__tramos i:nth-child(2){background:var(--naranja)}
+.marca__tramos i:nth-child(3){background:var(--amarillo)}
+.marca__tramos i:nth-child(4){background:var(--verde-claro)}
+.marca__tramos i:nth-child(5){background:var(--verde-parchis)}
+.marca__tramos i.es-actual{width:100%; opacity:1}
+.marca__nombre{
+  font-family:var(--display); font-weight:800; font-size:1.3rem;
+  letter-spacing:-.02em; line-height:1;
+}
+/* La coletilla es la instrucción de la etiqueta: va en voz baja. */
+.marca__nombre em{
+  display:block; font-style:normal;
+  font-family:var(--datos); font-weight:400; font-size:0.62rem;
+  letter-spacing:.11em; text-transform:uppercase;
+  color:var(--ceniza-tenue); margin-top:2px;
+}
+.cabecera__version{font-family:var(--datos); font-size:0.72rem; color:var(--ceniza-tenue)}
+
+/* --- Contenido ------------------------------------------------------------ */
+.principal{
+  padding:var(--e5) var(--e4) calc(var(--alto-barra) + var(--e7) + env(safe-area-inset-bottom));
+  max-width:640px; margin:0 auto;
+  min-height:60vh;
+}
+.principal:focus{outline:none}
+
+/* --- Barra de pestañas ---------------------------------------------------- */
+.barra{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:grid; grid-template-columns:repeat(5,1fr);
+  background:rgba(16,19,25,.94);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--linea);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.barra__pestana{
+  appearance:none; border:0; background:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  height:var(--alto-barra);
+  padding:var(--e2) var(--e1) 0;
+  color:var(--ceniza-tenue);
+  font-family:var(--cuerpo); font-size:0.75rem; font-weight:600;
+  letter-spacing:.01em;
+  transition:color .18s ease;
+}
+.barra__pestana svg{
+  width:1.55rem; height:1.55rem; fill:none;
+  stroke:currentColor; stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.barra__pestana[aria-selected="true"]{color:var(--hueso)}
+
+/* --- Piezas reutilizables ------------------------------------------------- */
+.tarjeta{
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e5) var(--e4);
+}
+
+.titulo{
+  font-family:var(--display); font-weight:800;
+  font-size:2.15rem; line-height:1.12; letter-spacing:-.025em;
+  margin:0 0 var(--e3);
+}
+.subtitulo{
+  font-family:var(--display); font-weight:600;
+  font-size:1.35rem; letter-spacing:-.015em;
+  margin:var(--e6) 0 var(--e3);
+}
+.rotulo{
+  font-family:var(--datos); font-weight:600;
+  font-size:0.78rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ceniza);
+  margin:0 0 var(--e3);
+}
+.texto{color:var(--ceniza); margin:0 0 var(--e3); font-size:1.02rem}
+.texto strong{color:var(--hueso); font-weight:600}
+.texto:last-child{margin-bottom:0}
+
+.cifra{font-family:var(--datos); font-variant-numeric:tabular-nums}
+
+/* Botón principal: ocupa espacio a propósito, se pulsa con el pulgar */
+.boton-grande{
+  appearance:none; width:100%; border:0; cursor:pointer;
+  background:var(--hueso); color:var(--tinta);
+  border-radius:var(--radio);
+  padding:var(--e6) var(--e4);
+  font-family:var(--display); font-weight:800;
+  font-size:1.5rem; letter-spacing:-.01em;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  transition:transform .12s ease, opacity .12s ease;
+}
+.boton-grande:active{transform:scale(.985)}
+.boton-grande small{
+  font-family:var(--cuerpo); font-weight:400; font-size:0.9rem;
+  color:rgba(16,19,25,.62); letter-spacing:0;
+}
+.boton-grande:disabled{
+  background:var(--carbon-alto); color:var(--ceniza);
+  cursor:not-allowed;
+}
+.boton-grande:disabled small{color:var(--ceniza-tenue)}
+
+.boton{
+  appearance:none; cursor:pointer;
+  background:none; color:var(--hueso);
+  border:1px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  font-family:var(--cuerpo); font-weight:600; font-size:1rem;
+}
+.boton:disabled{color:var(--ceniza-tenue); cursor:not-allowed}
+
+/* Estado vacío: una invitación, no una disculpa */
+.vacio{
+  text-align:center;
+  padding:var(--e7) var(--e4);
+  border:1px dashed var(--linea);
+  border-radius:var(--radio);
+}
+.vacio h3{
+  font-family:var(--display); font-weight:600; font-size:1.2rem;
+  margin:0 0 var(--e2);
+}
+.vacio p{color:var(--ceniza); font-size:0.98rem; margin:0}
+
+/* Aviso de módulo pendiente. Honesto, no decorativo. */
+.pendiente{
+  display:flex; gap:var(--e3); align-items:flex-start;
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio-s);
+  padding:var(--e4);
+  font-size:0.98rem; color:var(--ceniza);
+}
+.pendiente b{color:var(--hueso); font-weight:600}
+
+/* --- LA BANDA DE VEREDICTO ------------------------------------------------ */
+/* Cinco tramos. El del producto se expande, los otros se apagan.
+   Es el guiño a la tira que va impresa en el propio envase.            */
+.banda{display:flex; flex-direction:column; gap:var(--e2)}
+.banda__tramo{
+  display:flex; align-items:center; gap:var(--e3);
+  height:2.4rem;
+  border-radius:var(--radio-s);
+  padding:0 var(--e3);
+  background:var(--carbon-alto);
+  color:var(--ceniza-tenue);
+  font-family:var(--datos); font-size:0.76rem; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase;
+  width:52%;
+  transition:width .45s cubic-bezier(.2,.8,.25,1), background-color .3s ease, color .3s ease;
+}
+.banda__tramo::before{
+  content:""; width:8px; height:8px; border-radius:2px;
+  background:currentColor; opacity:.5; flex:none;
+}
+.banda__tramo.es-actual{
+  width:100%;
+  color:var(--tinta);
+  font-size:0.86rem;
+}
+.banda__tramo.es-actual::before{opacity:1; background:rgba(16,19,25,.55)}
+.banda__tramo[data-nivel="rojo"].es-actual{background:var(--rojo)}
+.banda__tramo[data-nivel="naranja"].es-actual{background:var(--naranja)}
+.banda__tramo[data-nivel="amarillo"].es-actual{background:var(--amarillo)}
+.banda__tramo[data-nivel="verde-claro"].es-actual{background:var(--verde-claro)}
+.banda__tramo[data-nivel="verde-parchis"].es-actual{background:var(--verde-parchis)}
+
+/* La nota, en grande */
+.veredicto{display:flex; align-items:baseline; gap:var(--e3); margin-bottom:var(--e4)}
+.veredicto__nota{
+  font-family:var(--display); font-weight:800;
+  font-size:4.4rem; line-height:.9; letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+}
+.veredicto__total{font-family:var(--datos); font-size:1.05rem; color:var(--ceniza-tenue)}
+.veredicto[data-nivel="rojo"] .veredicto__nota{color:var(--rojo)}
+.veredicto[data-nivel="naranja"] .veredicto__nota{color:var(--naranja)}
+.veredicto[data-nivel="amarillo"] .veredicto__nota{color:var(--amarillo)}
+.veredicto[data-nivel="verde-claro"] .veredicto__nota{color:var(--verde-claro)}
+.veredicto[data-nivel="verde-parchis"] .veredicto__nota{color:var(--verde-parchis)}
+
+/* --- Diagnóstico de instalación ------------------------------------------ */
+.diagnostico{list-style:none; margin:0; padding:0}
+.diagnostico li{
+  display:flex; justify-content:space-between; align-items:center; gap:var(--e3);
+  padding:var(--e3) 0;
+  border-bottom:1px solid var(--linea);
+  font-size:1rem; color:var(--ceniza);
+}
+.diagnostico li:last-child{border-bottom:0}
+.diagnostico b{
+  font-family:var(--datos); font-size:0.85rem; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase;
+  color:var(--ceniza-tenue);
+}
+.diagnostico b.si{color:var(--verde-claro)}
+.diagnostico b.no{color:var(--naranja)}
+
+/* --- Instrucciones de instalación en iPhone ------------------------------- */
+.instalar{
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e4);
+  margin-bottom:var(--e5);
+}
+.instalar h3{font-family:var(--display); font-weight:600; font-size:1.15rem; margin:0 0 var(--e2)}
+.instalar ol{margin:var(--e3) 0 0; padding-left:1.15em; color:var(--ceniza); font-size:1rem}
+.instalar li{margin-bottom:var(--e2)}
+.instalar li:last-child{margin-bottom:0}
+
+/* --- Escritorio ----------------------------------------------------------- */
+@media (min-width:44rem){
+  .principal{padding-bottom:var(--e7)}
+  .barra{
+    position:sticky; bottom:0;
+    max-width:640px; margin:0 auto;
+    border-radius:var(--radio) var(--radio) 0 0;
+    border:1px solid var(--linea); border-bottom:0;
+  }
+}
+
+/* --- Filas de factor: las dos tablas del veredicto ------------------------ */
+/* La barra mide el peso del factor. Es lo que ordena la tabla, no una opinión. */
+.factor{
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e4);
+  margin-bottom:var(--e2);
+}
+.factor__cab{
+  display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3);
+  margin-bottom:var(--e3);
+}
+.factor__nombre{font-family:var(--display); font-weight:600; font-size:1.18rem; letter-spacing:-.01em}
+.factor__peso{font-size:0.92rem; color:var(--ceniza-tenue); flex:none}
+.factor__medida{height:4px; border-radius:2px; background:var(--carbon-alto); overflow:hidden}
+.factor__medida i{display:block; height:100%; border-radius:2px}
+.factor--malo .factor__medida i{background:var(--rojo)}
+.factor--bueno .factor__medida i{background:var(--verde-claro)}
+.factor__dato{
+  margin:var(--e3) 0 var(--e2);
+  font-size:0.88rem; color:var(--ceniza);
+  letter-spacing:.03em;
+}
+.factor__motivo{margin:0; font-size:1rem; color:var(--ceniza); line-height:1.5}
+
+/* --- Resumen de tres cifras ---------------------------------------------- */
+.resumen{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2);
+  margin-top:var(--e5);
+}
+.resumen div{
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3); text-align:center;
+}
+.resumen b{
+  display:block;
+  font-family:var(--datos); font-weight:600; font-size:1.45rem;
+  color:var(--hueso); margin-bottom:2px;
+}
+.resumen span{font-size:0.78rem; color:var(--ceniza-tenue)}
+
+/* --- Control de tamaño ---------------------------------------------------- */
+/* Lo que a mí me parece legible y lo que le parece legible a otro no tienen
+   por qué coincidir. En vez de discutirlo, que lo decida quien mira. */
+.escala{
+  display:flex; gap:var(--e2); align-items:center;
+  margin:var(--e5) 0;
+}
+.escala__opciones{display:flex; gap:var(--e2); flex:1}
+.escala__boton{
+  appearance:none; cursor:pointer; flex:1;
+  background:var(--carbon); color:var(--ceniza);
+  border:1px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e2);
+  font-family:var(--display); font-weight:600;
+  transition:background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.escala__boton:nth-child(1){font-size:0.92rem}
+.escala__boton:nth-child(2){font-size:1.08rem}
+.escala__boton:nth-child(3){font-size:1.24rem}
+.escala__boton[aria-pressed="true"]{
+  background:var(--hueso); color:var(--tinta); border-color:var(--hueso);
+}
+
+/* --- Tomas de foto -------------------------------------------------------- */
+.toma{
+  display:block; width:100%;
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e4);
+  margin-bottom:var(--e3);
+  text-align:left;
+}
+/* La ranura vacía es un botón grande: se pulsa con el pulgar sin mirar. */
+.toma--vacia{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  border-style:dashed;
+  padding:var(--e6) var(--e4);
+  color:var(--hueso);
+  transition:border-color .15s ease, background-color .15s ease;
+}
+.toma--vacia:active{background:var(--carbon-alto); border-color:var(--ceniza-tenue)}
+.toma__icono{
+  width:2.3rem; height:2.3rem; fill:none;
+  stroke:var(--ceniza); stroke-width:1.4;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.toma__titulo{font-family:var(--display); font-weight:600; font-size:1.15rem}
+.toma__pista{font-size:0.92rem; color:var(--ceniza-tenue); text-align:center}
+
+.toma__cabecera{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:var(--e3); margin-bottom:var(--e3);
+}
+.toma__nota{font-size:0.92rem; color:var(--ceniza-tenue); flex:none}
+
+/* Las dos imágenes lado a lado: lo que hiciste y lo que va a leerse.
+   Ver la diferencia explica el procesado mejor que cualquier texto. */
+.toma__imagenes{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2)}
+.toma__imagenes figure{margin:0}
+.toma__imagenes img{
+  width:100%; aspect-ratio:4/3; object-fit:cover;
+  border-radius:var(--radio-s);
+  background:var(--carbon-alto);
+  display:block;
+}
+.toma__imagenes figcaption{
+  margin-top:var(--e1);
+  font-family:var(--datos); font-size:0.68rem;
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ceniza-tenue); text-align:center;
+}
+
+.toma__dictamen{
+  margin:var(--e3) 0 0;
+  font-family:var(--display); font-weight:600; font-size:1rem;
+}
+.toma__dictamen--lista{color:var(--verde-claro)}
+.toma__dictamen--regular{color:var(--amarillo)}
+.toma__dictamen--mala{color:var(--naranja)}
+
+.toma__problemas{
+  list-style:none; margin:var(--e3) 0 0; padding:0;
+  font-size:0.95rem; color:var(--ceniza);
+}
+.toma__problemas li{
+  padding:var(--e3); margin-bottom:var(--e2);
+  background:var(--carbon-alto);
+  border-radius:var(--radio-s);
+  border-left:3px solid var(--naranja);
+  line-height:1.45;
+}
+.toma__problemas b{color:var(--hueso); font-weight:600}
+.toma [data-repetir]{margin-top:var(--e3); width:100%}
+
+/* Mientras procesa. El pulso avisa de que no se ha colgado. */
+.toma--trabajando{opacity:.5; animation:latido 1.1s ease-in-out infinite}
+@keyframes latido{50%{opacity:.28}}
+
+/* --- Pegar texto ---------------------------------------------------------- */
+.pegar{
+  width:100%; display:block;
+  background:var(--carbon); color:var(--hueso);
+  border:1px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3);
+  font-family:var(--datos); font-size:0.92rem; line-height:1.5;
+  resize:vertical;
+}
+.pegar::placeholder{color:var(--ceniza-tenue)}
+.pegar:focus{border-color:var(--ceniza); outline:none}

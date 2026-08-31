@@ -1,0 +1,222 @@
+import { esc, pendiente } from '../ui.js';
+import { capturar, pedirFoto, aURL } from '../camara.js';
+import { leerTexto, lectorDisponible } from '../lector.js';
+import { analizarTabla, analizarIngredientesTexto } from '../motor.js';
+
+/**
+ * Las tres tomas.
+ *
+ * El frontal es opcional a propósito: sirve para reconocer el producto de un
+ * vistazo en la Despensa, pero no aporta nada al análisis. Exigirlo alargaría
+ * el proceso a cambio de nada.
+ */
+const TOMAS = [
+  { clave: 'tabla', titulo: 'Tabla nutricional', pista: 'La rejilla de valores por 100 g', obligatoria: true },
+  { clave: 'ingredientes', titulo: 'Lista de ingredientes', pista: 'Donde pone "Ingredientes:"', obligatoria: true },
+  { clave: 'frontal', titulo: 'Frente del envase', pista: 'Para reconocerlo en la Despensa', obligatoria: false },
+];
+
+/** Lo capturado en esta sesión. Se pierde al salir, y es lo correcto: guardar
+ *  a medias un análisis sin terminar solo ensuciaría la Despensa. */
+const capturas = new Map();
+
+const ICONO_CAMARA = `<svg viewBox="0 0 24 24" aria-hidden="true" class="toma__icono">
+  <path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
+
+function tarjetaToma(t) {
+  const c = capturas.get(t.clave);
+  if (!c) {
+    return `
+      <button class="toma toma--vacia" data-toma="${t.clave}">
+        ${ICONO_CAMARA}
+        <span class="toma__titulo">${esc(t.titulo)}</span>
+        <span class="toma__pista">${esc(t.pista)}${t.obligatoria ? '' : ' · opcional'}</span>
+      </button>`;
+  }
+
+  const estado = c.calidad.repetir ? 'mala' : c.calidad.problemas.length ? 'regular' : 'lista';
+  const dictamen = { mala: 'Conviene repetirla', regular: 'Servirá, pero puede mejorar', lista: 'Buena foto' }[estado];
+  const problemas = c.calidad.problemas
+    .map((p) => `<li><b>${esc(p.mensaje)}</b><br>${esc(p.consejo)}</li>`).join('');
+
+  return `
+    <div class="toma toma--${estado}" data-toma="${t.clave}">
+      <div class="toma__cabecera">
+        <span class="toma__titulo">${esc(t.titulo)}</span>
+        <span class="toma__nota cifra">${c.calidad.puntuacion}/100</span>
+      </div>
+      <div class="toma__imagenes">
+        <figure><img src="${c.urlOriginal}" alt="Tu foto de ${esc(t.titulo)}"><figcaption>Tu foto</figcaption></figure>
+        <figure><img src="${c.urlPreparada}" alt="Versión preparada para leer"><figcaption>Lista para leer</figcaption></figure>
+      </div>
+      <p class="toma__dictamen toma__dictamen--${estado}">${dictamen}</p>
+      ${problemas ? `<ul class="toma__problemas">${problemas}</ul>` : ''}
+      <button class="boton" data-repetir="${t.clave}">Repetir foto</button>
+    </div>`;
+}
+
+export function analizar() {
+  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
+  return `
+    <h1 class="titulo">Analizar</h1>
+    <p class="texto">Fotografía la tabla y los ingredientes. Las fotos no salen de tu teléfono: se procesan aquí dentro.</p>
+
+    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
+
+    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:24px">
+      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
+      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
+    </button>
+    <p class="texto" id="estadoLectura" style="margin-top:12px"></p>
+
+    <h2 class="subtitulo">O pega el texto</h2>
+    <p class="texto">Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
+    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
+    <textarea id="pegaTabla" class="pegar" rows="5" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
+    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
+    <textarea id="pegaIng" class="pegar" rows="4" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
+    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
+
+    <div id="resumenLectura" style="margin-top:24px"></div>
+
+    <div style="margin-top:24px">
+      ${pendiente('<b>Hasta aquí llega el módulo 6.</b> La lectura ya funciona y verás abajo lo que ha entendido. La pantalla donde podrás corregir campo por campo antes de analizar es el módulo 7.')}
+    </div>
+  `;
+}
+
+export function analizarActivo(raiz, { repintar }) {
+  const zona = raiz.querySelector('#tomas');
+  if (!zona) return;
+
+  async function tomar(clave) {
+    const fichero = await pedirFoto();
+    if (!fichero) return;
+
+    const tarjeta = zona.querySelector(`[data-toma="${clave}"]`);
+    if (tarjeta) tarjeta.classList.add('toma--trabajando');
+    // Un respiro para que el navegador pinte el estado de espera antes de
+    // ponerse con el procesado, que es pesado y en un móvil se nota.
+    await new Promise((r) => setTimeout(r, 30));
+
+    try {
+      const { original, preparada, calidad } = await capturar(fichero);
+      capturas.set(clave, {
+        calidad, preparada,
+        urlOriginal: aURL(original, 0.6),
+        urlPreparada: aURL(preparada, 0.6),
+      });
+    } catch (err) {
+      capturas.delete(clave);
+      alert(`No se ha podido usar esa imagen. ${err.message}`);
+    }
+    repintar();
+  }
+
+  zona.addEventListener('click', (e) => {
+    const repetir = e.target.closest('[data-repetir]');
+    if (repetir) { tomar(repetir.dataset.repetir); return; }
+    const vacia = e.target.closest('.toma--vacia');
+    if (vacia) tomar(vacia.dataset.toma);
+  });
+
+  const estado = raiz.querySelector('#estadoLectura');
+  const resumen = raiz.querySelector('#resumenLectura');
+
+  function pintarResumen() {
+    const t = leido.tabla;
+    const i = leido.ingredientes;
+    if (!t && !i) { resumen.innerHTML = ''; return; }
+
+    const campos = t ? Object.entries(t.nutrientes) : [];
+    const filas = campos.map(([k, d]) => `
+      <li><span>${esc(NOMBRES[k] ?? k)}</span><b class="cifra">${d.valor} ${UNIDAD[k] ?? ''}</b></li>`).join('');
+
+    const avisos = [...(t?.avisos ?? []), ...(i?.avisos ?? [])]
+      .map((a) => `<li>${esc(a)}</li>`).join('');
+
+    resumen.innerHTML = `
+      <h2 class="subtitulo">Lo que se ha entendido</h2>
+      ${t ? `<div class="tarjeta"><ul class="diagnostico">${filas || '<li>Nada reconocible en la tabla</li>'}</ul></div>` : ''}
+      ${i ? `<p class="texto" style="margin-top:12px"><strong>${i.ingredientes.length} ingrediente(s):</strong> ${esc(i.ingredientes.map((x) => x.texto).join(', ')) || 'ninguno'}</p>` : ''}
+      ${i && i.trazas.length ? `<p class="texto">Trazas declaradas: ${esc(i.trazas.join(', '))}</p>` : ''}
+      ${avisos ? `<div class="pendiente" style="margin-top:12px"><ul style="margin:0;padding-left:1.1em">${avisos}</ul></div>` : ''}`;
+  }
+
+  raiz.querySelector('#btnLeer')?.addEventListener('click', async () => {
+    estado.textContent = 'Preparando el lector…';
+    for (const clave of ['tabla', 'ingredientes']) {
+      const r = await leerCaptura(clave, (p, s2) => {
+        estado.textContent = `${s2 === 'recognizing text' ? 'Leyendo' : 'Preparando'} ${clave}… ${Math.round(p * 100)} %`;
+      });
+      if (!r.ok) { estado.textContent = r.motivo; return; }
+      interpretar(clave, r.texto);
+    }
+    estado.textContent = 'Listo. Revisa abajo lo que ha entendido.';
+    pintarResumen();
+  });
+
+  raiz.querySelector('#btnPegado')?.addEventListener('click', () => {
+    const t = raiz.querySelector('#pegaTabla').value.trim();
+    const i = raiz.querySelector('#pegaIng').value.trim();
+    if (!t && !i) { estado.textContent = 'No has pegado nada todavía.'; return; }
+    if (t) interpretar('tabla', t);
+    if (i) interpretar('ingredientes', i);
+    estado.textContent = 'Texto interpretado.';
+    pintarResumen();
+  });
+
+  pintarResumen();
+}
+
+const NOMBRES = {
+  energia_kcal: 'Energía', energia_kj: 'Energía (kJ)', grasas_g: 'Grasas',
+  saturadas_g: 'de las cuales saturadas', monoinsaturadas_g: 'Monoinsaturadas',
+  poliinsaturadas_g: 'Poliinsaturadas', trans_g: 'Grasas trans',
+  hidratos_g: 'Hidratos de carbono', azucares_g: 'de los cuales azúcares',
+  polialcoholes_g: 'Polialcoholes', fibra_g: 'Fibra', proteinas_g: 'Proteínas',
+  sal_g: 'Sal', sodio_mg: 'Sodio',
+};
+const UNIDAD = {
+  energia_kcal: 'kcal', energia_kj: 'kJ', sodio_mg: 'mg',
+  grasas_g: 'g', saturadas_g: 'g', monoinsaturadas_g: 'g', poliinsaturadas_g: 'g',
+  trans_g: 'g', hidratos_g: 'g', azucares_g: 'g', polialcoholes_g: 'g',
+  fibra_g: 'g', proteinas_g: 'g', sal_g: 'g',
+};
+
+/** Lo leído hasta ahora, para que el módulo 7 lo recoja. */
+export const leido = { tabla: null, ingredientes: null };
+
+export function capturasActuales() {
+  return capturas;
+}
+
+/**
+ * Lee una captura y la convierte en datos.
+ * Devuelve el motivo si no se ha podido, para poder decirlo en pantalla.
+ */
+export async function leerCaptura(clave, alProgresar) {
+  const c = capturas.get(clave);
+  if (!c) return { ok: false, motivo: 'No hay foto todavía.' };
+
+  const r = await leerTexto(c.preparada, alProgresar);
+  if (!r) {
+    return {
+      ok: false,
+      motivo: 'El lector automático no está instalado en esta copia de la app. Usa la vía de pegar texto: en tu iPhone sale mejor.',
+    };
+  }
+  return { ok: true, texto: r.texto, confianza: r.confianza };
+}
+
+/** Convierte texto suelto en datos, venga de donde venga. */
+export function interpretar(clave, texto) {
+  if (clave === 'tabla') {
+    leido.tabla = analizarTabla(texto);
+    return leido.tabla;
+  }
+  leido.ingredientes = analizarIngredientesTexto(texto);
+  return leido.ingredientes;
+}
+
+export { lectorDisponible };
