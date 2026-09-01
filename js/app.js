@@ -8,6 +8,7 @@
 import { inicio, inicioActivo } from './vistas/inicio.js';
 import { analizar, analizarActivo } from './vistas/analizar.js';
 import { resultado } from './vistas/resultado.js';
+import { revisar, revisarActivo } from './vistas/revisar.js';
 import { conocimiento } from './vistas/conocimiento.js';
 import { despensa } from './vistas/despensa.js';
 import {
@@ -18,7 +19,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.5.1';
+export const VERSION = '0.7.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -44,6 +45,8 @@ function ponerEscala(valor) {
 const VISTAS = {
   inicio: { pinta: inicio, activa: inicioActivo, titulo: 'Inicio' },
   analizar: { pinta: analizar, activa: analizarActivo, titulo: 'Analizar' },
+  // Revisar no tiene pestaña propia: es el segundo paso de Analizar.
+  revisar: { pinta: revisar, activa: revisarActivo, titulo: 'Revisar', pestana: 'analizar' },
   resultado: { pinta: resultado, titulo: 'Resultado' },
   conocimiento: { pinta: conocimiento, titulo: 'Saber' },
   despensa: { pinta: despensa, titulo: 'Despensa' },
@@ -70,8 +73,9 @@ function irA(clave, conservarScroll = false) {
     });
   }
 
+  const marcada = vista.pestana ?? clave;
   for (const p of pestanas) {
-    p.setAttribute('aria-selected', String(p.dataset.vista === clave));
+    p.setAttribute('aria-selected', String(p.dataset.vista === marcada));
   }
 
   document.title = `${vista.titulo} · Comer después de usar`;
@@ -169,5 +173,7 @@ if (etiqueta) etiqueta.textContent = `v${VERSION}`;
 const registroSW = activarSinConexion();
 
 ponerEscala(escala());
+
+export { irA };
 
 irA('inicio');

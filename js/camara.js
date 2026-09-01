@@ -10,9 +10,16 @@
  * getMediaStream da problemas en Safari según el contexto.
  */
 
-import { evaluarCalidad, prepararParaLectura } from './motor.js';
+import { evaluarCalidad, prepararParaLectura, recorteRelativo, hayRecorte, RECORTE_COMPLETO } from './motor.js';
 
-/** Abre la cámara y devuelve el fichero elegido, o null si se cancela. */
+/**
+ * Pide una foto.
+ *
+ * Con `camara: true` abre directamente la cámara. Con `false` deja elegir de
+ * la fototeca, que es como se importa una foto ya recortada con el editor del
+ * propio iPhone. Recortar fuera sale mejor que recortar aquí dentro: el editor
+ * de Fotos es mejor que cualquier cosa que se pueda montar en una página web.
+ */
 export function pedirFoto({ camara = true } = {}) {
   return new Promise((resuelve) => {
     const input = document.createElement('input');
@@ -110,11 +117,16 @@ export function aBytes(imagen, calidad = 0.72) {
 
 /**
  * El proceso completo de una captura.
- * Devuelve el original reducido, la versión preparada para leer, y el
- * dictamen sobre si la foto sirve.
+ *
+ * Si hay recorte, la foto se vuelve a decodificar a más resolución antes de
+ * recortarla. Recortar una imagen ya reducida desperdicia detalle justo donde
+ * hace falta: al quedarnos con un tercio de la foto, ese tercio conserva
+ * píxeles suficientes para que las letras pequeñas sigan siendo legibles.
  */
-export async function capturar(fichero) {
-  const original = await aPixeles(fichero);
+export async function capturar(fichero, recorte = RECORTE_COMPLETO) {
+  const recorta = hayRecorte(recorte);
+  const completa = await aPixeles(fichero, recorta ? 2600 : 2000);
+  const original = recorta ? recorteRelativo(completa, recorte) : completa;
   const calidad = evaluarCalidad(original);
   const preparada = prepararParaLectura(original, { ladoMax: 1600 });
   return { original, preparada, calidad };

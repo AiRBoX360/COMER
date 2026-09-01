@@ -511,3 +511,122 @@ button{touch-action:manipulation}
   letter-spacing:.05em; text-transform:uppercase;
   color:var(--amarillo); margin-top:2px;
 }
+
+/* --- Campos editables ----------------------------------------------------- */
+/* Cada cifra es un cuadro que se puede tocar. Es el paso que convierte una
+   lectura aproximada en un dato del que fiarse. */
+.campo{
+  padding:var(--e3) 0;
+  border-bottom:1px solid var(--linea);
+}
+.campo--sangrado{padding-left:var(--e4)}
+.campo__nombre{
+  display:block; font-size:1rem; color:var(--ceniza);
+  margin-bottom:var(--e2);
+}
+.campo__entrada{display:flex; align-items:center; gap:var(--e2)}
+.campo__entrada input,
+.campo__entrada select{
+  flex:1; min-width:0;
+  background:var(--carbon); color:var(--hueso);
+  border:1px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3);
+  font-family:var(--datos); font-size:1.1rem;
+  font-variant-numeric:tabular-nums;
+}
+.campo__entrada select{font-family:var(--cuerpo); font-size:1rem}
+.campo__entrada input:focus,
+.campo__entrada select:focus{border-color:var(--hueso); outline:none}
+.campo__unidad{
+  font-family:var(--datos); font-size:0.9rem;
+  color:var(--ceniza-tenue); width:2.6rem; flex:none;
+}
+.campo__aviso{
+  margin:var(--e2) 0 0; font-size:0.9rem;
+  color:var(--ceniza); line-height:1.45;
+}
+
+.campo--aviso .campo__entrada input{border-color:var(--amarillo)}
+.campo--error .campo__entrada input{border-color:var(--naranja)}
+.campo--falta .campo__entrada input{border-style:dashed; border-color:var(--naranja)}
+.campo--corregido .campo__entrada input{border-color:var(--verde-claro)}
+
+/* La corrección propuesta: un botón, no un cambio a tus espaldas. */
+.propuesta{
+  appearance:none; cursor:pointer;
+  margin-top:var(--e2);
+  background:none; color:var(--verde-claro);
+  border:1px solid var(--verde-claro); border-radius:var(--radio-s);
+  padding:var(--e2) var(--e3);
+  font-family:var(--datos); font-size:0.9rem; font-weight:600;
+}
+.propuesta:active{background:var(--verde-claro); color:var(--tinta)}
+
+.apunte--ok{color:var(--verde-claro)}
+
+.mas{margin-top:var(--e4)}
+.mas summary{
+  cursor:pointer; padding:var(--e3) 0;
+  font-family:var(--display); font-weight:600; font-size:1rem;
+  color:var(--ceniza);
+}
+.toma__botones{display:flex; gap:var(--e2); width:100%; margin-top:var(--e3)}
+.toma__botones .boton{flex:1; text-align:center}
+
+/* --- Recorte con deslizadores --------------------------------------------- */
+.recorte{margin-top:var(--e3)}
+.recorte__lienzo{
+  position:relative; display:block;
+  border-radius:var(--radio-s); overflow:hidden;
+  background:var(--carbon-alto);
+  margin-bottom:var(--e4);
+}
+.recorte__lienzo img{width:100%; display:block}
+/* La sombra enorme oscurece todo lo que queda fuera del marco. Es un truco
+   viejo y funciona en cualquier navegador sin tocar el lienzo. */
+.recorte__marco{
+  position:absolute;
+  border:2px solid var(--hueso);
+  box-shadow:0 0 0 9999px rgba(16,19,25,.72);
+  pointer-events:none;
+  transition:none;
+}
+.recorte__marco::before,
+.recorte__marco::after{
+  content:""; position:absolute; inset:0;
+  border:1px solid rgba(233,235,239,.35);
+}
+.recorte__marco::after{
+  inset:33% 0; border-left:0; border-right:0;
+}
+
+.desliza{display:flex; align-items:center; gap:var(--e3); margin-bottom:var(--e2)}
+.desliza span{
+  width:5.5rem; flex:none;
+  font-family:var(--datos); font-size:0.78rem;
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ceniza-tenue);
+}
+.desliza input[type="range"]{
+  flex:1; min-width:0;
+  appearance:none; -webkit-appearance:none;
+  height:2.2rem; background:none; margin:0;
+}
+.desliza input[type="range"]::-webkit-slider-runnable-track{
+  height:4px; border-radius:2px; background:var(--linea);
+}
+.desliza input[type="range"]::-moz-range-track{
+  height:4px; border-radius:2px; background:var(--linea);
+}
+/* Pulgar grande: se maneja con el dedo, no con un ratón. */
+.desliza input[type="range"]::-webkit-slider-thumb{
+  appearance:none; -webkit-appearance:none;
+  width:1.6rem; height:1.6rem; margin-top:-0.7rem;
+  border-radius:50%; background:var(--hueso);
+  border:0; cursor:pointer;
+}
+.desliza input[type="range"]::-moz-range-thumb{
+  width:1.6rem; height:1.6rem;
+  border-radius:50%; background:var(--hueso);
+  border:0; cursor:pointer;
+}

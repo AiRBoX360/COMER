@@ -3156,6 +3156,22 @@ function prepararParaLectura(img, opts = {}) {
   if (opts.binarizar !== false) out = binarizarSauvola(out);
   return out;
 }
+var RECORTE_COMPLETO = { x0: 0, y0: 0, x1: 100, y1: 100 };
+function hayRecorte(r) {
+  return r.x0 > 0.5 || r.y0 > 0.5 || r.x1 < 99.5 || r.y1 < 99.5;
+}
+function recorteRelativo(img, r) {
+  const lim = (v2) => Math.max(0, Math.min(100, Number.isFinite(v2) ? v2 : 0));
+  let x0 = lim(r.x0), x1 = lim(r.x1), y0 = lim(r.y0), y1 = lim(r.y1);
+  if (x1 < x0) [x0, x1] = [x1, x0];
+  if (y1 < y0) [y0, y1] = [y1, y0];
+  if (x1 - x0 < 5 || y1 - y0 < 5) return img;
+  const px = Math.round(x0 / 100 * img.ancho);
+  const py = Math.round(y0 / 100 * img.alto);
+  const ancho = Math.max(1, Math.round((x1 - x0) / 100 * img.ancho));
+  const alto = Math.max(1, Math.round((y1 - y0) / 100 * img.alto));
+  return recortar(img, px, py, ancho, alto);
+}
 
 // src/imagen/calidad.ts
 function nitidez(gris) {
@@ -3711,6 +3727,7 @@ export {
   COLORES_SEMAFORO,
   ETIQUETAS_SEMAFORO,
   FUENTES,
+  RECORTE_COMPLETO,
   RepositorioIndexedDB,
   RepositorioMemoria,
   UMBRALES_CALIDAD,
@@ -3735,6 +3752,7 @@ export {
   fuentesDe,
   hay,
   hayIndexedDB,
+  hayRecorte,
   importar,
   leido,
   nombreFichero,
@@ -3744,6 +3762,7 @@ export {
   partirRespetandoParentesis,
   prepararParaLectura,
   recortar,
+  recorteRelativo,
   redimensionar,
   resumenCatalogo,
   validar,

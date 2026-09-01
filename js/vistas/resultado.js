@@ -1,73 +1,111 @@
-import { banda, marcador, esc, pendiente } from '../ui.js';
+import { banda, marcador, esc, vacio } from '../ui.js';
+import { enCurso } from '../estado.js';
+import { analizarProducto } from '../motor.js';
 
 /**
- * Muestra de diseño.
+ * El veredicto.
  *
- * Las cifras de abajo NO están inventadas: salen de ejecutar el motor real
- * sobre la etiqueta de una crema de cacao con avellanas. Lo que falta es
- * conectar el motor a esta pantalla, que es el módulo 1.
+ * Se calcula aquí, cada vez que se entra, a partir de lo que hay revisado.
+ * Así lo que ves siempre corresponde a lo que acabas de corregir, sin copias
+ * intermedias que puedan quedarse viejas.
  */
-const MUESTRA = {
-  nombre: 'Crema de cacao con avellanas',
-  nota: 24,
-  nutriScore: 'E',
-  nova: 4,
-  confianza: 92,
-  porQue: 'Más de la mitad del producto es azúcar añadido y el segundo ingrediente es aceite de palma. Ni el cacao ni las avellanas compensan eso.',
-  limitar: [
-    { n: 'Azúcares añadidos', s: 97, d: '56,3 g / 100 g', m: 'Es el primer ingrediente de la lista, así que es lo que más pesa del bote. La OMS recomienda no pasar de 25 g al día.' },
-    { n: 'Grasas saturadas', s: 93, d: '10,6 g / 100 g', m: 'Elevan el colesterol LDL. Las guías recomiendan quedarse por debajo de 22 g al día.' },
-    { n: 'Aceite de palma', s: 68, d: 'posición 2 de la lista', m: 'Cerca del 50 % de grasa saturada. Su refinado genera contaminantes de proceso vigilados por la EFSA.' },
-    { n: 'Ultraprocesado (NOVA 4)', s: 64, d: '4 marcadores industriales', m: 'Formulación con sustancias que no existen en una cocina. Se asocia a peores resultados de salud incluso ajustando por composición.' },
-  ],
-  mejor: [
-    { n: 'Bajo en sal', s: 56, d: '0,1 g / 100 g', m: 'Por debajo de 0,3 g/100 g la UE permite declararlo bajo en sal.' },
-    { n: 'Proteínas', s: 35, d: '6,3 g / 100 g', m: 'Aporta algo de proteína, procedente sobre todo de la leche en polvo y las avellanas.' },
-    { n: 'Cacao', s: 35, d: '7,4 %, posición 5', m: 'Flavanoles con efecto vascular, siempre que no vengan sepultados en azúcar. Aquí vienen sepultados.' },
-  ],
-};
 
 function filaFactor(f, signo) {
   return `
     <div class="factor factor--${signo}">
       <div class="factor__cab">
-        <span class="factor__nombre">${esc(f.n)}</span>
-        <span class="factor__peso cifra">${f.s}</span>
+        <span class="factor__nombre">${esc(f.nombre)}</span>
+        <span class="factor__peso cifra">${f.peso}</span>
       </div>
-      <div class="factor__medida"><i style="width:${f.s}%"></i></div>
-      <p class="factor__dato cifra">${esc(f.d)}</p>
-      <p class="factor__motivo">${esc(f.m)}</p>
+      <div class="factor__medida"><i style="width:${f.peso}%"></i></div>
+      <p class="factor__dato cifra">${esc(f.dato)} · ${esc(f.origen === 'tabla' ? 'de la tabla' : f.origen === 'ingredientes' ? 'de los ingredientes' : 'de ambos')}</p>
+      <p class="factor__motivo">${esc(f.motivo)}</p>
     </div>`;
 }
 
-export function resultado() {
-  const p = MUESTRA;
+function bloque(titulo, pista, lista, signo) {
+  if (lista.length === 0) {
+    return `<h2 class="subtitulo">${titulo}</h2><p class="texto">Nada reseñable.</p>`;
+  }
+  const primeros = lista.slice(0, 3);
+  const resto = lista.slice(3);
   return `
-    <div style="margin-bottom:24px">
-      ${pendiente('<b>Muestra de diseño.</b> Las cifras salen de ejecutar el motor real sobre una etiqueta de verdad, pero esta pantalla todavía no está conectada a él. Sirve para que veas cómo se leerá un veredicto.')}
-    </div>
+    <h2 class="subtitulo">${titulo}</h2>
+    <p class="texto" style="font-size:0.92rem">${pista}</p>
+    ${primeros.map((f) => filaFactor(f, signo)).join('')}
+    ${resto.length ? `<details class="mas"><summary>Ver los ${resto.length} restantes</summary>
+      ${resto.map((f) => filaFactor(f, signo)).join('')}</details>` : ''}`;
+}
 
+export function resultado() {
+  const hayDatos = Object.keys(enCurso.nutrientes).length > 0 || enCurso.ingredientes.length > 0;
+  if (!hayDatos) {
+    return `<h1 class="titulo">Resultado</h1>
+      ${vacio('Todavía no has analizado nada', 'Ve a Analizar, lee una etiqueta, revísala y vuelve aquí.')}`;
+  }
+
+  const v = analizarProducto({
+    nombre: enCurso.nombre || 'Producto sin nombre',
+    categoria: enCurso.categoria,
+    nutrientes: enCurso.nutrientes,
+    ingredientes: enCurso.ingredientes,
+    racion_declarada_g: enCurso.racionGramos ?? undefined,
+  });
+  enCurso.veredicto = v;
+
+  const sinNota = v.puntuacion === null;
+
+  return `
     <h2 class="rotulo">Producto analizado</h2>
-    <h1 class="titulo">${esc(p.nombre)}</h1>
+    <h1 class="titulo">${esc(v.nombre)}</h1>
 
-    ${marcador(p.nota)}
-    ${banda(p.nota)}
+    ${sinNota ? `
+      <div class="pendiente" style="border-left-color:var(--naranja); margin-bottom:16px">
+        <div><b>Análisis incompleto.</b> No hay datos suficientes para dar una nota.
+        Faltan: ${esc(v.datosFaltantes.join(', '))}.</div>
+      </div>` : `
+      ${marcador(v.puntuacion)}
+      ${banda(v.puntuacion)}`}
 
     <div class="resumen">
-      <div><b class="cifra">${p.nutriScore}</b><span>Nutri-Score</span></div>
-      <div><b class="cifra">${p.nova}</b><span>Grado NOVA</span></div>
-      <div><b class="cifra">${p.confianza}%</b><span>Confianza</span></div>
+      <div><b class="cifra">${v.nutriScore.letra ?? '—'}</b><span>Nutri-Score</span></div>
+      <div><b class="cifra">${v.nova.grupo ?? '—'}</b><span>Grado NOVA</span></div>
+      <div><b class="cifra">${v.confianza.valor}%</b><span>Confianza</span></div>
     </div>
 
+    ${v.confianza.nivel !== 'alta' ? `
+      <div class="pendiente" style="margin-top:16px">
+        <div><b>${esc(v.confianza.etiqueta)}.</b>
+        ${v.confianza.comoMejorarla.map((c) => esc(c)).join(' ')}</div>
+      </div>` : ''}
+
     <h2 class="subtitulo">¿Por qué esta nota?</h2>
-    <p class="texto">${esc(p.porQue)}</p>
+    <p class="texto">${esc(v.porQue)}</p>
 
-    <h2 class="subtitulo">Lo que conviene limitar</h2>
-    <p class="texto" style="font-size:13px">Ordenado de más a menos relevante.</p>
-    ${p.limitar.map((f) => filaFactor(f, 'malo')).join('')}
+    ${bloque('Lo que conviene limitar', 'Ordenado de más a menos relevante.', v.limitar, 'malo')}
+    ${bloque('Lo mejor del producto', 'Ordenado de más a menos relevante.', v.favorables, 'bueno')}
 
-    <h2 class="subtitulo">Lo mejor del producto</h2>
-    <p class="texto" style="font-size:13px">Ordenado de más a menos relevante.</p>
-    ${p.mejor.map((f) => filaFactor(f, 'bueno')).join('')}
+    ${v.alergenos.length ? `
+      <h2 class="subtitulo">Alérgenos detectados</h2>
+      <p class="texto">${v.alergenos.map((a) => esc(a.nombre) + (a.esTraza ? ' (trazas)' : '')).join(', ')}.</p>
+      <p class="texto" style="font-size:0.9rem">${esc(v.avisoAlergenos)}</p>` : ''}
+
+    ${v.porRacion ? `
+      <h2 class="subtitulo">Por ración de ${v.porRacion.gramos} g</h2>
+      <div class="resumen">
+        <div><b class="cifra">${v.porRacion.kcal ?? '—'}</b><span>kcal</span></div>
+        <div><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}%</b><span>del azúcar diario</span></div>
+        <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
+      </div>` : ''}
+
+    ${v.avisos.length ? `
+      <h2 class="subtitulo">Avisos</h2>
+      <ul class="incidencias">
+        ${v.avisos.map((a) => `<li class="incidencia">${esc(a)}</li>`).join('')}
+      </ul>` : ''}
+
+    <p class="texto" style="margin-top:24px; font-size:0.85rem">
+      Calculado con la versión ${esc(v.versionAlgoritmo)} del algoritmo.
+    </p>
   `;
 }
