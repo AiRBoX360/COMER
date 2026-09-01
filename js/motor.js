@@ -467,7 +467,80 @@ var ALIAS_ADITIVOS = {
   bht: "E321",
   bha: "E320",
   tbhq: "E319",
-  "galato de propilo": "E310"
+  "galato de propilo": "E310",
+  // Aditivos que las etiquetas nombran por su nombre y no por su código.
+  "extracto de romero": "E392",
+  "romero": "E392",
+  "tocoferoles naturales": "E306",
+  "alfa tocoferol": "E307",
+  "vitamina e": "E306",
+  "vitamina c": "E300",
+  "ascorbato sodico": "E301",
+  "ascorbato de sodio": "E301",
+  "nisina": "E234",
+  "natamicina": "E235",
+  "carmin": "E120",
+  "cochinilla": "E120",
+  "acido carminico": "E120",
+  "curcuma": "E100",
+  "clorofilas": "E140",
+  "licopeno": "E160d",
+  "luteina": "E161b",
+  "betacaroteno": "E160a",
+  "caroteno": "E160a",
+  "rojo de remolacha": "E162",
+  "antocianinas": "E163",
+  "carbon vegetal": "E153",
+  "goma tragacanto": "E413",
+  "goma gellan": "E418",
+  "goma tara": "E417",
+  "alginato sodico": "E401",
+  "acido alginico": "E400",
+  "agar": "E406",
+  "almidon modificado": "E1442",
+  "celulosa": "E460",
+  "metilcelulosa": "E461",
+  "carboximetilcelulosa sodica": "E466",
+  "glicerol": "E422",
+  "glicerina": "E422",
+  "sorbato calcico": "E203",
+  "sorbato sodico": "E201",
+  "benzoato calcico": "E213",
+  "propionato sodico": "E281",
+  "acido propionico": "E280",
+  "acido tartarico": "E334",
+  "acido fumarico": "E297",
+  "acido succinico": "E363",
+  "acido adipico": "E355",
+  "lactato sodico": "E325",
+  "lactato calcico": "E327",
+  "citrato sodico": "E331",
+  "citrato calcico": "E333",
+  "fosfato calcico": "E341",
+  "difosfato disodico": "E450",
+  "cloruro potasico": "E508",
+  "cloruro calcico": "E509",
+  "sulfato calcico": "E516",
+  "hidroxido calcico": "E526",
+  "hidroxido sodico": "E524",
+  "carbonato potasico": "E501",
+  "cera de abejas": "E901",
+  "cera carnauba": "E903",
+  "goma laca": "E904",
+  "taumatina": "E957",
+  "isomalt": "E953",
+  "lactitol": "E966",
+  "neotamo": "E961",
+  "estevia": "E960",
+  "polidextrosa": "E1200",
+  "gelatina alimentaria": "E428",
+  "pectina de manzana": "E440",
+  "l cisteina": "E920",
+  "cisteina": "E920",
+  "oxigeno": "E948",
+  "nitrogeno": "E941",
+  "dioxido de carbono": "E290",
+  "anhidrido carbonico": "E290"
 };
 
 // src/datos/alergenos.ts
@@ -991,7 +1064,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.7.0";
+var VERSION_ALGORITMO = "1.7.1";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -4463,8 +4536,56 @@ function casa(texto, patron) {
   const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`).test(texto);
 }
-function explicarIngrediente(texto, porcentaje) {
+var FUNCIONES_DECLARADAS = [
+  "emulgente",
+  "emulgentes",
+  "conservador",
+  "conservadores",
+  "conservante",
+  "conservantes",
+  "colorante",
+  "colorantes",
+  "antioxidante",
+  "antioxidantes",
+  "estabilizante",
+  "estabilizantes",
+  "espesante",
+  "espesantes",
+  "gelificante",
+  "gelificantes",
+  "acidulante",
+  "acidulantes",
+  "corrector de acidez",
+  "correctores de acidez",
+  "potenciador del sabor",
+  "potenciadores del sabor",
+  "edulcorante",
+  "edulcorantes",
+  "antiaglomerante",
+  "antiaglomerantes",
+  "gasificante",
+  "gasificantes",
+  "humectante",
+  "humectantes",
+  "aroma",
+  "aromas",
+  "agente de tratamiento de la harina"
+];
+function explicarIngrediente(texto, porcentaje, profundidad = 0) {
   const t = normalizarTexto(texto);
+  if (profundidad === 0 && t.includes(" ")) {
+    const dosPuntos = texto.indexOf(":");
+    if (dosPuntos > 0) {
+      const funcion = normalizarTexto(texto.slice(0, dosPuntos));
+      const sustancia = texto.slice(dosPuntos + 1).trim();
+      if (FUNCIONES_DECLARADAS.some((f) => funcion === f || funcion.endsWith(" " + f)) && sustancia.length > 2) {
+        const e = explicarIngrediente(sustancia, porcentaje, 1);
+        if (e.veredicto !== "sin_ficha") {
+          return { ...e, texto: texto.trim(), categoria: e.categoria || funcion };
+        }
+      }
+    }
+  }
   const alergenos = ALERGENOS.filter((a) => a.patrones.some((p) => casa(t, p))).map((a) => a.nombre);
   const base = {
     texto: texto.trim(),
@@ -4482,6 +4603,27 @@ function explicarIngrediente(texto, porcentaje) {
         veredicto: ad.riesgo === 0 ? "neutro" : "limitar",
         valoracion: -ad.riesgo,
         queEs: ad.fichado === false ? `Aditivo alimentario. Por su numeración es un ${ad.funcion}.` : `Aditivo alimentario que cumple la función de ${ad.funcion}.`,
+        porQue: ad.motivo,
+        evidencia: ad.evidencia,
+        codigoE: ad.codigo,
+        fuentes: fuentesDe(ad.fuentes ?? ["ue-1333"])
+      };
+    }
+  }
+  let mejorAlias = "";
+  for (const alias of Object.keys(ALIAS_ADITIVOS)) {
+    if (casa(t, alias) && alias.length > mejorAlias.length) mejorAlias = alias;
+  }
+  if (mejorAlias) {
+    const ad = buscarAditivo(ALIAS_ADITIVOS[mejorAlias]);
+    if (ad) {
+      return {
+        ...base,
+        titulo: `${ad.codigo} · ${ad.nombre}`,
+        categoria: ad.funcion,
+        veredicto: ad.riesgo === 0 ? "neutro" : "limitar",
+        valoracion: -ad.riesgo,
+        queEs: `Aditivo alimentario que cumple la función de ${ad.funcion}. En la etiqueta aparece por su nombre y no por su código.`,
         porQue: ad.motivo,
         evidencia: ad.evidencia,
         codigoE: ad.codigo,
