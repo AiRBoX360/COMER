@@ -1,5 +1,6 @@
-import { vacio, pendiente } from '../ui.js';
+import { vacio, pendiente, esc } from '../ui.js';
 import { estadoInstalacion } from '../diagnostico.js';
+import { ultimos } from './despensa.js';
 
 export function inicio({ irA }) {
   const est = estadoInstalacion();
@@ -45,7 +46,9 @@ export function inicio({ irA }) {
     </div>
 
     <h2 class="rotulo">Últimos análisis</h2>
-    ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán en esta lista y en la Despensa.')}
+    <div id="ultimosAnalisis">
+      ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán en esta lista y en la Despensa.')}
+    </div>
 
     <h2 class="subtitulo">Estado de la instalación</h2>
     <p class="texto">Esta sección existe para que puedas comprobar que todo está en su sitio. Desaparecerá cuando la app esté terminada.</p>
@@ -87,4 +90,21 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
 
   const lista = raiz.querySelector('#listaDiagnostico');
   if (lista) pintarDiagnostico(lista);
+
+  // Los últimos análisis se piden después de pintar: la pantalla aparece
+  // enseguida y la lista entra cuando la base responde.
+  const hueco = raiz.querySelector('#ultimosAnalisis');
+  if (hueco) {
+    ultimos(4).then((productos) => {
+      if (!productos.length) return;
+      hueco.innerHTML = productos.map((p) => `
+        <button class="ultimo" data-ver="${p.id}">
+          <span class="ultimo__nota cifra" data-nivel="${p.semaforo ?? 'rojo'}">${p.puntuacion ?? '—'}</span>
+          <span class="ultimo__nombre">${esc(p.nombre)}</span>
+        </button>`).join('');
+      hueco.addEventListener('click', (e) => {
+        if (e.target.closest('[data-ver]')) irA('despensa');
+      });
+    }).catch(() => { /* sin base de datos, se queda el estado vacío */ });
+  }
 }

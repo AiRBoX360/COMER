@@ -7,11 +7,11 @@
 
 import { inicio, inicioActivo } from './vistas/inicio.js';
 import { analizar, analizarActivo } from './vistas/analizar.js';
-import { resultado } from './vistas/resultado.js';
+import { resultado, resultadoActivo } from './vistas/resultado.js';
 import { revisar, revisarActivo } from './vistas/revisar.js';
 import { escucharGestos, deslizarActivado, ponerDeslizar } from './gestos.js';
 import { conocimiento } from './vistas/conocimiento.js';
-import { despensa } from './vistas/despensa.js';
+import { despensa, despensaActivo } from './vistas/despensa.js';
 import {
   almacenamientoDuradero,
   espacioDisponible,
@@ -20,7 +20,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.9.1';
+export const VERSION = '0.10.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -48,9 +48,9 @@ const VISTAS = {
   analizar: { pinta: analizar, activa: analizarActivo, titulo: 'Analizar' },
   // Revisar no tiene pestaña propia: es el segundo paso de Analizar.
   revisar: { pinta: revisar, activa: revisarActivo, titulo: 'Revisar', pestana: 'analizar' },
-  resultado: { pinta: resultado, titulo: 'Resultado' },
+  resultado: { pinta: resultado, activa: resultadoActivo, titulo: 'Resultado' },
   conocimiento: { pinta: conocimiento, titulo: 'Saber' },
-  despensa: { pinta: despensa, titulo: 'Despensa' },
+  despensa: { pinta: despensa, activa: despensaActivo, titulo: 'Despensa' },
 };
 
 const contenedor = document.getElementById('contenedorVista');
@@ -186,6 +186,9 @@ if (etiqueta) etiqueta.textContent = `v${VERSION}`;
 const registroSW = activarSinConexion();
 
 ponerEscala(escala());
+
+// Volver a ver un producto guardado, desde la Despensa.
+window.addEventListener('comer:ver-resultado', () => irA('resultado'));
 
 export { irA };
 

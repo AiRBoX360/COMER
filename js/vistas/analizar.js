@@ -157,7 +157,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     try {
       const { original, preparada, calidad } = await capturar(fichero);
       capturas.set(clave, {
-        calidad, preparada, fichero,
+        calidad, preparada, original, fichero,
         recorte: { ...RECORTE_COMPLETO },
         recortando: false,
         // Se guarda también la foto entera para poder enseñar el marco encima
@@ -183,7 +183,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     try {
       const { original, preparada, calidad } = await capturar(c.fichero, recorte);
       capturas.set(clave, {
-        ...c, calidad, preparada, recorte, recortando: false,
+        ...c, calidad, preparada, original, recorte, recortando: false,
         urlOriginal: aURL(original, 0.6),
         urlPreparada: aURL(preparada, 0.6),
       });

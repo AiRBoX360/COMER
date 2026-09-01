@@ -707,3 +707,68 @@ button{touch-action:manipulation}
 }
 .interruptor__boton[aria-checked="true"]{background:var(--verde-claro); border-color:var(--verde-claro)}
 .interruptor__boton[aria-checked="true"] span{transform:translateX(1.4rem); background:var(--tinta)}
+
+/* --- Productos guardados -------------------------------------------------- */
+.bloque{margin-bottom:var(--e6)}
+.producto{
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3);
+  margin-bottom:var(--e2);
+  position:relative;
+}
+.producto__foto{
+  width:3.6rem; height:3.6rem; flex:none;
+  border-radius:var(--radio-s);
+  background:var(--carbon-alto) center/cover no-repeat;
+  display:flex; align-items:center; justify-content:center;
+}
+.producto__foto span{
+  font-family:var(--datos); font-size:0.58rem;
+  color:var(--ceniza-tenue); text-transform:uppercase; letter-spacing:.05em;
+}
+.producto__texto{flex:1; min-width:0}
+.producto__texto h3{
+  margin:0; font-family:var(--display); font-weight:600; font-size:1.05rem;
+  line-height:1.25;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.producto__fecha{margin:2px 0 0; font-size:0.78rem; color:var(--ceniza-tenue)}
+.producto__nota{
+  flex:none; width:2.8rem; text-align:center;
+  font-size:1.25rem; font-weight:600;
+}
+.producto__nota[data-nivel="rojo"]{color:var(--rojo)}
+.producto__nota[data-nivel="naranja"]{color:var(--naranja)}
+.producto__nota[data-nivel="amarillo"]{color:var(--amarillo)}
+.producto__nota[data-nivel="verde_claro"]{color:var(--verde-claro)}
+.producto__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis)}
+.producto__borrar{
+  appearance:none; cursor:pointer; flex:none;
+  width:2.2rem; height:2.2rem; padding:0;
+  background:none; border:0; color:var(--ceniza-tenue);
+  font-size:1.4rem; line-height:1;
+}
+
+.ultimo{
+  appearance:none; cursor:pointer; width:100%;
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3);
+  margin-bottom:var(--e2); text-align:left;
+}
+.ultimo__nota{
+  width:2.6rem; flex:none; text-align:center;
+  font-size:1.15rem; font-weight:600;
+}
+.ultimo__nota[data-nivel="rojo"]{color:var(--rojo)}
+.ultimo__nota[data-nivel="naranja"]{color:var(--naranja)}
+.ultimo__nota[data-nivel="amarillo"]{color:var(--amarillo)}
+.ultimo__nota[data-nivel="verde_claro"]{color:var(--verde-claro)}
+.ultimo__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis)}
+.ultimo__nombre{
+  flex:1; min-width:0; color:var(--hueso);
+  font-family:var(--cuerpo); font-size:1rem;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}

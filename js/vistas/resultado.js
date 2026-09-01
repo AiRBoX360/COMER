@@ -2,6 +2,10 @@ import { banda, marcador, esc, vacio } from '../ui.js';
 import { enCurso } from '../estado.js';
 import { analizarProducto } from '../motor.js';
 import { listaExplicada } from './revisar.js';
+import { guardarAnalisis } from '../almacen.js';
+import { capturasActuales } from './analizar.js';
+import { aBytes } from '../camara.js';
+import { refrescarDespensa } from './despensa.js';
 
 /**
  * El veredicto.
@@ -107,8 +111,49 @@ export function resultado() {
         ${v.avisos.map((a) => `<li class="incidencia">${esc(a)}</li>`).join('')}
       </ul>` : ''}
 
+    <button class="boton-grande" id="btnGuardar" style="margin-top:24px">
+      GUARDAR EN LA DESPENSA
+      <small>Con sus fotos, para poder volver a verlo</small>
+    </button>
+    <p class="texto" id="estadoGuardar" style="margin-top:12px"></p>
+
     <p class="texto" style="margin-top:24px; font-size:0.85rem">
       Calculado con la versión ${esc(v.versionAlgoritmo)} del algoritmo.
     </p>
   `;
+}
+
+export function resultadoActivo(raiz, { irA }) {
+  const estado = raiz.querySelector('#estadoGuardar');
+  const boton = raiz.querySelector('#btnGuardar');
+  if (!boton) return;
+
+  boton.addEventListener('click', async () => {
+    if (!enCurso.veredicto) return;
+    boton.disabled = true;
+    estado.textContent = 'Guardando…';
+    try {
+      // Las fotos se comprimen a JPEG aquí: en bruto ocuparían veinte veces más.
+      const fotos = [];
+      for (const [tipo, c] of capturasActuales()) {
+        if (!c?.preparada) continue;
+        fotos.push({ tipo, bytes: await aBytes(c.original ?? c.preparada, 0.7) });
+      }
+      await guardarAnalisis({
+        veredicto: enCurso.veredicto,
+        entrada: {
+          nombre: enCurso.nombre, categoria: enCurso.categoria,
+          nutrientes: enCurso.nutrientes, ingredientes: enCurso.ingredientes,
+          racion_declarada_g: enCurso.racionGramos ?? undefined,
+        },
+        fotos,
+      });
+      refrescarDespensa();
+      estado.textContent = 'Guardado. Ya está en tu Despensa.';
+      boton.textContent = 'GUARDADO';
+    } catch (err) {
+      boton.disabled = false;
+      estado.textContent = `No se ha podido guardar. ${err.message}`;
+    }
+  });
 }
