@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'comer-v0.7.0';
+const CACHE = 'comer-v0.9.0';
 
 const ARCHIVOS = [
   './',
@@ -19,6 +19,7 @@ const ARCHIVOS = [
   './js/vistas/inicio.js',
   './js/vistas/revisar.js',
   './js/estado.js',
+  './js/gestos.js',
   './js/vistas/analizar.js',
   './js/vistas/resultado.js',
   './js/vistas/conocimiento.js',

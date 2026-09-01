@@ -14,7 +14,7 @@
 
 import { esc } from '../ui.js';
 import { CAMPOS, CATEGORIAS, corregir, enCurso } from '../estado.js';
-import { normalizarNutrientes, validar, validarContraIngredientes } from '../motor.js';
+import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista } from '../motor.js';
 
 /** Cifra con coma decimal, que es como se escribe en español. */
 const conComa = (v) => (v === null || v === undefined ? '' : String(v).replace('.', ','));
@@ -172,14 +172,69 @@ export function revisar() {
 
     <h2 class="rotulo" style="margin-top:24px">Ingredientes</h2>
     <p class="texto" style="font-size:0.92rem">Separados por comas, en el orden del envase. El orden importa: la ley obliga a listarlos de mayor a menor peso.</p>
-    <textarea id="c_ingredientes" class="pegar" rows="4"
+    <textarea id="c_ingredientes" class="pegar pegar--alta" rows="9"
       placeholder="harina de trigo, azúcar, aceite de girasol">${esc(enCurso.ingredientes.map((i) => (i.porcentaje ? `${i.texto} ${conComa(i.porcentaje)}%` : i.texto)).join(', '))}</textarea>
+
+    ${listaExplicada(enCurso.ingredientes)}
 
     <button class="boton-grande" id="btnAnalizarYa" style="margin-top:24px">
       ANALIZAR ESTE PRODUCTO
       <small>${faltan.length ? `Faltan ${faltan.length} campo(s), el análisis saldrá incompleto` : 'Con los datos que ves arriba'}</small>
     </button>
   `;
+}
+
+/**
+ * Qué es cada ingrediente y por qué suma o resta.
+ *
+ * Va aquí, junto al cuadro editable, y no solo en el resultado: si al leer la
+ * explicación ves que un ingrediente está mal escrito, lo corriges en el acto.
+ */
+export function listaExplicada(ingredientes) {
+  if (!ingredientes.length) return '';
+  const ETIQUETA = {
+    favorable: 'Suma', limitar: 'Conviene limitar',
+    neutro: 'Neutro', sin_ficha: 'Sin ficha',
+  };
+  const fichas = explicarLista(ingredientes).map((e, i) => `
+    <details class="ficha ficha--${e.veredicto}">
+      <summary>
+        <span class="ficha__orden cifra">${i + 1}</span>
+        <span class="ficha__titulo">${esc(e.titulo)}${e.porcentaje ? ` <span class="cifra">${String(e.porcentaje).replace('.', ',')}%</span>` : ''}</span>
+        <span class="ficha__sello">${ETIQUETA[e.veredicto]}</span>
+      </summary>
+      <div class="ficha__cuerpo">
+        <p class="ficha__linea"><b>Qué es.</b> ${esc(e.queEs)}</p>
+        <p class="ficha__linea"><b>${e.veredicto === 'favorable' ? 'Por qué suma' : e.veredicto === 'limitar' ? 'Por qué conviene limitarlo' : 'Qué papel juega'}.</b> ${esc(e.porQue)}</p>
+        ${e.alergenos.length ? `<p class="ficha__linea"><b>Alérgenos.</b> ${esc(e.alergenos.join(', '))}.</p>` : ''}
+        ${e.fuentes.length ? `<p class="ficha__fuente">${esc(e.fuentes[0].organismo)} · ${esc(e.fuentes[0].documento)}</p>` : ''}
+      </div>
+    </details>`).join('');
+
+  // Los que no conocemos se recogen aparte, para poder mandarlos y que se
+  // conviertan en fichas de verdad. Es la alternativa a traerse un párrafo de
+  // internet: más lenta, pero cada ficha que se añade queda respaldada.
+  const desconocidos = explicarLista(ingredientes)
+    .filter((e) => e.veredicto === 'sin_ficha')
+    .map((e) => e.texto);
+
+  const bloqueDesconocidos = desconocidos.length ? `
+    <div class="pendiente" style="margin-top:12px">
+      <div>
+        <b>${desconocidos.length} ingrediente(s) sin ficha.</b>
+        No sabemos qué son, así que no cuentan ni a favor ni en contra de la nota.
+        <button class="boton" id="btnCopiarDesconocidos" style="margin-top:12px; width:100%"
+                data-lista="${esc(desconocidos.join(', '))}">
+          Copiar la lista
+        </button>
+      </div>
+    </div>` : '';
+
+  return `
+    <h2 class="subtitulo">Qué lleva, uno por uno</h2>
+    <p class="texto" style="font-size:0.92rem">En el orden del envase, que por ley va de mayor a menor peso. Toca cualquiera para ver qué es.</p>
+    <div class="fichas">${fichas}</div>
+    ${bloqueDesconocidos}`;
 }
 
 export function revisarActivo(raiz, { repintar, irA }) {
@@ -207,4 +262,18 @@ export function revisarActivo(raiz, { repintar, irA }) {
   });
 
   raiz.querySelector('#btnAnalizarYa')?.addEventListener('click', () => irA('resultado'));
+
+  raiz.addEventListener('click', async (e) => {
+    const b = e.target.closest('#btnCopiarDesconocidos');
+    if (!b) return;
+    const texto = b.dataset.lista;
+    try {
+      await navigator.clipboard.writeText(texto);
+      b.textContent = 'Copiado. Pégamelo y les escribo ficha.';
+    } catch {
+      // Safari niega el portapapeles en algunos contextos. Se enseña el texto
+      // para que se pueda seleccionar a mano, en vez de dejar un botón muerto.
+      b.outerHTML = `<textarea class="pegar" rows="3" readonly>${texto}</textarea>`;
+    }
+  });
 }

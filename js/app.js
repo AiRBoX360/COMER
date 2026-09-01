@@ -9,6 +9,7 @@ import { inicio, inicioActivo } from './vistas/inicio.js';
 import { analizar, analizarActivo } from './vistas/analizar.js';
 import { resultado } from './vistas/resultado.js';
 import { revisar, revisarActivo } from './vistas/revisar.js';
+import { escucharGestos, deslizarActivado, ponerDeslizar } from './gestos.js';
 import { conocimiento } from './vistas/conocimiento.js';
 import { despensa } from './vistas/despensa.js';
 import {
@@ -19,7 +20,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.7.0';
+export const VERSION = '0.9.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -66,7 +67,7 @@ function irA(clave, conservarScroll = false) {
   contenedor.innerHTML = vista.pinta({ irA });
   if (vista.activa) {
     vista.activa(contenedor, {
-      irA, pintarDiagnostico, escala, ponerEscala,
+      irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar,
       // Repintar sin perder el sitio: al volver de la cámara, saltar arriba
       // sería desconcertante.
       repintar: () => irA(clave, true),
@@ -86,6 +87,18 @@ function irA(clave, conservarScroll = false) {
 for (const p of pestanas) {
   p.addEventListener('click', () => irA(p.dataset.vista));
 }
+
+/** Orden de las pestañas, que es el que sigue el gesto. */
+const ORDEN = pestanas.map((p) => p.dataset.vista);
+
+escucharGestos(document.body, (direccion) => {
+  // Si se está revisando, el gesto se refiere a la pestaña de la que cuelga.
+  const actual = VISTAS[vistaActual]?.pestana ?? vistaActual;
+  const i = ORDEN.indexOf(actual);
+  if (i === -1) return;
+  const destino = ORDEN[direccion === 'anterior' ? i - 1 : i + 1];
+  if (destino) irA(destino);
+});
 
 /** Rellena la lista de comprobaciones de la pantalla de inicio. */
 async function pintarDiagnostico(lista) {

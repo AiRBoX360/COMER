@@ -630,3 +630,80 @@ button{touch-action:manipulation}
   border-radius:50%; background:var(--hueso);
   border:0; cursor:pointer;
 }
+
+/* Cuadros de pegar más altos: menos scroll para ver la etiqueta entera. */
+.pegar--alta{min-height:14rem; line-height:1.6}
+
+/* --- Ficha de cada ingrediente -------------------------------------------- */
+.fichas{margin-top:var(--e3)}
+.ficha{
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio-s);
+  margin-bottom:var(--e2);
+}
+.ficha--favorable{border-left-color:var(--verde-claro)}
+.ficha--limitar{border-left-color:var(--naranja)}
+.ficha--neutro{border-left-color:var(--ceniza-tenue)}
+.ficha--sin_ficha{border-left-color:var(--linea); border-left-style:dashed}
+
+.ficha summary{
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e3) var(--e4);
+  cursor:pointer; list-style:none;
+}
+.ficha summary::-webkit-details-marker{display:none}
+.ficha__orden{
+  width:1.6rem; flex:none;
+  font-size:0.8rem; color:var(--ceniza-tenue);
+}
+.ficha__titulo{
+  flex:1; min-width:0;
+  font-family:var(--display); font-weight:600; font-size:1.05rem;
+  line-height:1.25;
+}
+.ficha__titulo .cifra{color:var(--ceniza); font-size:0.85rem}
+.ficha__sello{
+  flex:none;
+  font-family:var(--datos); font-size:0.66rem; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase;
+  color:var(--ceniza-tenue); text-align:right;
+}
+.ficha--favorable .ficha__sello{color:var(--verde-claro)}
+.ficha--limitar .ficha__sello{color:var(--naranja)}
+
+.ficha__cuerpo{padding:0 var(--e4) var(--e4)}
+.ficha__linea{
+  margin:0 0 var(--e3); font-size:0.98rem;
+  color:var(--ceniza); line-height:1.5;
+}
+.ficha__linea b{color:var(--hueso); font-weight:600}
+.ficha__fuente{
+  margin:0; font-family:var(--datos); font-size:0.7rem;
+  color:var(--ceniza-tenue); line-height:1.4;
+}
+
+/* --- Interruptor ---------------------------------------------------------- */
+.interruptor{
+  display:flex; align-items:center; gap:var(--e4);
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio); padding:var(--e4);
+  margin-bottom:var(--e5);
+}
+.interruptor label{flex:1; font-size:0.98rem; color:var(--ceniza); line-height:1.45}
+.interruptor__boton{
+  appearance:none; cursor:pointer; flex:none;
+  width:3.4rem; height:2rem; padding:0;
+  background:var(--carbon-alto); border:1px solid var(--linea);
+  border-radius:1rem; position:relative;
+  transition:background-color .18s ease, border-color .18s ease;
+}
+.interruptor__boton span{
+  position:absolute; top:0.2rem; left:0.2rem;
+  width:1.4rem; height:1.4rem; border-radius:50%;
+  background:var(--ceniza-tenue);
+  transition:transform .18s ease, background-color .18s ease;
+}
+.interruptor__boton[aria-checked="true"]{background:var(--verde-claro); border-color:var(--verde-claro)}
+.interruptor__boton[aria-checked="true"] span{transform:translateX(1.4rem); background:var(--tinta)}

@@ -123,9 +123,9 @@ export function analizar() {
     <h2 class="subtitulo">O pega el texto</h2>
     <p class="texto">Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
     <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
-    <textarea id="pegaTabla" class="pegar" rows="5" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
+    <textarea id="pegaTabla" class="pegar pegar--alta" rows="12" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
     <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
-    <textarea id="pegaIng" class="pegar" rows="4" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
+    <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
     <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
 
     <div id="resumenLectura" style="margin-top:24px"></div>

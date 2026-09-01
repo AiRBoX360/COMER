@@ -991,7 +991,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.6.1";
+var VERSION_ALGORITMO = "1.7.0";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -3719,6 +3719,850 @@ function analizarIngredientesTexto(crudo) {
     avisos
   };
 }
+
+// src/datos/ingredientes-comunes.ts
+var FILAS2 = [
+  // --- Cereales -----------------------------------------------------------
+  [
+    "arroz integral",
+    "Arroz integral",
+    "cereal integral",
+    3,
+    "Grano de arroz al que solo se le ha quitado la cáscara exterior, conservando el salvado y el germen.",
+    "Al conservar el salvado mantiene la fibra, el magnesio y las vitaminas del grupo B que el arroz blanco pierde. Se digiere más despacio, así que sube menos la glucosa en sangre.",
+    "alta"
+  ],
+  [
+    "arroz",
+    "Arroz",
+    "cereal refinado",
+    0,
+    "Grano de arroz pulido: se le ha quitado la cáscara, el salvado y el germen.",
+    "Es energía casi pura, con poca fibra y pocos micronutrientes. Ni suma ni resta por sí mismo, pero el integral es mejor elección en igualdad de condiciones.",
+    "alta"
+  ],
+  [
+    "harina integral",
+    "Harina integral",
+    "cereal integral",
+    3,
+    "Harina molida con el grano entero, salvado y germen incluidos.",
+    'Aporta fibra, magnesio y vitaminas del grupo B. Ojo: "harina de trigo integral" no es lo mismo que "harina de trigo con salvado añadido", que es harina blanca a la que se le devuelve una parte.',
+    "alta"
+  ],
+  [
+    "harina de trigo",
+    "Harina de trigo refinada",
+    "cereal refinado",
+    -1,
+    "Trigo molido al que se le ha quitado el salvado y el germen.",
+    "Pierde la mayor parte de la fibra, el magnesio y las vitaminas del grupo B. Sube el índice glucémico. Como primer ingrediente de un producto, es señal de que la base es harina blanca.",
+    "alta"
+  ],
+  [
+    "harina de maiz",
+    "Harina de maíz",
+    "cereal refinado",
+    0,
+    "Maíz molido, normalmente sin germen.",
+    "Sin gluten, pero con poca fibra y poca proteína. Neutro.",
+    "media"
+  ],
+  [
+    "semola",
+    "Sémola",
+    "cereal refinado",
+    0,
+    "Molienda gruesa de trigo duro, la base de la pasta.",
+    "Perfil parecido al de la harina refinada, con algo más de proteína.",
+    "media"
+  ],
+  [
+    "avena integral",
+    "Avena integral",
+    "cereal integral",
+    3,
+    "Grano de avena entero, en copos o molido.",
+    "Sus beta-glucanos tienen efecto demostrado sobre el colesterol LDL, reconocido por la propia EFSA. De los cereales con mejor perfil.",
+    "alta"
+  ],
+  [
+    "avena",
+    "Avena",
+    "cereal",
+    3,
+    "Grano de avena, casi siempre entero porque su salvado no se separa bien.",
+    "Beta-glucanos con efecto sobre el colesterol, fibra soluble y más proteína que otros cereales.",
+    "alta"
+  ],
+  [
+    "centeno",
+    "Centeno",
+    "cereal",
+    2,
+    "Cereal emparentado con el trigo, de sabor más intenso.",
+    "Más fibra que el trigo y menor índice glucémico, sobre todo en pan de masa madre.",
+    "media"
+  ],
+  [
+    "espelta",
+    "Espelta",
+    "cereal",
+    1,
+    "Variedad antigua de trigo. Lleva gluten.",
+    "Perfil parecido al del trigo. Su fama de más saludable está poco respaldada: lo que cuenta es si va integral o refinada.",
+    "media"
+  ],
+  [
+    "quinoa",
+    "Quinoa",
+    "pseudocereal",
+    3,
+    "Semilla andina que se cocina como un cereal, aunque no lo es.",
+    "Proteína con todos los aminoácidos esenciales, cosa rara en el mundo vegetal. Fibra, hierro y magnesio. Sin gluten.",
+    "alta"
+  ],
+  [
+    "trigo sarraceno",
+    "Trigo sarraceno",
+    "pseudocereal",
+    3,
+    "Semilla sin parentesco con el trigo, pese al nombre. No lleva gluten.",
+    "Fibra, magnesio y rutina, un flavonoide con efecto sobre los vasos sanguíneos.",
+    "media"
+  ],
+  [
+    "almidon de maiz",
+    "Almidón de maíz",
+    "almidón",
+    -1,
+    "Parte de almidón puro extraída del grano de maíz.",
+    "Hidrato de absorción rápida, sin fibra ni micronutrientes. Se usa para espesar y dar textura.",
+    "alta"
+  ],
+  [
+    "almidon",
+    "Almidón",
+    "almidón",
+    -1,
+    "Hidrato de carbono extraído de un cereal o un tubérculo.",
+    'Energía sin fibra ni micronutrientes. Si pone "almidón modificado", además ha pasado por un tratamiento químico.',
+    "alta"
+  ],
+  [
+    "maiz",
+    "Maíz",
+    "cereal",
+    1,
+    "Grano de maíz, entero o partido.",
+    "Aporta fibra y carotenoides si va entero. En forma de harina refinada o almidón pierde casi todo eso.",
+    "media"
+  ],
+  [
+    "salvado",
+    "Salvado",
+    "fibra de cereal",
+    2,
+    "Capa exterior del grano, separada del resto.",
+    "Fibra insoluble concentrada. Mejora el tránsito, aunque en exceso puede reducir la absorción de algunos minerales.",
+    "alta"
+  ],
+  [
+    "gluten de trigo",
+    "Gluten de trigo aislado",
+    "proteína aislada",
+    -1,
+    "Proteína del trigo extraída y añadida aparte.",
+    "Se añade para dar estructura a masas industriales. No es problema salvo para celíacos, pero su presencia delata un producto formulado.",
+    "media"
+  ],
+  // --- Legumbres ----------------------------------------------------------
+  [
+    "garbanzo",
+    "Garbanzo",
+    "legumbre",
+    3,
+    "Legumbre de grano redondo, entera, cocida en conserva o molida en harina.",
+    "Proteína vegetal, fibra, hierro y almidón resistente que alimenta a la microbiota. El consumo habitual de legumbres es de los factores mejor asociados a longevidad.",
+    "alta"
+  ],
+  [
+    "lenteja",
+    "Lenteja",
+    "legumbre",
+    3,
+    "Legumbre pequeña, de las de cocción más rápida.",
+    "Proteína, fibra y hierro. Su hierro se absorbe mejor acompañado de vitamina C.",
+    "alta"
+  ],
+  [
+    "alubia",
+    "Alubia",
+    "legumbre",
+    3,
+    "Judía seca, en cualquiera de sus variedades.",
+    "Fibra y almidón resistente, que llega intacto al colon y alimenta a las bacterias buenas.",
+    "alta"
+  ],
+  [
+    "guisante",
+    "Guisante",
+    "legumbre",
+    2,
+    "Legumbre verde, fresca o congelada.",
+    "Fibra, proteína vegetal y vitamina C. Congelado conserva prácticamente todo, porque se congela recién recolectado.",
+    "alta"
+  ],
+  [
+    "proteina de guisante",
+    "Proteína de guisante aislada",
+    "proteína aislada",
+    0,
+    "Proteína extraída del guisante y separada del resto del alimento.",
+    "Buena proteína vegetal, pero fuera de su matriz original. Su presencia indica un producto formulado, no un plato de guisantes.",
+    "media"
+  ],
+  [
+    "soja",
+    "Soja",
+    "legumbre",
+    2,
+    "Legumbre muy rica en proteína, base del tofu, la salsa de soja y muchas bebidas vegetales.",
+    "Proteína completa e isoflavonas. Alérgeno de declaración obligatoria en la UE.",
+    "alta"
+  ],
+  [
+    "proteina de soja",
+    "Proteína de soja aislada",
+    "proteína aislada",
+    -1,
+    "Proteína de la soja extraída y concentrada.",
+    "Se usa para dar textura y subir la proteína de embutidos y precocinados a bajo coste. Marcador claro de ultraprocesado.",
+    "media"
+  ],
+  [
+    "altramuz",
+    "Altramuz",
+    "legumbre",
+    2,
+    "Legumbre muy proteica, cada vez más usada como harina sin gluten.",
+    "Proteína y fibra. Alérgeno de declaración obligatoria.",
+    "media"
+  ],
+  // --- Lácteos ------------------------------------------------------------
+  [
+    "leche entera",
+    "Leche entera",
+    "lácteo",
+    2,
+    "Leche con toda su grasa, normalmente pasteurizada.",
+    "Proteína de alto valor, calcio bien absorbido y vitaminas liposolubles. Su grasa saturada se comporta mejor dentro de la matriz láctea que aislada.",
+    "alta"
+  ],
+  [
+    "leche desnatada en polvo",
+    "Leche desnatada en polvo",
+    "lácteo deshidratado",
+    -1,
+    "Leche a la que se ha quitado la grasa y después el agua.",
+    "Conserva proteína y calcio, pero su presencia casi siempre indica un producto industrial. Además concentra la lactosa.",
+    "media"
+  ],
+  [
+    "leche en polvo",
+    "Leche en polvo",
+    "lácteo deshidratado",
+    -1,
+    "Leche a la que se le ha evaporado el agua hasta dejarla en polvo, para que dure y ocupe menos.",
+    "Barata y estable, se usa para dar cuerpo a productos industriales. Marcador de formulación.",
+    "media"
+  ],
+  [
+    "leche",
+    "Leche",
+    "lácteo",
+    2,
+    "Leche de vaca salvo que se indique otra cosa.",
+    "Proteína, calcio y vitamina B12. Alérgeno de declaración obligatoria.",
+    "alta"
+  ],
+  [
+    "suero de leche",
+    "Suero de leche",
+    "lácteo",
+    0,
+    "Parte líquida que queda al cuajar la leche, normalmente en polvo.",
+    "Aporta proteína de buena calidad, pero también lactosa, y se usa sobre todo como relleno barato.",
+    "media"
+  ],
+  [
+    "caseina",
+    "Caseinato",
+    "proteína láctea aislada",
+    -1,
+    "Proteína principal de la leche, extraída y añadida aparte.",
+    "Se usa para dar cremosidad sin leche. Marcador de ultraprocesado. Alérgeno para quien lo sea a la leche.",
+    "media"
+  ],
+  [
+    "yogur",
+    "Yogur",
+    "lácteo fermentado",
+    3,
+    "Leche fermentada por bacterias vivas.",
+    "Matriz fermentada con bacterias vivas, mejor tolerada que la leche y asociada a mejor salud metabólica. Salvo que le hayan añadido azúcar.",
+    "alta"
+  ],
+  [
+    "queso",
+    "Queso",
+    "lácteo",
+    0,
+    "Leche cuajada, escurrida y curada durante un tiempo que va de días a años.",
+    "Calcio y proteína en cantidad, pero también grasa saturada y bastante sal. Depende mucho del tipo.",
+    "alta"
+  ],
+  [
+    "nata",
+    "Nata",
+    "lácteo graso",
+    -1,
+    "Parte grasa de la leche, separada.",
+    "Muy alta en grasa saturada y densa en calorías.",
+    "alta"
+  ],
+  [
+    "mantequilla",
+    "Mantequilla",
+    "grasa láctea",
+    -1,
+    "Grasa de la leche, batida y separada del suero.",
+    "Alrededor del 50 % de grasa saturada. Dentro de una dieta variada no es un problema en poca cantidad, pero conviene no abusar.",
+    "alta"
+  ],
+  // --- Carne y pescado ----------------------------------------------------
+  [
+    "pechuga de pavo",
+    "Pechuga de pavo",
+    "carne blanca",
+    2,
+    "Músculo de pechuga de pavo. Ojo: en un fiambre, el porcentaje declarado dice cuánta carne lleva de verdad.",
+    "Proteína magra de alto valor biológico. Si va en un fiambre con nitritos, lo que pesa en contra son los nitritos, no el pavo.",
+    "alta"
+  ],
+  [
+    "pollo",
+    "Pollo",
+    "carne blanca",
+    2,
+    "Carne de ave, magra o con piel según la pieza.",
+    "Proteína magra, hierro y vitaminas del grupo B. Menos grasa saturada que las carnes rojas.",
+    "alta"
+  ],
+  [
+    "carne de cerdo",
+    "Carne de cerdo",
+    "carne",
+    1,
+    "Carne de cerdo, magra o con grasa según el corte.",
+    "Buena proteína y vitamina B1. En productos procesados suele ir acompañada de sal y conservantes que sí pesan.",
+    "alta"
+  ],
+  [
+    "carne de vacuno",
+    "Carne de vacuno",
+    "carne roja",
+    0,
+    "Carne de ternera, añojo o vaca, según la edad del animal.",
+    "Proteína, hierro hemo y B12. La OMS clasifica la carne roja como probable carcinógeno en consumo elevado, así que conviene moderar la frecuencia.",
+    "alta"
+  ],
+  [
+    "jamon",
+    "Jamón",
+    "carne curada",
+    -1,
+    "Pierna de cerdo curada con sal, y casi siempre con nitritos.",
+    "Aporta proteína, pero también mucha sal. Si lleva nitritos, entra en la categoría de carne procesada, que la OMS clasifica como carcinógeno del grupo 1.",
+    "alta"
+  ],
+  [
+    "atun",
+    "Atún",
+    "pescado",
+    2,
+    "Pescado azul, fresco o en conserva.",
+    "Proteína y omega-3. Los túnidos grandes acumulan mercurio, así que se desaconseja en embarazo e infancia.",
+    "alta"
+  ],
+  [
+    "salmon",
+    "Salmón",
+    "pescado azul",
+    3,
+    "Pescado azul, salvaje o de acuicultura.",
+    "De las mejores fuentes de EPA y DHA, los omega-3 con efecto cardiovascular directo. También vitamina D.",
+    "alta"
+  ],
+  [
+    "sardina",
+    "Sardina",
+    "pescado azul",
+    3,
+    "Pescado azul pequeño, muy habitual en conserva.",
+    "Omega-3, calcio si se come con espina, vitamina D y muy poco mercurio por ser pequeño.",
+    "alta"
+  ],
+  [
+    "gelatina",
+    "Gelatina",
+    "proteína animal",
+    0,
+    "Colágeno extraído de piel y huesos, casi siempre de cerdo o vacuno.",
+    "Proteína de bajo valor biológico: le faltan aminoácidos esenciales. Cumple función de textura, no nutricional.",
+    "alta"
+  ],
+  [
+    "huevo",
+    "Huevo",
+    "proteína animal",
+    2,
+    "Huevo entero, o solo clara o yema si se especifica.",
+    "La proteína de referencia con la que se comparan todas las demás. Aporta colina, vitamina D y luteína. Alérgeno declarado.",
+    "alta"
+  ],
+  // --- Frutos secos y semillas --------------------------------------------
+  [
+    "almendra",
+    "Almendra",
+    "fruto seco",
+    3,
+    "Fruto seco, entero, laminado o en pasta.",
+    "Grasa monoinsaturada, vitamina E, magnesio y fibra. Su consumo habitual se asocia a mejor perfil lipídico.",
+    "alta"
+  ],
+  [
+    "avellana",
+    "Avellana",
+    "fruto seco",
+    3,
+    "Fruto seco de sabor dulce, muy usado en cremas de cacao.",
+    "Monoinsaturados y vitamina E. En una crema de cacao, mira el porcentaje: suele ser mucho menor que el de azúcar.",
+    "alta"
+  ],
+  [
+    "nuez",
+    "Nuez",
+    "fruto seco",
+    3,
+    "Fruto seco de cáscara dura y forma de cerebro, entero o troceado.",
+    "Casi la única fuente vegetal corriente de omega-3 de cadena corta en cantidad apreciable.",
+    "alta"
+  ],
+  [
+    "pistacho",
+    "Pistacho",
+    "fruto seco",
+    3,
+    "Fruto seco verde, muchas veces salado.",
+    "Proteína, fibra y potasio. Si viene salado, la sal cuenta aparte.",
+    "alta"
+  ],
+  [
+    "anacardo",
+    "Anacardo",
+    "fruto seco",
+    2,
+    "Semilla curva y de sabor suave que crece pegada al fruto del anacardo.",
+    "Magnesio, hierro y grasa insaturada. Algo más de hidratos que otros frutos secos.",
+    "alta"
+  ],
+  [
+    "semilla de girasol",
+    "Pipas de girasol",
+    "semilla",
+    2,
+    "Semilla de girasol, con o sin cáscara.",
+    "Vitamina E y grasa poliinsaturada. Muy ricas en omega-6, así que en exceso desequilibran la relación con el omega-3.",
+    "media"
+  ],
+  [
+    "sesamo",
+    "Sésamo",
+    "semilla",
+    2,
+    "Semilla pequeña, base del tahini.",
+    "Calcio, hierro y lignanos. Alérgeno de declaración obligatoria.",
+    "alta"
+  ],
+  [
+    "chia",
+    "Semillas de chía",
+    "semilla",
+    3,
+    "Semilla que gelifica al hidratarse.",
+    "Fibra soluble en cantidad y omega-3 de cadena corta.",
+    "media"
+  ],
+  [
+    "lino",
+    "Lino",
+    "semilla",
+    3,
+    "Semilla oleaginosa. Se absorbe mucho mejor molida que entera.",
+    "Omega-3 de cadena corta, fibra y lignanos.",
+    "media"
+  ],
+  // --- Fruta y verdura ----------------------------------------------------
+  [
+    "tomate",
+    "Tomate",
+    "hortaliza",
+    2,
+    "Tomate fresco, triturado o concentrado.",
+    "Licopeno, potasio y vitamina C. El licopeno se absorbe mejor cocinado y con algo de grasa.",
+    "alta"
+  ],
+  [
+    "cebolla",
+    "Cebolla",
+    "hortaliza",
+    2,
+    "Bulbo de sabor fuerte, usado fresco, pochado o deshidratado en polvo.",
+    "Quercetina y fructanos que alimentan a la microbiota.",
+    "media"
+  ],
+  [
+    "ajo",
+    "Ajo",
+    "hortaliza",
+    2,
+    "Diente de ajo, fresco o en polvo.",
+    "Compuestos azufrados con efecto sobre la tensión y el perfil lipídico, aunque a las dosis de un condimento el efecto es modesto.",
+    "media"
+  ],
+  [
+    "zanahoria",
+    "Zanahoria",
+    "hortaliza",
+    2,
+    "Raíz naranja, usada cruda, cocida, en tiras o deshidratada.",
+    "Betacarotenos, precursores de vitamina A, y fibra.",
+    "alta"
+  ],
+  [
+    "espinaca",
+    "Espinaca",
+    "verdura de hoja",
+    3,
+    "Hoja verde, fresca o congelada.",
+    "Folato, hierro no hemo, magnesio y nitratos con efecto vasodilatador.",
+    "alta"
+  ],
+  [
+    "patata",
+    "Patata",
+    "tubérculo",
+    0,
+    "Tubérculo. Su efecto depende sobre todo de cómo se cocine.",
+    "Potasio y vitamina C. Cocida y enfriada genera almidón resistente. Frita, cambia por completo su perfil.",
+    "alta"
+  ],
+  [
+    "manzana",
+    "Manzana",
+    "fruta",
+    2,
+    "Fruta entera, en trozos o en puré.",
+    "Pectina, una fibra soluble, y polifenoles. En zumo pierde la fibra y el azúcar pasa a ser libre.",
+    "alta"
+  ],
+  [
+    "platano",
+    "Plátano",
+    "fruta",
+    2,
+    "Fruta. Cuanto más verde, más almidón resistente y menos azúcar libre.",
+    "Potasio, vitamina B6 y fibra. Verde aporta almidón resistente, que alimenta a la microbiota; maduro, ese almidón se ha convertido ya en azúcar.",
+    "alta"
+  ],
+  [
+    "concentrado de zumo",
+    "Concentrado de zumo",
+    "azúcar de fruta",
+    -2,
+    "Zumo al que se ha quitado el agua, quedando el azúcar concentrado.",
+    'Suena a fruta y es azúcar libre. Se usa para poder decir "sin azúcares añadidos" sin renunciar al dulzor.',
+    "alta"
+  ],
+  // --- Otros --------------------------------------------------------------
+  [
+    "agua",
+    "Agua",
+    "agua",
+    0,
+    "Agua, normalmente añadida para dar volumen o textura.",
+    "Neutra. Pero si aparece entre los primeros ingredientes de un fiambre o un embutido, significa que estás pagando peso en agua.",
+    "alta"
+  ],
+  [
+    "levadura",
+    "Levadura",
+    "fermento",
+    1,
+    "Hongo que fermenta la masa y la hace subir.",
+    "Aporta vitaminas del grupo B y hace subir la masa. Sin pegas nutricionales, aunque una fermentación corta con levadura da un pan menos interesante que una masa madre lenta.",
+    "alta"
+  ],
+  [
+    "masa madre",
+    "Masa madre",
+    "fermento",
+    3,
+    "Fermento natural de harina y agua, con levaduras y bacterias del ambiente.",
+    'La fermentación larga baja el índice glucémico, degrada parte del ácido fítico y libera minerales que estaban bloqueados. Comprueba que no sea "masa madre deshidratada" como mero aromatizante.',
+    "media"
+  ],
+  [
+    "extracto de levadura",
+    "Extracto de levadura",
+    "potenciador natural",
+    -1,
+    "Levadura descompuesta para liberar sus compuestos de sabor.",
+    "Es glutamato por otro nombre: potencia el sabor sin tener que declarar E621. Marcador de ultraprocesado.",
+    "media"
+  ],
+  [
+    "cacao",
+    "Cacao",
+    "cacao",
+    2,
+    "Semilla de cacao molida y normalmente desgrasada.",
+    "Flavanoles con efecto sobre la función vascular, magnesio y hierro. Su valor depende del porcentaje: en una crema con 7 % de cacao y 56 % de azúcar, manda el azúcar.",
+    "alta"
+  ],
+  [
+    "manteca de cacao",
+    "Manteca de cacao",
+    "grasa vegetal",
+    0,
+    "Grasa natural del grano de cacao, separada al prensarlo.",
+    "Muy saturada, pero su ácido esteárico apenas eleva el colesterol LDL, a diferencia de otras saturadas.",
+    "media"
+  ],
+  [
+    "sal",
+    "Sal",
+    "sal",
+    -1,
+    "Cloruro sódico añadido al producto para conservar y dar sabor.",
+    "Necesaria en pequeña cantidad, pero la media española dobla el límite de 5 g diarios de la OMS. Es el principal factor dietético modificable de la hipertensión.",
+    "alta"
+  ],
+  [
+    "vinagre",
+    "Vinagre",
+    "acidulante",
+    1,
+    "Producto de la fermentación acética del vino, la manzana u otros.",
+    "Conserva sin aditivos y hay indicios de que modera la respuesta glucémica de una comida.",
+    "media"
+  ],
+  [
+    "especias",
+    "Especias",
+    "condimento",
+    1,
+    "Mezcla de especias, casi nunca detallada.",
+    "Aportan sabor sin sal ni azúcar. Sin pegas, aunque no se sabe cuáles son.",
+    "media"
+  ],
+  [
+    "aroma",
+    "Aromas",
+    "aroma",
+    -1,
+    "Sustancias que dan sabor, naturales o de síntesis. La ley no obliga a detallar cuáles.",
+    "No son tóxicas, pero su presencia es uno de los marcadores más fiables de ultraprocesado: hace falta añadir sabor porque el producto no lo tiene por sí mismo.",
+    "alta"
+  ],
+  [
+    "aroma natural",
+    "Aroma natural",
+    "aroma",
+    -1,
+    '"Natural" aquí significa que la molécula procede de una fuente natural, no que sea el alimento original.',
+    "La etiqueta suena bien, pero el papel es el mismo: dar sabor a algo que no lo tiene. Sigue siendo marcador de ultraprocesado.",
+    "alta"
+  ],
+  [
+    "fibra vegetal",
+    "Fibra vegetal aislada",
+    "fibra añadida",
+    0,
+    "Fibra extraída de una planta y añadida aparte.",
+    "Suma en la tabla nutricional, pero no equivale a la fibra que viene dentro de un alimento entero.",
+    "media"
+  ],
+  [
+    "inulina",
+    "Inulina",
+    "fibra añadida",
+    1,
+    "Fibra soluble extraída sobre todo de la achicoria.",
+    "Prebiótica de verdad: alimenta a la microbiota. En cantidad da gases y sienta mal en colon irritable.",
+    "media"
+  ],
+  [
+    "cafeina",
+    "Cafeína",
+    "estimulante",
+    -1,
+    "Estimulante del sistema nervioso, natural o añadido.",
+    "La EFSA sitúa el límite en 400 mg diarios para adultos y 200 mg en embarazo. Altera el sueño hasta seis horas después de tomarla.",
+    "alta"
+  ],
+  [
+    "alto oleico",
+    "Aceite alto oleico",
+    "grasa vegetal",
+    1,
+    "Aceite de girasol de una variedad seleccionada para que sea rico en ácido oleico, el mismo del aceite de oliva.",
+    "Su perfil de grasas se parece al del aceite de oliva y aguanta mucho mejor el calor que el girasol corriente, así que se oxida menos al freír. Sigue siendo un aceite refinado, sin los polifenoles del virgen extra.",
+    "media"
+  ],
+  [
+    "aroma de humo",
+    "Aroma de humo",
+    "aroma",
+    -1,
+    "Condensado de humo, usado para dar sabor ahumado sin ahumar.",
+    "Evita algunos compuestos del ahumado tradicional, pero su presencia delata un producto formulado.",
+    "media"
+  ]
+];
+var INGREDIENTES_COMUNES = FILAS2.map(
+  ([patron, titulo, categoria, valoracion, queEs, porQue, evidencia]) => ({
+    patron,
+    titulo,
+    categoria,
+    valoracion,
+    queEs,
+    porQue,
+    evidencia
+  })
+);
+
+// src/nucleo/explicar.ts
+function veredictoDe(v2) {
+  if (v2 > 0) return "favorable";
+  if (v2 < 0) return "limitar";
+  return "neutro";
+}
+function casa(texto, patron) {
+  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`).test(texto);
+}
+function explicarIngrediente(texto, porcentaje) {
+  const t = normalizarTexto(texto);
+  const alergenos = ALERGENOS.filter((a) => a.patrones.some((p) => casa(t, p))).map((a) => a.nombre);
+  const base = {
+    texto: texto.trim(),
+    porcentaje,
+    alergenos
+  };
+  const mE = t.match(/\be\s?-?\s?(\d{3,4}\s?[a-z]?)\b/i);
+  if (mE) {
+    const ad = buscarAditivo("E" + mE[1].replace(/\s/g, ""));
+    if (ad) {
+      return {
+        ...base,
+        titulo: `${ad.codigo} · ${ad.nombre}`,
+        categoria: ad.funcion,
+        veredicto: ad.riesgo === 0 ? "neutro" : "limitar",
+        valoracion: -ad.riesgo,
+        queEs: ad.fichado === false ? `Aditivo alimentario. Por su numeración es un ${ad.funcion}.` : `Aditivo alimentario que cumple la función de ${ad.funcion}.`,
+        porQue: ad.motivo,
+        evidencia: ad.evidencia,
+        codigoE: ad.codigo,
+        fuentes: fuentesDe(ad.fuentes ?? ["ue-1333"])
+      };
+    }
+  }
+  const candidatas = INGREDIENTES_COMUNES.filter((f) => casa(t, f.patron));
+  if (candidatas.length > 0) {
+    const f = candidatas.reduce((a, b) => b.patron.length > a.patron.length ? b : a);
+    return {
+      ...base,
+      titulo: f.titulo,
+      categoria: f.categoria,
+      veredicto: veredictoDe(f.valoracion),
+      valoracion: f.valoracion,
+      queEs: f.queEs,
+      porQue: f.porQue,
+      evidencia: f.evidencia,
+      fuentes: fuentesDe(f.valoracion <= -2 ? ["oms-azucar", "nova"] : ["nova", "ue-1169"])
+    };
+  }
+  const grasas = GRASAS.filter((g) => g.prefijo ? t.includes(g.patron) : casa(t, g.patron));
+  if (grasas.length > 0) {
+    const g = grasas.reduce((a, b) => b.patron.length > a.patron.length ? b : a);
+    return {
+      ...base,
+      titulo: g.etiqueta,
+      categoria: "grasa o aceite",
+      veredicto: veredictoDe(g.valor),
+      valoracion: g.valor,
+      queEs: "Grasa o aceite usado en la elaboración del producto.",
+      porQue: g.motivo,
+      evidencia: "media",
+      fuentes: fuentesDe(g.valor <= -3 ? ["oms-trans"] : ["fsa-semaforo"])
+    };
+  }
+  const azucares = AZUCARES_ANADIDOS.filter((a) => casa(t, a));
+  if (azucares.length > 0) {
+    const a = azucares.reduce((x, y) => y.length > x.length ? y : x);
+    return {
+      ...base,
+      titulo: texto.trim(),
+      categoria: "azúcar añadido",
+      veredicto: "limitar",
+      valoracion: -2,
+      queEs: `Es azúcar libre, aunque el nombre no lo diga. En la etiqueta aparece como "${a}".`,
+      porQue: "Cuenta como azúcar añadido en el total del día. Repartirlo en varias formas distintas hace que ninguna suba a los primeros puestos de la lista, aunque sumadas sean el ingrediente principal.",
+      evidencia: "alta",
+      fuentes: fuentesDe(["oms-azucar", "ue-1169"])
+    };
+  }
+  const upf = MARCADORES_UPF.find((m) => t.includes(m.patron));
+  if (upf) {
+    return {
+      ...base,
+      titulo: upf.etiqueta,
+      categoria: "marcador de ultraprocesado",
+      veredicto: "limitar",
+      valoracion: -1,
+      queEs: "Sustancia de uso industrial que no encontrarías en una cocina doméstica.",
+      porQue: "No es tóxica por sí misma, pero su presencia delata una formulación industrial. El grado de ultraprocesado se asocia a peores resultados de salud incluso ajustando por la composición nutricional.",
+      evidencia: "alta",
+      fuentes: fuentesDe(["nova"])
+    };
+  }
+  return {
+    ...base,
+    titulo: texto.trim(),
+    categoria: "sin clasificar",
+    veredicto: "sin_ficha",
+    valoracion: 0,
+    queEs: "No tenemos ficha de este ingrediente todavía.",
+    porQue: "No podemos decir si suma o resta. No cuenta ni a favor ni en contra de la nota.",
+    evidencia: "baja",
+    fuentes: []
+  };
+}
+function explicarLista(ingredientes) {
+  return ingredientes.map((i) => explicarIngrediente(i.texto, i.porcentaje));
+}
 export {
   ADITIVOS,
   ALERGENOS,
@@ -3745,6 +4589,8 @@ export {
   desconocido,
   estirarContraste,
   evaluarCalidad,
+  explicarIngrediente,
+  explicarLista,
   exportar,
   extraerNumeros,
   ficha,

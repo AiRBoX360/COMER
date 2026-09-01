@@ -36,6 +36,14 @@ export function inicio({ irA }) {
       </div>
     </div>
 
+    <h2 class="rotulo">Cambiar de pestaña deslizando</h2>
+    <div class="interruptor">
+      <label for="swDeslizar">Desliza el dedo a izquierda o derecha para pasar de una pestaña a otra.</label>
+      <button class="interruptor__boton" id="swDeslizar" role="switch" aria-checked="false">
+        <span></span>
+      </button>
+    </div>
+
     <h2 class="rotulo">Últimos análisis</h2>
     ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán en esta lista y en la Despensa.')}
 
@@ -47,7 +55,7 @@ export function inicio({ irA }) {
   `;
 }
 
-export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala }) {
+export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar }) {
   const btn = raiz.querySelector('#btnAnalizar');
   if (btn) btn.addEventListener('click', () => irA('analizar'));
 
@@ -67,6 +75,16 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
       marcar(valor);
     });
   }
+  const sw = raiz.querySelector('#swDeslizar');
+  if (sw && deslizarActivado) {
+    sw.setAttribute('aria-checked', String(deslizarActivado()));
+    sw.addEventListener('click', () => {
+      const nuevo = sw.getAttribute('aria-checked') !== 'true';
+      ponerDeslizar(nuevo);
+      sw.setAttribute('aria-checked', String(nuevo));
+    });
+  }
+
   const lista = raiz.querySelector('#listaDiagnostico');
   if (lista) pintarDiagnostico(lista);
 }

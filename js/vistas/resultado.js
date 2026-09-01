@@ -1,6 +1,7 @@
 import { banda, marcador, esc, vacio } from '../ui.js';
 import { enCurso } from '../estado.js';
 import { analizarProducto } from '../motor.js';
+import { listaExplicada } from './revisar.js';
 
 /**
  * El veredicto.
@@ -84,6 +85,8 @@ export function resultado() {
 
     ${bloque('Lo que conviene limitar', 'Ordenado de más a menos relevante.', v.limitar, 'malo')}
     ${bloque('Lo mejor del producto', 'Ordenado de más a menos relevante.', v.favorables, 'bueno')}
+
+    ${listaExplicada(enCurso.ingredientes)}
 
     ${v.alergenos.length ? `
       <h2 class="subtitulo">Alérgenos detectados</h2>
