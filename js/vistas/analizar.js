@@ -3,6 +3,7 @@ import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
 import { leerTexto, lectorDisponible } from '../lector.js';
 import { enCurso } from '../estado.js';
+import { buscarPorCodigo } from '../codigobarras.js';
 import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
 /**
@@ -118,7 +119,7 @@ export function analizar() {
       ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
       <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
     </button>
-    <p class="texto" id="estadoLectura" style="margin-top:12px"></p>
+    <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
 
     <h2 class="subtitulo">O pega el texto</h2>
     <p class="texto">Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
@@ -127,6 +128,23 @@ export function analizar() {
     <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
     <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
     <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
+
+    <h2 class="subtitulo">O busca por código de barras</h2>
+    <p class="texto">Teclea el número de debajo del código de barras. La app consulta Open Food Facts, una base abierta hecha por voluntarios.</p>
+    <p class="texto" style="font-size:0.9rem">
+      <strong>Esta es la única parte de la app que sale a internet.</strong>
+      Viaja solo el número, ninguna foto ni ningún dato tuyo. Y lo que devuelva
+      hay que comprobarlo contra el envase: la ficha puede ser de una versión
+      anterior del producto.
+    </p>
+    <div class="campo">
+      <div class="campo__entrada">
+        <input id="codigoBarras" type="text" inputmode="numeric"
+               placeholder="8480000123456" autocomplete="off">
+      </div>
+    </div>
+    <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
+    <p class="texto" id="estadoCodigo" role="status" aria-live="polite" style="margin-top:12px"></p>
 
     <div id="resumenLectura" style="margin-top:24px"></div>
     <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
@@ -333,6 +351,33 @@ export function analizarActivo(raiz, { repintar, irA }) {
     if (i) interpretar('ingredientes', i);
     estado.textContent = 'Texto interpretado.';
     pintarResumen();
+  });
+
+  const estadoCodigo = raiz.querySelector('#estadoCodigo');
+  raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', async () => {
+    const codigo = raiz.querySelector('#codigoBarras')?.value ?? '';
+    estadoCodigo.textContent = 'Consultando…';
+    const r = await buscarPorCodigo(codigo);
+
+    if (!r.ok) { estadoCodigo.textContent = r.mensaje; return; }
+
+    const p = r.producto;
+    // Lo que llega de la base se trata igual que lo leído de una foto: entra
+    // como dato leído, no como dato confirmado, y va a la pantalla de revisión.
+    enCurso.nombre = p.nombre;
+    enCurso.categoria = p.categoria;
+    if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
+    for (const [k, d] of Object.entries(p.nutrientes)) {
+      if (enCurso.nutrientes[k]?.estado === 'corregido') continue;
+      enCurso.nutrientes[k] = d;
+    }
+    if (p.ingredientesTexto) interpretar('ingredientes', p.ingredientesTexto);
+    leido.tabla = { nutrientes: p.nutrientes, avisos: p.avisos, base: 'por_100' };
+
+    estadoCodigo.textContent =
+      `Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
+      (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
+    repintar();
   });
 
   raiz.querySelector('#btnRevisar')?.addEventListener('click', () => irA('revisar'));

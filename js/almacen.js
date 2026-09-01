@@ -10,6 +10,7 @@
 import {
   RepositorioIndexedDB, RepositorioMemoria, hayIndexedDB,
   exportar, importar, validarCopia, nombreFichero, nuevoId,
+  desactualizados, simularRecalculo, recalcularTodo,
 } from './motor.js';
 
 let repo = null;
@@ -140,4 +141,24 @@ export async function restaurarCopia(fichero, modo = 'fusionar') {
   const errores = validarCopia(datos);
   if (errores.length) return { ok: false, errores };
   return importar(almacen(), datos, { modo });
+}
+
+// ---------------------------------------------------------------------------
+// Recalcular lo guardado cuando el algoritmo cambia
+// ---------------------------------------------------------------------------
+
+/** Qué productos se analizaron con una versión anterior del algoritmo. */
+export async function pendientesDeRecalcular() {
+  return desactualizados(await almacen().listarProductos());
+}
+
+/** Qué cambiaría, sin tocar nada. */
+export async function simularRecalculoTodo() {
+  const pendientes = await pendientesDeRecalcular();
+  return pendientes.map(simularRecalculo);
+}
+
+/** Recalcula y guarda. Solo cuando se pide expresamente. */
+export async function aplicarRecalculo() {
+  return recalcularTodo(almacen());
 }

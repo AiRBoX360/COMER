@@ -6,6 +6,8 @@ import { guardarAnalisis } from '../almacen.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
+import { refrescarConocimiento } from './conocimiento.js';
+import { refrescarComparador } from './comparar.js';
 
 /**
  * El veredicto.
@@ -115,7 +117,7 @@ export function resultado() {
       GUARDAR EN LA DESPENSA
       <small>Con sus fotos, para poder volver a verlo</small>
     </button>
-    <p class="texto" id="estadoGuardar" style="margin-top:12px"></p>
+    <p class="texto" id="estadoGuardar" role="status" aria-live="polite" style="margin-top:12px"></p>
 
     <p class="texto" style="margin-top:24px; font-size:0.85rem">
       Calculado con la versión ${esc(v.versionAlgoritmo)} del algoritmo.
@@ -149,6 +151,8 @@ export function resultadoActivo(raiz, { irA }) {
         fotos,
       });
       refrescarDespensa();
+      refrescarConocimiento();
+      refrescarComparador();
       estado.textContent = 'Guardado. Ya está en tu Despensa.';
       boton.textContent = 'GUARDADO';
     } catch (err) {

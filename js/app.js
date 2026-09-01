@@ -10,7 +10,8 @@ import { analizar, analizarActivo } from './vistas/analizar.js';
 import { resultado, resultadoActivo } from './vistas/resultado.js';
 import { revisar, revisarActivo } from './vistas/revisar.js';
 import { escucharGestos, deslizarActivado, ponerDeslizar } from './gestos.js';
-import { conocimiento } from './vistas/conocimiento.js';
+import { vistaComparar, compararActivo } from './vistas/comparar.js';
+import { conocimiento, conocimientoActivo } from './vistas/conocimiento.js';
 import { despensa, despensaActivo } from './vistas/despensa.js';
 import {
   almacenamientoDuradero,
@@ -20,7 +21,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.10.0';
+export const VERSION = '0.16.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -49,8 +50,10 @@ const VISTAS = {
   // Revisar no tiene pestaña propia: es el segundo paso de Analizar.
   revisar: { pinta: revisar, activa: revisarActivo, titulo: 'Revisar', pestana: 'analizar' },
   resultado: { pinta: resultado, activa: resultadoActivo, titulo: 'Resultado' },
-  conocimiento: { pinta: conocimiento, titulo: 'Saber' },
+  conocimiento: { pinta: conocimiento, activa: conocimientoActivo, titulo: 'Saber' },
   despensa: { pinta: despensa, activa: despensaActivo, titulo: 'Despensa' },
+  // Comparar cuelga de la Despensa: es lo que se hace con lo guardado.
+  comparar: { pinta: vistaComparar, activa: compararActivo, titulo: 'Comparar', pestana: 'despensa' },
 };
 
 const contenedor = document.getElementById('contenedorVista');
@@ -189,6 +192,7 @@ ponerEscala(escala());
 
 // Volver a ver un producto guardado, desde la Despensa.
 window.addEventListener('comer:ver-resultado', () => irA('resultado'));
+window.addEventListener('comer:comparar', () => irA('comparar'));
 
 export { irA };
 

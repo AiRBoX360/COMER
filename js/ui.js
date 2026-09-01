@@ -36,12 +36,17 @@ export function banda(nota) {
   const tramos = NIVELES
     .slice()
     .reverse()
-    .map((n) => {
+    .map((n, i) => {
       const esActual = n.clave === actual.clave ? ' es-actual' : '';
-      return `<div class="banda__tramo${esActual}" data-nivel="${n.clave}">${esc(n.texto)}</div>`;
+      // El número de nivel es una señal que no depende del color. Quien no
+      // distinga el rojo del verde ve igualmente que el 1 está abajo del todo.
+      const posicion = NIVELES.length - i;
+      return `<div class="banda__tramo${esActual}" data-nivel="${n.clave}">` +
+             `<b class="banda__pos">${posicion}</b>${esc(n.texto)}</div>`;
     })
     .join('');
-  return `<div class="banda" role="img" aria-label="Clasificación: ${esc(actual.texto)}, ${Math.round(nota)} sobre 100">${tramos}</div>`;
+  const posActual = NIVELES.findIndex((n) => n.clave === actual.clave) + 1;
+  return `<div class="banda" role="img" aria-label="Clasificación nivel ${posActual} de 5: ${esc(actual.texto)}, ${Math.round(nota)} sobre 100">${tramos}</div>`;
 }
 
 /** La nota grande, con el color de su nivel. */

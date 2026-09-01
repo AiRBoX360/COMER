@@ -1,6 +1,7 @@
 import { NIVELES, esc, vacio } from '../ui.js';
 import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
-         descargarCopia, restaurarCopia, almacenDuradero } from '../almacen.js';
+         descargarCopia, restaurarCopia, almacenDuradero,
+         simularRecalculoTodo, aplicarRecalculo } from '../almacen.js';
 import { enCurso } from '../estado.js';
 
 /**
@@ -13,6 +14,37 @@ import { enCurso } from '../estado.js';
 
 let cache = [];
 let filtro = '';
+let pendientes = null;
+
+/**
+ * Aviso de productos analizados con una versión anterior.
+ *
+ * No se recalcula solo. Cambiar el historial a espaldas de nadie es peor que
+ * tenerlo desactualizado: al menos lo viejo lleva escrita su versión.
+ */
+function bloqueRecalculo() {
+  if (!pendientes || pendientes.length === 0) return '';
+  const cambian = pendientes.filter((c) => c.recalculable && c.diferencia !== 0);
+  const filas = cambian.slice(0, 6).map((c) => `
+    <li>
+      <span>${esc(c.nombre)}</span>
+      <b class="cifra">${c.notaAntes ?? '—'} → ${c.notaDespues ?? '—'}</b>
+    </li>`).join('');
+  const noSePuede = pendientes.filter((c) => !c.recalculable).length;
+
+  return `
+    <div class="pendiente" style="border-left-color:var(--amarillo); margin-bottom:16px">
+      <div>
+        <b>${pendientes.length} producto(s) se analizaron con una versión anterior del criterio.</b>
+        Sus notas no son comparables con las de ahora.
+        ${cambian.length ? `<ul class="diagnostico" style="margin-top:12px">${filas}</ul>` : ''}
+        ${noSePuede ? `<p style="margin-top:8px">${noSePuede} no se puede(n) recalcular: se guardaron sin los datos de la etiqueta.</p>` : ''}
+        <button class="boton" id="btnRecalcular" style="margin-top:12px; width:100%">
+          Recalcular con el criterio de ahora
+        </button>
+      </div>
+    </div>`;
+}
 
 function ficha(p) {
   const fecha = new Date(p.fechaAnalisis).toLocaleDateString('es-ES',
@@ -80,13 +112,21 @@ export function despensa() {
           ${sinNota.map(ficha).join('')}
         </section>` : ''}`}
 
+    ${bloqueRecalculo()}
+
+    ${total >= 2 ? `
+      <button class="boton-grande" id="btnComparar" style="margin:24px 0">
+        COMPARAR DOS PRODUCTOS
+        <small>Cuál conviene, y por qué</small>
+      </button>` : ''}
+
     <h2 class="subtitulo">Copia de seguridad</h2>
     <p class="texto">Tus datos viven solo en este teléfono. Si el navegador se queda sin espacio puede borrarlos, así que conviene guardar una copia de vez en cuando.</p>
     <div class="toma__botones">
       <button class="boton" id="btnExportar">Guardar copia</button>
       <button class="boton" id="btnImportar">Restaurar copia</button>
     </div>
-    <p class="texto" id="estadoCopia" style="margin-top:12px; font-size:0.92rem"></p>
+    <p class="texto" id="estadoCopia" role="status" aria-live="polite" style="margin-top:12px; font-size:0.92rem"></p>
   `;
 }
 
@@ -97,7 +137,12 @@ export async function despensaActivo(raiz, { repintar }) {
   // pantalla parpadeando mientras llegan.
   if (cache.length === 0) {
     const lista = await listar({ orden: 'fecha_desc' });
-    if (lista.length > 0) { cache = lista; repintar(); return; }
+    if (lista.length > 0) {
+      cache = lista;
+      pendientes = await simularRecalculoTodo();
+      repintar();
+      return;
+    }
   }
 
   // Las fotos se piden después de pintar: así la lista aparece enseguida y las
@@ -136,6 +181,26 @@ export async function despensaActivo(raiz, { repintar }) {
       if (p) volverAVer(p);
       return;
     }
+  });
+
+  raiz.querySelector('#btnRecalcular')?.addEventListener('click', async (e) => {
+    const b = e.target;
+    b.disabled = true;
+    b.textContent = 'Recalculando…';
+    const r = await aplicarRecalculo();
+    cache = await listar({ orden: 'fecha_desc' });
+    pendientes = await simularRecalculoTodo();
+    repintar();
+    const est2 = raiz.querySelector('#estadoCopia');
+    if (est2) {
+      est2.textContent = `Recalculados ${r.recalculados} producto(s)` +
+        (r.cambiosDeColor ? `, ${r.cambiosDeColor} cambió de color` : '') +
+        (r.omitidos ? `. ${r.omitidos} no se pudo por falta de datos` : '') + '.';
+    }
+  });
+
+  raiz.querySelector('#btnComparar')?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('comer:comparar'));
   });
 
   const estado = raiz.querySelector('#estadoCopia');
@@ -185,6 +250,7 @@ function volverAVer(p) {
 /** Fuerza a releer de la base la próxima vez. */
 export function refrescarDespensa() {
   cache = [];
+  pendientes = null;
 }
 
 export async function ultimos(n = 4) {

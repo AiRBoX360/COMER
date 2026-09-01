@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'comer-v0.10.0';
+const CACHE = 'comer-v0.16.0';
 
 const ARCHIVOS = [
   './',
@@ -18,9 +18,11 @@ const ARCHIVOS = [
   './js/diagnostico.js',
   './js/vistas/inicio.js',
   './js/vistas/revisar.js',
+  './js/vistas/comparar.js',
   './js/estado.js',
   './js/gestos.js',
   './js/almacen.js',
+  './js/codigobarras.js',
   './js/vistas/analizar.js',
   './js/vistas/resultado.js',
   './js/vistas/conocimiento.js',
@@ -69,6 +71,8 @@ const INMUTABLE = /\/(fuentes|iconos|lector)\//;
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
+  // Lo de fuera (la consulta a la base de productos) va directo a la red y no
+  // se guarda: una ficha vieja en la copia sería peor que no tenerla.
   if (url.origin !== self.location.origin) return;
 
   if (INMUTABLE.test(url.pathname)) {
