@@ -1,6 +1,6 @@
 import { banda, marcador, esc, vacio } from '../ui.js';
 import { enCurso, reiniciar } from '../estado.js';
-import { analizarProducto, revisarVigilancia } from '../motor.js';
+import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe } from '../motor.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis } from '../almacen.js';
@@ -52,6 +52,25 @@ function bloque(titulo, pista, lista, signo) {
  * nitritos, eso lo quieres ver antes que un número. Y no toca la puntuación:
  * es un aviso, no una opinión.
  */
+/**
+ * Qué buscar en una alternativa mejor.
+ *
+ * Solo aparece cuando merece la pena buscarla. Decirle a alguien que compre
+ * otra cosa cuando lo que tiene en la mano está bien es ruido, y el ruido hace
+ * que se deje de leer lo que sí importa.
+ */
+function bloqueAlternativa(v) {
+  if (v.puntuacion === null || v.puntuacion >= 60) return '';
+  const consejos = queBuscarEnLugarDe(v);
+  if (consejos.length === 0 || consejos[0].includes('ningún factor')) return '';
+  return `
+    <h2 class="subtitulo">Qué buscar en una alternativa</h2>
+    <p class="texto" style="font-size:0.92rem">Deducido de lo que más resta en este producto, no de una lista general.</p>
+    <ul class="incidencias">
+      ${consejos.map((c) => `<li class="incidencia">${esc(c)}</li>`).join('')}
+    </ul>`;
+}
+
 function bloqueVigilancia(v) {
   const avisos = revisarVigilancia(v, enCurso.ingredientes, vigilanciaActiva())
     .filter((a) => a.salta);
@@ -133,6 +152,8 @@ export function resultado() {
         <div><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}%</b><span>del azúcar diario</span></div>
         <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
       </div>` : ''}
+
+    ${bloqueAlternativa(v)}
 
     ${v.avisos.length ? `
       <h2 class="subtitulo">Avisos</h2>

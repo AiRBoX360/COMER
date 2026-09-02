@@ -14,7 +14,21 @@
 
 import { limpiarCodigo, codigoValido } from './motor.js';
 
-const RUTA = './escaner/';
+const RUTA = 'escaner/';
+
+/**
+ * Ruta absoluta desde la raíz de la app.
+ *
+ * Hace falta porque fetch() e import() NO resuelven igual una ruta relativa:
+ * fetch la calcula desde la página, e import desde el fichero que la escribe,
+ * que vive en js/. El resultado era que la comprobación encontraba el fichero
+ * y la carga lo buscaba en js/escaner/, donde no hay nada, y la app concluía
+ * que el lector no estaba instalado.
+ */
+function rutaApp(relativa) {
+  return new URL(relativa, document.baseURI).href;
+}
+
 const TIPOS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 
 let lectorPropio = null;
@@ -39,11 +53,12 @@ async function cargarLectorPropio() {
   if (cargando) return cargando;
   cargando = (async () => {
     try {
-      const r = await fetch(`${RUTA}reader/index.js`, { method: 'HEAD' });
+      const destino = rutaApp(`${RUTA}reader/index.js`);
+      const r = await fetch(destino, { method: 'HEAD' });
       if (!r.ok) return null;
-      const mod = await import(`${RUTA}reader/index.js`);
+      const mod = await import(/* @vite-ignore */ destino);
       mod.prepareZXingModule({
-        overrides: { locateFile: (f) => (f.endsWith('.wasm') ? `${RUTA}${f}` : f) },
+        overrides: { locateFile: (f) => (f.endsWith('.wasm') ? rutaApp(`${RUTA}${f}`) : f) },
       });
       lectorPropio = mod;
       return mod;

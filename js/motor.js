@@ -1080,7 +1080,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.13.0";
+var VERSION_ALGORITMO = "1.14.0";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -2255,1643 +2255,6 @@ function calcularConfianza(e) {
     calidadLectura: Math.round(calidadLectura * 100),
     coherencia: Math.round(coherencia * 100),
     comoMejorarla
-  };
-}
-
-// src/datos/fuentes.ts
-var F = [
-  [
-    "ue-1169",
-    "Unión Europea",
-    "Reglamento (UE) 1169/2011 sobre información alimentaria facilitada al consumidor",
-    2011,
-    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32011R1169",
-    "Qué campos son obligatorios en la tabla nutricional, la lista de 14 alérgenos y los valores de referencia de nutrientes."
-  ],
-  [
-    "ue-1333",
-    "Unión Europea",
-    "Reglamento (CE) 1333/2008 sobre aditivos alimentarios",
-    2008,
-    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32008R1333",
-    "La numeración E, la función tecnológica de cada aditivo y sus condiciones de uso."
-  ],
-  [
-    "ue-1924",
-    "Unión Europea",
-    "Reglamento (CE) 1924/2006 sobre declaraciones nutricionales y de propiedades saludables",
-    2006,
-    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32006R1924",
-    'Los umbrales legales de "fuente de", "alto contenido en", "bajo en sal" y "sin azúcares añadidos".'
-  ],
-  [
-    "ue-2022-63",
-    "Unión Europea",
-    "Reglamento (UE) 2022/63: retirada del dióxido de titanio (E171)",
-    2022,
-    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32022R0063",
-    "La prohibición del E171 como aditivo alimentario en la Unión Europea."
-  ],
-  [
-    "efsa-aditivos",
-    "EFSA",
-    "Reevaluación de aditivos alimentarios autorizados antes de 2009",
-    2020,
-    "https://www.efsa.europa.eu/en/topics/topic/food-additives",
-    "Ingestas diarias admisibles y dictámenes de seguridad de cada aditivo."
-  ],
-  [
-    "efsa-cafeina",
-    "EFSA",
-    "Dictamen científico sobre la seguridad de la cafeína",
-    2015,
-    "https://www.efsa.europa.eu/en/efsajournal/pub/4102",
-    "El límite de 400 mg diarios en adultos y 200 mg en embarazo."
-  ],
-  [
-    "iarc-carne",
-    "IARC / OMS",
-    "Monografía 114: consumo de carne roja y carne procesada",
-    2018,
-    "https://publications.iarc.fr/564",
-    "La clasificación de la carne procesada como carcinógeno del grupo 1 y el papel de los nitritos."
-  ],
-  [
-    "iarc-aspartamo",
-    "IARC / OMS",
-    "Monografía 134: aspartamo, metileugenol e isoeugenol",
-    2024,
-    "https://publications.iarc.fr/636",
-    "La clasificación del aspartamo como posiblemente carcinógeno para el ser humano (grupo 2B)."
-  ],
-  [
-    "oms-azucar",
-    "OMS",
-    "Directriz: ingesta de azúcares para adultos y niños",
-    2015,
-    "https://www.who.int/publications/i/item/9789241549028",
-    "La recomendación de no superar el 10 % de la energía diaria en azúcares libres, y el objetivo del 5 %."
-  ],
-  [
-    "oms-sal",
-    "OMS",
-    "Directriz: ingesta de sodio en adultos y niños",
-    2012,
-    "https://www.who.int/publications/i/item/9789241504836",
-    "El límite de 5 g de sal al día, equivalente a 2 g de sodio."
-  ],
-  [
-    "oms-trans",
-    "OMS",
-    "Paquete de medidas REPLACE para eliminar las grasas trans industriales",
-    2018,
-    "https://www.who.int/teams/nutrition-and-food-safety/replace-trans-fat",
-    "Que no existe un nivel seguro de consumo de grasas trans industriales."
-  ],
-  [
-    "nutriscore-2023",
-    "Santé publique France",
-    "Nutri-Score: algoritmo actualizado para alimentos y bebidas",
-    2023,
-    "https://www.santepubliquefrance.fr/en/nutri-score",
-    "Las tablas de puntos y los cortes de letra del algoritmo que usa este motor."
-  ],
-  [
-    "nova",
-    "Universidad de São Paulo · Monteiro y col.",
-    "Clasificación NOVA de alimentos según su grado de procesamiento",
-    2019,
-    "https://www.fao.org/3/ca5644en/ca5644en.pdf",
-    "La definición de los cuatro grupos y de qué marca a un ultraprocesado."
-  ],
-  [
-    "fsa-semaforo",
-    "Food Standards Agency (Reino Unido)",
-    "Guía de etiquetado nutricional frontal por colores",
-    2016,
-    "https://www.gov.uk/government/publications/front-of-pack-nutrition-labelling-guidance",
-    'Los umbrales de "alto contenido" en azúcar, grasa saturada y sal que este motor usa como referencia de dosis.'
-  ],
-  [
-    "efsa-fosforo",
-    "EFSA",
-    "Reevaluación de los fosfatos como aditivos alimentarios",
-    2019,
-    "https://www.efsa.europa.eu/en/efsajournal/pub/5674",
-    "La ingesta admisible de fosfatos y la advertencia sobre la carga renal del fósforo añadido."
-  ],
-  [
-    "efsa-nitritos",
-    "EFSA",
-    "Reevaluación de nitritos y nitratos como aditivos alimentarios",
-    2017,
-    "https://www.efsa.europa.eu/en/efsajournal/pub/4786",
-    "La formación de nitrosaminas y los márgenes de exposición."
-  ],
-  [
-    "emulgentes-2021",
-    "Gastroenterology · Chassaing y col.",
-    "Ensayo controlado sobre carboximetilcelulosa y microbiota intestinal",
-    2021,
-    "https://pubmed.ncbi.nlm.nih.gov/34774538/",
-    "La alteración de la microbiota y de la capa de moco intestinal por emulgentes de uso común."
-  ],
-  [
-    "efsa-azoicos",
-    "EFSA",
-    "Dictámenes sobre colorantes azoicos y actividad en la infancia",
-    2009,
-    "https://www.efsa.europa.eu/en/efsajournal/pub/1330",
-    "La advertencia obligatoria de que pueden afectar a la actividad y la atención de los niños."
-  ]
-];
-var FUENTES = new Map(
-  F.map(([clave2, organismo, documento, anio, url, aporta]) => [
-    clave2,
-    { clave: clave2, organismo, documento, anio, url, aporta }
-  ])
-);
-function fuentesDe(claves) {
-  return claves.map((c) => FUENTES.get(c)).filter((f) => Boolean(f));
-}
-
-// src/nucleo/conocimiento.ts
-function deAditivo(a) {
-  return {
-    clave: a.codigo,
-    tipo: "aditivo",
-    nombre: `${a.codigo} · ${a.nombre}`,
-    sinonimos: [a.codigo, a.nombre],
-    categoria: a.funcion,
-    valoracion: -a.riesgo,
-    explicacion: a.motivo,
-    evidencia: a.evidencia,
-    fuentes: fuentesDe(a.fuentes ?? ["ue-1333"]),
-    fichada: a.fichado !== false
-  };
-}
-function construirCatalogo() {
-  const out = [];
-  for (const a of ADITIVOS.values()) out.push(deAditivo(a));
-  for (const al of ALERGENOS) {
-    out.push({
-      clave: `alergeno_${al.clave}`,
-      tipo: "alergeno",
-      nombre: al.nombre,
-      sinonimos: al.patrones,
-      categoria: "alérgeno de declaración obligatoria",
-      valoracion: 0,
-      explicacion: `${al.nota} Su declaración es obligatoria en la Unión Europea y en la etiqueta va resaltado.`,
-      evidencia: "alta",
-      fuentes: fuentesDe(["ue-1169"]),
-      fichada: true
-    });
-  }
-  for (const az of AZUCARES_ANADIDOS) {
-    out.push({
-      clave: `azucar_${az.replace(/\s/g, "_")}`,
-      tipo: "azucar",
-      nombre: az.charAt(0).toUpperCase() + az.slice(1),
-      sinonimos: [az],
-      categoria: "azúcar añadido",
-      valoracion: -2,
-      explicacion: "Es azúcar libre, aunque el nombre no lo parezca. Repartir el azúcar en varias formas distintas hace que ninguna suba a los primeros puestos de la lista de ingredientes.",
-      evidencia: "alta",
-      fuentes: fuentesDe(["oms-azucar", "ue-1169"]),
-      fichada: true
-    });
-  }
-  for (const g of GRASAS) {
-    out.push({
-      clave: `grasa_${g.patron.replace(/\s/g, "_")}`,
-      tipo: "grasa",
-      nombre: g.etiqueta,
-      sinonimos: [g.patron],
-      categoria: "grasa o aceite",
-      valoracion: g.valor,
-      explicacion: g.motivo,
-      evidencia: "media",
-      fuentes: fuentesDe(g.valor <= -3 ? ["oms-trans"] : ["fsa-semaforo"]),
-      fichada: true
-    });
-  }
-  for (const i of INGREDIENTES_REALES) {
-    out.push({
-      clave: `real_${i.patron.replace(/\s/g, "_")}`,
-      tipo: "ingrediente",
-      nombre: i.etiqueta,
-      sinonimos: [i.patron],
-      categoria: "ingrediente favorable",
-      valoracion: Math.min(3, i.peso),
-      explicacion: i.motivo,
-      evidencia: "alta",
-      fuentes: fuentesDe(["nova"]),
-      fichada: true
-    });
-  }
-  for (const [clave2, v2] of Object.entries(VRN)) {
-    out.push({
-      clave: `nutriente_${clave2}`,
-      tipo: "nutriente",
-      nombre: v2.nombre,
-      sinonimos: [v2.nombre, clave2],
-      categoria: "vitamina o mineral",
-      valoracion: 2,
-      explicacion: `Valor de referencia diario en la Unión Europea: ${v2.cantidad} ${v2.unidad}. Un producto puede llamarse "fuente de" a partir del 15 % y "alto contenido en" a partir del 30 %.`,
-      evidencia: "alta",
-      fuentes: fuentesDe(["ue-1169", "ue-1924"]),
-      fichada: true
-    });
-  }
-  return out;
-}
-var CATALOGO = construirCatalogo();
-function buscar(termino, opts = {}) {
-  const t = normalizarTexto(termino);
-  const limite = opts.limite ?? 40;
-  let base = CATALOGO;
-  if (opts.tipos?.length) base = base.filter((f) => opts.tipos.includes(f.tipo));
-  if (opts.soloLimitar) base = base.filter((f) => f.valoracion < 0);
-  if (opts.soloFavorable) base = base.filter((f) => f.valoracion > 0);
-  if (!t) return base.slice(0, limite);
-  const puntuadas = base.map((f) => {
-    const nombre = normalizarTexto(f.nombre);
-    const sinonimos = f.sinonimos.map(normalizarTexto);
-    let p = 0;
-    if (nombre === t || sinonimos.includes(t)) p = 100;
-    else if (nombre.startsWith(t) || sinonimos.some((s) => s.startsWith(t))) p = 70;
-    else if (nombre.includes(t) || sinonimos.some((s) => s.includes(t))) p = 40;
-    else if (normalizarTexto(f.explicacion).includes(t)) p = 10;
-    return { f, p };
-  }).filter((x) => x.p > 0).sort((a, b) => b.p - a.p || Math.abs(b.f.valoracion) - Math.abs(a.f.valoracion));
-  return puntuadas.slice(0, limite).map((x) => x.f);
-}
-function ficha(clave2) {
-  const directa = CATALOGO.find((f) => f.clave === clave2);
-  if (directa) return directa;
-  if (/^E\d/i.test(clave2)) {
-    const a = buscarAditivo(clave2.toUpperCase());
-    if (a) return deAditivo(a);
-  }
-  return void 0;
-}
-function resumenCatalogo() {
-  const out = { aditivo: 0, alergeno: 0, nutriente: 0, ingrediente: 0, azucar: 0, grasa: 0 };
-  for (const f of CATALOGO) out[f.tipo]++;
-  return out;
-}
-
-// src/index.ts
-function analizarProducto(p, ahora = /* @__PURE__ */ new Date()) {
-  const categoria = p.categoria ?? "general";
-  const n = normalizarNutrientes(p.nutrientes);
-  const ing = analizarIngredientes(p.ingredientes ?? []);
-  const nova = clasificarNova(ing);
-  const primero = ing.lista[0]?.textoNormalizado ?? "";
-  const esProductoSalado = /^(sal|sal marina|sal yodada|cloruro sodico)\b/.test(primero) || ing.lista.some((i) => /\b(caldo|pastilla de caldo|cubito|concentrado de carne|sazonador|salsa de soja)\b/.test(i.textoNormalizado));
-  const validacion = validar(n, esProductoSalado);
-  validacion.incidencias.push(...validarContraIngredientes(n, {
-    total: ing.total,
-    hayFuenteAzucar: ing.fuentesAzucar.length > 0,
-    hayLacteo: ing.lista.some((i) => /\b(leche|lacteo|yogur|nata|suero|queso|lactosa)\b/.test(i.textoNormalizado)),
-    hayFruta: ing.lista.some((i) => /\b(fruta|zumo|pure|manzana|platano|naranja|fresa|melocoton|pera|uva)\b/.test(i.textoNormalizado)),
-    hayGrasaAnadida: ing.grasas.length > 0,
-    haySal: ing.salPresente
-  }));
-  validacion.errores = validacion.incidencias.filter((i) => i.gravedad === "error").length;
-  validacion.avisos = validacion.incidencias.filter((i) => i.gravedad === "aviso").length;
-  validacion.coherente = validacion.errores === 0;
-  validacion.indiceCoherencia = Math.max(0, 1 - validacion.errores * 0.28 - validacion.avisos * 0.08);
-  const contieneEdulcorante = ing.aditivos.some((a) => a.aditivo.funcion === "edulcorante");
-  const ns = calcularNutriScore(n, { categoria, esAgua: p.es_agua, contieneEdulcorante });
-  const limitar = construirLimitar(n, ing, nova, categoria);
-  const favorables = construirFavorables(n, ing, categoria, p.micronutrientes, nova.grupo === 4);
-  const { puntuacion, semaforo, vetos, componentes } = calcularPuntuacion(n, ing, nova, ns, categoria);
-  const faltanObligatorios = camposQueFaltan(n);
-  const faltanVoluntarios = voluntariosQueFaltan(n);
-  const sinIngredientes = ing.total === 0;
-  const datosFaltantes = [...faltanObligatorios];
-  if (sinIngredientes) datosFaltantes.push("Lista de ingredientes");
-  const analisisCompleto = faltanObligatorios.length === 0 && !sinIngredientes;
-  const avisosDeDatos = [];
-  const hayAlgunComponente = componentes.some((c) => c.nota !== null);
-  if (faltanObligatorios.length > 0) {
-    avisosDeDatos.push(
-      hayAlgunComponente ? `Faltan datos obligatorios de la etiqueta (${faltanObligatorios.join(", ")}). No se calcula el Nutri-Score y la nota se apoya solo en el resto.` : `Faltan datos obligatorios de la etiqueta (${faltanObligatorios.join(", ")}). Sin ellos no se puede dar ninguna nota.`
-    );
-  }
-  if (sinIngredientes) {
-    avisosDeDatos.push("Sin la lista de ingredientes no se puede saber si el azúcar es añadido, ni detectar aditivos, ni valorar el grado de procesamiento.");
-  }
-  if (faltanVoluntarios.includes("Fibra")) {
-    avisosDeDatos.push("La etiqueta no declara fibra. Es voluntario en la UE, así que el producto podría tener más de la que se le reconoce aquí.");
-  }
-  if (faltanVoluntarios.includes("Porcentaje de fruta, verdura y legumbre") && categoria !== "grasa_anadida") {
-    avisosDeDatos.push("No consta el porcentaje de fruta, verdura o legumbre. Si el producto lleva bastante, su nota real podría ser mejor.");
-  }
-  const confianza = calcularConfianza({
-    nutrientes: n,
-    hayIngredientes: !sinIngredientes,
-    indiceCoherencia: validacion.indiceCoherencia,
-    huboErrores: validacion.errores > 0
-  });
-  if (validacion.errores > 0) {
-    avisosDeDatos.push(
-      `Hay ${validacion.errores} dato(s) que no cuadran entre sí. La nota se ha calculado igualmente, pero conviene revisarlos antes de fiarse.`
-    );
-  }
-  const porQue = redactarPorQue(limitar, favorables, puntuacion, analisisCompleto);
-  let porRacion;
-  if (p.racion_declarada_g && p.racion_declarada_g > 0) {
-    const f = p.racion_declarada_g / 100;
-    const kcal = hay(n.energia_kcal) ? Math.round(n.energia_kcal.valor * f) : null;
-    const az = hay(n.azucares_g) ? Math.round(n.azucares_g.valor * f * 10) / 10 : null;
-    const sat = hay(n.saturadas_g) ? Math.round(n.saturadas_g.valor * f * 10) / 10 : null;
-    const sal = hay(n.sal_g) ? Math.round(n.sal_g.valor * f * 100) / 100 : null;
-    porRacion = {
-      gramos: p.racion_declarada_g,
-      kcal,
-      azucares_g: az,
-      saturadas_g: sat,
-      sal_g: sal,
-      pctSalOMS: sal === null ? null : Math.round(sal / LIMITES_DIARIOS.salOMS * 100),
-      pctAzucarOMS: az === null ? null : Math.round(az / LIMITES_DIARIOS.azucarLibreOMS * 100)
-    };
-  }
-  const avisos = [];
-  if (porRacion && p.racion_declarada_g < 35 && categoria !== "grasa_anadida") {
-    avisos.push(`La ración declarada es de solo ${p.racion_declarada_g} g. Comprueba si es lo que comes de verdad: las raciones pequeñas maquillan las cifras del frontal del envase.`);
-  }
-  if (porRacion?.pctAzucarOMS != null && porRacion.pctAzucarOMS >= 50) {
-    avisos.push(`Una sola ración cubre el ${porRacion.pctAzucarOMS} % del azúcar libre recomendado para todo el día.`);
-  }
-  if (porRacion?.pctSalOMS != null && porRacion.pctSalOMS >= 30) {
-    avisos.push(`Una sola ración cubre el ${porRacion.pctSalOMS} % de la sal recomendada para todo el día.`);
-  }
-  if (ing.aditivosSinFicha.length > 0) {
-    avisos.push(`No tenemos ficha de ${ing.aditivosSinFicha.join(", ")}. Se han identificado por su familia y pesan poco en la nota, pero conviene mirarlos aparte.`);
-  }
-  if (ing.alergenos.length > 0) {
-    avisos.push(`Alérgenos detectados: ${ing.alergenos.map((a) => a.nombre.toLowerCase()).join(", ")}. ${AVISO_ALERGENOS}`);
-  }
-  if (ing.fuentesAzucar.length >= 2) {
-    avisos.push("El azúcar aparece repartido en varias formas distintas. Súmalas mentalmente antes de fiarte del orden de la lista.");
-  }
-  if (hay(n.polialcoholes_g) && n.polialcoholes_g.valor > 10) {
-    avisos.push("Más de 10 g de polialcoholes por 100 g: puede provocar gases y efecto laxante.");
-  }
-  const sustancias = [];
-  for (const { aditivo } of ing.aditivos) {
-    if (sustancias.some((s) => s.codigo === aditivo.codigo)) continue;
-    sustancias.push({
-      codigo: aditivo.codigo,
-      nombre: aditivo.nombre,
-      tipo: aditivo.riesgo > 0 ? "limitar" : "favorable",
-      riesgo: aditivo.riesgo
-    });
-  }
-  for (const f of limitar) {
-    if (f.categoria === "aditivo") continue;
-    sustancias.push({ codigo: f.id, nombre: f.nombre, tipo: "limitar" });
-  }
-  for (const f of favorables) {
-    sustancias.push({ codigo: f.id, nombre: f.nombre, tipo: "favorable" });
-  }
-  return {
-    nombre: p.nombre ?? "Producto sin nombre",
-    marca: p.marca,
-    categoria,
-    versionAlgoritmo: VERSION_ALGORITMO,
-    fechaAnalisis: ahora.toISOString(),
-    puntuacion,
-    semaforo,
-    etiquetaSemaforo: semaforo ? ETIQUETAS_SEMAFORO[semaforo] : "Análisis incompleto",
-    porQue,
-    analisisCompleto,
-    datosFaltantes,
-    avisosDeDatos,
-    confianza,
-    incidencias: validacion.incidencias,
-    datosCoherentes: validacion.coherente,
-    componentes,
-    nutriScore: ns,
-    nova,
-    limitar,
-    favorables,
-    alergenos: ing.alergenos,
-    avisoAlergenos: AVISO_ALERGENOS,
-    vetos,
-    porRacion,
-    avisos,
-    sustancias
-  };
-}
-function redactarPorQue(limitar, favorables, puntuacion, completo) {
-  if (puntuacion === null) {
-    return "No hay datos suficientes para dar una nota. Completa la etiqueta y vuelve a analizarlo.";
-  }
-  const malos = limitar.filter((f) => f.peso >= 45).slice(0, 3).map((f) => f.nombre.toLowerCase());
-  const buenos = favorables.filter((f) => f.peso >= 45).slice(0, 2).map((f) => f.nombre.toLowerCase());
-  let txt = "";
-  if (malos.length) txt += `Lo que más pesa en contra: ${malos.join(", ")}.`;
-  else txt += "No se ha detectado ningún factor de peso que convenga limitar.";
-  if (buenos.length) txt += ` A favor: ${buenos.join(" y ")}.`;
-  if (!completo) txt += " Ojo: el análisis está incompleto y la nota puede cambiar al completar los datos.";
-  return txt;
-}
-
-// src/almacen/modelo.ts
-function nuevoId(prefijo = "p") {
-  const azar = Math.random().toString(36).slice(2, 10);
-  return `${prefijo}_${Date.now().toString(36)}_${azar}`;
-}
-function clave(s) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-}
-var SEMAFOROS = ["rojo", "naranja", "amarillo", "verde_claro", "verde_parchis"];
-function filtrarYOrdenar(lista, f = {}) {
-  let out = lista;
-  if (f.texto) {
-    const t = clave(f.texto);
-    out = out.filter((p) => clave(`${p.nombre} ${p.marca ?? ""}`).includes(t));
-  }
-  if (f.semaforo?.length) out = out.filter((p) => p.semaforo !== null && f.semaforo.includes(p.semaforo));
-  if (f.categoria?.length) out = out.filter((p) => f.categoria.includes(p.categoria));
-  if (f.soloFavoritos) out = out.filter((p) => p.favorito === true);
-  if (f.desde) out = out.filter((p) => p.fechaAnalisis >= f.desde);
-  if (f.hasta) out = out.filter((p) => p.fechaAnalisis <= f.hasta);
-  const sinNota = (p) => p.puntuacion === null ? -1 : p.puntuacion;
-  const orden = f.orden ?? "fecha_desc";
-  out = [...out].sort((a, b) => {
-    switch (orden) {
-      case "fecha_asc":
-        return a.fechaAnalisis.localeCompare(b.fechaAnalisis);
-      case "nota_desc":
-        return sinNota(b) - sinNota(a);
-      case "nota_asc":
-        return sinNota(a) - sinNota(b);
-      case "nombre":
-        return a.nombre.localeCompare(b.nombre, "es");
-      default:
-        return b.fechaAnalisis.localeCompare(a.fechaAnalisis);
-    }
-  });
-  return f.limite ? out.slice(0, f.limite) : out;
-}
-function contarSustancias(lista, tipo) {
-  const mapa = /* @__PURE__ */ new Map();
-  for (const p of lista) {
-    const vistas = /* @__PURE__ */ new Set();
-    for (const s of p.veredicto?.sustancias ?? []) {
-      if (tipo && s.tipo !== tipo) continue;
-      if (vistas.has(s.codigo)) continue;
-      vistas.add(s.codigo);
-      const previa = mapa.get(s.codigo);
-      if (previa) {
-        previa.veces++;
-        if (previa.ejemplos.length < 5) previa.ejemplos.push(p.nombre);
-      } else {
-        mapa.set(s.codigo, {
-          codigo: s.codigo,
-          nombre: s.nombre,
-          tipo: s.tipo,
-          riesgo: s.riesgo,
-          veces: 1,
-          ejemplos: [p.nombre]
-        });
-      }
-    }
-  }
-  return [...mapa.values()].sort((a, b) => b.veces - a.veces || a.nombre.localeCompare(b.nombre, "es"));
-}
-function resumir(productos, fotos) {
-  const porSemaforo = Object.fromEntries(SEMAFOROS.map((s) => [s, 0]));
-  for (const p of productos) if (p.semaforo) porSemaforo[p.semaforo]++;
-  const fechas = productos.map((p) => p.fechaAnalisis).sort();
-  return {
-    productos: productos.length,
-    fotos: fotos.length,
-    bytesFotos: fotos.reduce((s, f) => s + f.datos.byteLength, 0),
-    porSemaforo,
-    primerAnalisis: fechas[0],
-    ultimoAnalisis: fechas[fechas.length - 1]
-  };
-}
-
-// src/almacen/memoria.ts
-var RepositorioMemoria = class {
-  constructor() {
-    __publicField(this, "productos", /* @__PURE__ */ new Map());
-    __publicField(this, "fotos", /* @__PURE__ */ new Map());
-    __publicField(this, "preferencias", /* @__PURE__ */ new Map());
-  }
-  async guardarProducto(p) {
-    this.productos.set(p.id, estructurar(p));
-  }
-  async obtenerProducto(id) {
-    const p = this.productos.get(id);
-    return p ? estructurar(p) : void 0;
-  }
-  async listarProductos(filtro) {
-    return filtrarYOrdenar([...this.productos.values()], filtro).map(estructurar);
-  }
-  async borrarProducto(id) {
-    const p = this.productos.get(id);
-    if (!p) return;
-    this.productos.delete(id);
-    const enUso = /* @__PURE__ */ new Set();
-    for (const otro of this.productos.values()) {
-      for (const f of otro.fotos) enUso.add(f.idFoto);
-    }
-    for (const f of p.fotos) if (!enUso.has(f.idFoto)) this.fotos.delete(f.idFoto);
-  }
-  async guardarFoto(f) {
-    this.fotos.set(f.id, f);
-  }
-  async obtenerFoto(id) {
-    return this.fotos.get(id);
-  }
-  async borrarFoto(id) {
-    this.fotos.delete(id);
-  }
-  async guardarPreferencia(clave2, valor) {
-    this.preferencias.set(clave2, valor);
-  }
-  async obtenerPreferencia(clave2) {
-    return this.preferencias.get(clave2);
-  }
-  async listarPreferencias() {
-    return Object.fromEntries(this.preferencias);
-  }
-  async estadisticas() {
-    return resumir([...this.productos.values()], [...this.fotos.values()]);
-  }
-  async recuentoSustancias(tipo) {
-    return contarSustancias([...this.productos.values()], tipo);
-  }
-  async vaciar() {
-    this.productos.clear();
-    this.fotos.clear();
-    this.preferencias.clear();
-  }
-};
-function estructurar(x) {
-  return structuredClone(x);
-}
-
-// src/almacen/indexeddb.ts
-var BASE = "comer-despues-de-usar";
-var VERSION_BASE = 1;
-var ALMACEN_PRODUCTOS = "productos";
-var ALMACEN_FOTOS = "fotos";
-var ALMACEN_PREFERENCIAS = "preferencias";
-function prometer(req) {
-  return new Promise((resuelve, rechaza) => {
-    req.onsuccess = () => resuelve(req.result);
-    req.onerror = () => rechaza(req.error ?? new Error("Fallo en la base de datos"));
-  });
-}
-function terminada(tx) {
-  return new Promise((resuelve, rechaza) => {
-    tx.oncomplete = () => resuelve();
-    tx.onerror = () => rechaza(tx.error ?? new Error("Transacción fallida"));
-    tx.onabort = () => rechaza(tx.error ?? new Error("Transacción abortada"));
-  });
-}
-var RepositorioIndexedDB = class {
-  constructor(nombreBase = BASE) {
-    __publicField(this, "bd", null);
-    __publicField(this, "nombreBase");
-    this.nombreBase = nombreBase;
-  }
-  /** Abre la base y crea los almacenes la primera vez. */
-  async abrir() {
-    if (this.bd) return this.bd;
-    this.bd = await new Promise((resuelve, rechaza) => {
-      const req = indexedDB.open(this.nombreBase, VERSION_BASE);
-      req.onupgradeneeded = () => {
-        const bd = req.result;
-        if (!bd.objectStoreNames.contains(ALMACEN_PRODUCTOS)) {
-          const st = bd.createObjectStore(ALMACEN_PRODUCTOS, { keyPath: "id" });
-          st.createIndex("fecha", "fechaAnalisis");
-          st.createIndex("semaforo", "semaforo");
-        }
-        if (!bd.objectStoreNames.contains(ALMACEN_FOTOS)) {
-          bd.createObjectStore(ALMACEN_FOTOS, { keyPath: "id" });
-        }
-        if (!bd.objectStoreNames.contains(ALMACEN_PREFERENCIAS)) {
-          bd.createObjectStore(ALMACEN_PREFERENCIAS);
-        }
-      };
-      req.onsuccess = () => resuelve(req.result);
-      req.onerror = () => rechaza(req.error ?? new Error("No se pudo abrir la base de datos"));
-      req.onblocked = () => rechaza(new Error("La base está bloqueada por otra pestaña abierta"));
-    });
-    return this.bd;
-  }
-  async leer(almacen, fn) {
-    const bd = await this.abrir();
-    const tx = bd.transaction(almacen, "readonly");
-    const res = await prometer(fn(tx.objectStore(almacen)));
-    await terminada(tx);
-    return res;
-  }
-  async escribir(almacen, fn) {
-    const bd = await this.abrir();
-    const tx = bd.transaction(almacen, "readwrite");
-    fn(tx.objectStore(almacen));
-    await terminada(tx);
-  }
-  async guardarProducto(p) {
-    await this.escribir(ALMACEN_PRODUCTOS, (st) => {
-      st.put(p);
-    });
-  }
-  async obtenerProducto(id) {
-    return this.leer(ALMACEN_PRODUCTOS, (st) => st.get(id));
-  }
-  async listarProductos(filtro) {
-    const todos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
-    return filtrarYOrdenar(todos ?? [], filtro);
-  }
-  async borrarProducto(id) {
-    const bd = await this.abrir();
-    const producto = await this.obtenerProducto(id);
-    if (!producto) return;
-    const tx = bd.transaction([ALMACEN_PRODUCTOS, ALMACEN_FOTOS], "readwrite");
-    const stProductos = tx.objectStore(ALMACEN_PRODUCTOS);
-    const stFotos = tx.objectStore(ALMACEN_FOTOS);
-    const resto = await prometer(stProductos.getAll());
-    const enUso = /* @__PURE__ */ new Set();
-    for (const otro of resto) {
-      if (otro.id === id) continue;
-      for (const f of otro.fotos) enUso.add(f.idFoto);
-    }
-    stProductos.delete(id);
-    for (const f of producto.fotos) if (!enUso.has(f.idFoto)) stFotos.delete(f.idFoto);
-    await terminada(tx);
-  }
-  async guardarFoto(f) {
-    await this.escribir(ALMACEN_FOTOS, (st) => {
-      st.put(f);
-    });
-  }
-  async obtenerFoto(id) {
-    return this.leer(ALMACEN_FOTOS, (st) => st.get(id));
-  }
-  async borrarFoto(id) {
-    await this.escribir(ALMACEN_FOTOS, (st) => {
-      st.delete(id);
-    });
-  }
-  async guardarPreferencia(clave2, valor) {
-    await this.escribir(ALMACEN_PREFERENCIAS, (st) => {
-      st.put(valor, clave2);
-    });
-  }
-  async obtenerPreferencia(clave2) {
-    return this.leer(ALMACEN_PREFERENCIAS, (st) => st.get(clave2));
-  }
-  async listarPreferencias() {
-    const bd = await this.abrir();
-    const tx = bd.transaction(ALMACEN_PREFERENCIAS, "readonly");
-    const st = tx.objectStore(ALMACEN_PREFERENCIAS);
-    const claves = await prometer(st.getAllKeys());
-    const valores = await prometer(st.getAll());
-    await terminada(tx);
-    const out = {};
-    claves.forEach((k, i) => {
-      out[String(k)] = valores[i];
-    });
-    return out;
-  }
-  async estadisticas() {
-    const productos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
-    const fotos = await this.leer(ALMACEN_FOTOS, (st) => st.getAll());
-    return resumir(productos ?? [], fotos ?? []);
-  }
-  async recuentoSustancias(tipo) {
-    const productos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
-    return contarSustancias(productos ?? [], tipo);
-  }
-  async vaciar() {
-    const bd = await this.abrir();
-    const tx = bd.transaction([ALMACEN_PRODUCTOS, ALMACEN_FOTOS, ALMACEN_PREFERENCIAS], "readwrite");
-    tx.objectStore(ALMACEN_PRODUCTOS).clear();
-    tx.objectStore(ALMACEN_FOTOS).clear();
-    tx.objectStore(ALMACEN_PREFERENCIAS).clear();
-    await terminada(tx);
-  }
-  async cerrar() {
-    this.bd?.close();
-    this.bd = null;
-  }
-};
-function hayIndexedDB() {
-  try {
-    return typeof indexedDB !== "undefined" && indexedDB !== null;
-  } catch {
-    return false;
-  }
-}
-
-// src/almacen/copia.ts
-var FORMATO = "comer-despues-de-usar/copia";
-var VERSION_FORMATO = 1;
-async function exportar(repo, opts = {}) {
-  const incluirFotos = opts.incluirFotos ?? true;
-  const productos = await repo.listarProductos({ orden: "fecha_asc" });
-  const preferencias = await repo.listarPreferencias();
-  const fotos = [];
-  if (incluirFotos) {
-    const vistas = /* @__PURE__ */ new Set();
-    for (const p of productos) {
-      for (const ref of p.fotos) {
-        if (vistas.has(ref.idFoto)) continue;
-        vistas.add(ref.idFoto);
-        const f = await repo.obtenerFoto(ref.idFoto);
-        if (!f) continue;
-        fotos.push({
-          id: f.id,
-          tipo: f.tipo,
-          mime: f.mime,
-          creada: f.creada,
-          datos64: aBase64(f.datos)
-        });
-      }
-    }
-  }
-  return {
-    formato: FORMATO,
-    version: VERSION_FORMATO,
-    fecha: (/* @__PURE__ */ new Date()).toISOString(),
-    versionAlgoritmo: VERSION_ALGORITMO,
-    incluyeFotos: incluirFotos,
-    productos,
-    fotos,
-    preferencias
-  };
-}
-function validarCopia(x) {
-  const errores = [];
-  if (!x || typeof x !== "object") {
-    return ["El fichero no contiene datos reconocibles."];
-  }
-  const c = x;
-  if (c.formato !== FORMATO) {
-    errores.push("El fichero no es una copia de seguridad de esta aplicación.");
-  }
-  if (typeof c.version !== "number") {
-    errores.push("Al fichero le falta el número de versión del formato.");
-  } else if (c.version > VERSION_FORMATO) {
-    errores.push(`La copia es de una versión más nueva (${c.version}) que esta aplicación (${VERSION_FORMATO}). Actualiza antes de importarla.`);
-  }
-  if (!Array.isArray(c.productos)) {
-    errores.push("El fichero no contiene una lista de productos.");
-  } else {
-    const malos = c.productos.filter(
-      (p) => !p || typeof p !== "object" || typeof p.id !== "string"
-    ).length;
-    if (malos > 0) errores.push(`Hay ${malos} producto(s) sin identificador válido.`);
-  }
-  if (c.fotos !== void 0 && !Array.isArray(c.fotos)) {
-    errores.push("La lista de fotos está corrupta.");
-  }
-  return errores;
-}
-async function importar(repo, copia, opts = {}) {
-  const errores = validarCopia(copia);
-  if (errores.length > 0) {
-    return { ok: false, productosImportados: 0, productosOmitidos: 0, fotosImportadas: 0, errores, avisos: [] };
-  }
-  const c = copia;
-  const modo = opts.modo ?? "fusionar";
-  const avisos = [];
-  if (modo === "reemplazar") await repo.vaciar();
-  let fotosImportadas = 0;
-  for (const f of c.fotos ?? []) {
-    try {
-      const foto = {
-        id: f.id,
-        tipo: f.tipo,
-        mime: f.mime,
-        creada: f.creada,
-        datos: deBase64(f.datos64)
-      };
-      await repo.guardarFoto(foto);
-      fotosImportadas++;
-    } catch {
-      avisos.push(`No se pudo restaurar la foto ${f.id}.`);
-    }
-  }
-  let importados = 0;
-  let omitidos = 0;
-  for (const p of c.productos) {
-    try {
-      if (modo === "fusionar" && await repo.obtenerProducto(p.id)) {
-        omitidos++;
-        continue;
-      }
-      await repo.guardarProducto(p);
-      importados++;
-    } catch {
-      omitidos++;
-      avisos.push(`No se pudo restaurar el producto "${p.nombre ?? p.id}".`);
-    }
-  }
-  for (const [k, v2] of Object.entries(c.preferencias ?? {})) {
-    await repo.guardarPreferencia(k, v2);
-  }
-  if (!c.incluyeFotos) {
-    avisos.push("Esta copia se guardó sin fotos, así que los productos se restauran sin imagen.");
-  }
-  if (c.versionAlgoritmo !== VERSION_ALGORITMO) {
-    avisos.push(`Los veredictos se calcularon con la versión ${c.versionAlgoritmo} del algoritmo y esta app usa la ${VERSION_ALGORITMO}. Puedes recalcularlos cuando quieras.`);
-  }
-  return {
-    ok: true,
-    productosImportados: importados,
-    productosOmitidos: omitidos,
-    fotosImportadas,
-    errores: [],
-    avisos
-  };
-}
-function nombreFichero(fecha = /* @__PURE__ */ new Date()) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `comer-copia-${fecha.getFullYear()}${p(fecha.getMonth() + 1)}${p(fecha.getDate())}-${p(fecha.getHours())}${p(fecha.getMinutes())}.json`;
-}
-function aBase64(datos) {
-  const bytes = new Uint8Array(datos);
-  let bin = "";
-  const trozo = 32768;
-  for (let i = 0; i < bytes.length; i += trozo) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + trozo));
-  }
-  return btoa(bin);
-}
-function deBase64(texto) {
-  const bin = atob(texto);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-// src/imagen/procesar.ts
-function crearImagen(ancho, alto) {
-  return { datos: new Uint8ClampedArray(ancho * alto * 4), ancho, alto };
-}
-function redimensionar(img, ladoMax) {
-  const mayor = Math.max(img.ancho, img.alto);
-  if (mayor <= ladoMax) return img;
-  const escala = ladoMax / mayor;
-  const ancho = Math.max(1, Math.round(img.ancho * escala));
-  const alto = Math.max(1, Math.round(img.alto * escala));
-  const out = crearImagen(ancho, alto);
-  const px = img.ancho / ancho;
-  const py = img.alto / alto;
-  for (let y = 0; y < alto; y++) {
-    const y0 = Math.floor(y * py);
-    const y1 = Math.min(img.alto, Math.max(y0 + 1, Math.ceil((y + 1) * py)));
-    for (let x = 0; x < ancho; x++) {
-      const x0 = Math.floor(x * px);
-      const x1 = Math.min(img.ancho, Math.max(x0 + 1, Math.ceil((x + 1) * px)));
-      let r = 0, g = 0, b = 0, a = 0, n = 0;
-      for (let j = y0; j < y1; j++) {
-        for (let i = x0; i < x1; i++) {
-          const k2 = (j * img.ancho + i) * 4;
-          r += img.datos[k2];
-          g += img.datos[k2 + 1];
-          b += img.datos[k2 + 2];
-          a += img.datos[k2 + 3];
-          n++;
-        }
-      }
-      const k = (y * ancho + x) * 4;
-      out.datos[k] = r / n;
-      out.datos[k + 1] = g / n;
-      out.datos[k + 2] = b / n;
-      out.datos[k + 3] = a / n;
-    }
-  }
-  return out;
-}
-function aGrises(img) {
-  const out = crearImagen(img.ancho, img.alto);
-  for (let i = 0; i < img.datos.length; i += 4) {
-    const l = 0.2126 * img.datos[i] + 0.7152 * img.datos[i + 1] + 0.0722 * img.datos[i + 2];
-    out.datos[i] = out.datos[i + 1] = out.datos[i + 2] = l;
-    out.datos[i + 3] = 255;
-  }
-  return out;
-}
-function estirarContraste(img, recorte = 0.02) {
-  const hist = new Uint32Array(256);
-  for (let i = 0; i < img.datos.length; i += 4) hist[img.datos[i] | 0]++;
-  const total = img.ancho * img.alto;
-  const fuera = Math.floor(total * recorte);
-  let bajo = 0, acumulado = 0;
-  for (let v2 = 0; v2 < 256; v2++) {
-    acumulado += hist[v2];
-    if (acumulado > fuera) {
-      bajo = v2;
-      break;
-    }
-  }
-  let alto = 255;
-  acumulado = 0;
-  for (let v2 = 255; v2 >= 0; v2--) {
-    acumulado += hist[v2];
-    if (acumulado > fuera) {
-      alto = v2;
-      break;
-    }
-  }
-  const out = crearImagen(img.ancho, img.alto);
-  const rango = Math.max(1, alto - bajo);
-  for (let i = 0; i < img.datos.length; i += 4) {
-    const v2 = Math.max(0, Math.min(255, (img.datos[i] - bajo) / rango * 255));
-    out.datos[i] = out.datos[i + 1] = out.datos[i + 2] = v2;
-    out.datos[i + 3] = 255;
-  }
-  return out;
-}
-function integrales(img) {
-  const { ancho: w, alto: h } = img;
-  const suma = new Float64Array((w + 1) * (h + 1));
-  const suma2 = new Float64Array((w + 1) * (h + 1));
-  for (let y = 0; y < h; y++) {
-    let fila = 0, fila2 = 0;
-    for (let x = 0; x < w; x++) {
-      const v2 = img.datos[(y * w + x) * 4];
-      fila += v2;
-      fila2 += v2 * v2;
-      const k = (y + 1) * (w + 1) + (x + 1);
-      suma[k] = suma[y * (w + 1) + (x + 1)] + fila;
-      suma2[k] = suma2[y * (w + 1) + (x + 1)] + fila2;
-    }
-  }
-  return { suma, suma2, w, h };
-}
-function binarizarSauvola(img, radio = 0, k = 0.2, R = 128) {
-  const { suma, suma2, w, h } = integrales(img);
-  const r = radio > 0 ? radio : Math.max(7, Math.round(Math.min(w, h) / 28));
-  const out = crearImagen(w, h);
-  const areaSuma = (x0, y0, x1, y1, tabla) => tabla[y1 * (w + 1) + x1] - tabla[y0 * (w + 1) + x1] - tabla[y1 * (w + 1) + x0] + tabla[y0 * (w + 1) + x0];
-  for (let y = 0; y < h; y++) {
-    const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
-    for (let x = 0; x < w; x++) {
-      const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
-      const n = (x1 - x0) * (y1 - y0);
-      const s = areaSuma(x0, y0, x1, y1, suma);
-      const s2 = areaSuma(x0, y0, x1, y1, suma2);
-      const media2 = s / n;
-      const varianza = Math.max(0, s2 / n - media2 * media2);
-      const desv = Math.sqrt(varianza);
-      const umbral = media2 * (1 + k * (desv / R - 1));
-      const v2 = img.datos[(y * w + x) * 4] > umbral ? 255 : 0;
-      const kk = (y * w + x) * 4;
-      out.datos[kk] = out.datos[kk + 1] = out.datos[kk + 2] = v2;
-      out.datos[kk + 3] = 255;
-    }
-  }
-  return out;
-}
-function recortar(img, x, y, ancho, alto) {
-  const x0 = Math.max(0, Math.min(img.ancho - 1, Math.round(x)));
-  const y0 = Math.max(0, Math.min(img.alto - 1, Math.round(y)));
-  const w = Math.max(1, Math.min(img.ancho - x0, Math.round(ancho)));
-  const h = Math.max(1, Math.min(img.alto - y0, Math.round(alto)));
-  const out = crearImagen(w, h);
-  for (let j = 0; j < h; j++) {
-    const origen = ((y0 + j) * img.ancho + x0) * 4;
-    out.datos.set(img.datos.subarray(origen, origen + w * 4), j * w * 4);
-  }
-  return out;
-}
-function prepararParaLectura(img, opts = {}) {
-  const ladoMax = opts.ladoMax ?? 1600;
-  let out = redimensionar(img, ladoMax);
-  out = aGrises(out);
-  out = estirarContraste(out, opts.recorteHistograma ?? 0.02);
-  if (opts.binarizar !== false) out = binarizarSauvola(out);
-  return out;
-}
-var RECORTE_COMPLETO = { x0: 0, y0: 0, x1: 100, y1: 100 };
-function hayRecorte(r) {
-  return r.x0 > 0.5 || r.y0 > 0.5 || r.x1 < 99.5 || r.y1 < 99.5;
-}
-function recorteRelativo(img, r) {
-  const lim = (v2) => Math.max(0, Math.min(100, Number.isFinite(v2) ? v2 : 0));
-  let x0 = lim(r.x0), x1 = lim(r.x1), y0 = lim(r.y0), y1 = lim(r.y1);
-  if (x1 < x0) [x0, x1] = [x1, x0];
-  if (y1 < y0) [y0, y1] = [y1, y0];
-  if (x1 - x0 < 5 || y1 - y0 < 5) return img;
-  const px = Math.round(x0 / 100 * img.ancho);
-  const py = Math.round(y0 / 100 * img.alto);
-  const ancho = Math.max(1, Math.round((x1 - x0) / 100 * img.ancho));
-  const alto = Math.max(1, Math.round((y1 - y0) / 100 * img.alto));
-  return recortar(img, px, py, ancho, alto);
-}
-
-// src/imagen/calidad.ts
-function nitidez(gris) {
-  const { ancho: w, alto: h, datos } = gris;
-  if (w < 3 || h < 3) return 0;
-  let suma = 0, suma2 = 0, n = 0;
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
-      const c = (y * w + x) * 4;
-      const lap = -4 * datos[c] + datos[c - 4] + datos[c + 4] + datos[c - w * 4] + datos[c + w * 4];
-      suma += lap;
-      suma2 += lap * lap;
-      n++;
-    }
-  }
-  const media2 = suma / n;
-  return suma2 / n - media2 * media2;
-}
-function brillo(gris) {
-  let s = 0;
-  for (let i = 0; i < gris.datos.length; i += 4) s += gris.datos[i];
-  return s / (gris.datos.length / 4);
-}
-function contraste(gris) {
-  const m = brillo(gris);
-  let s = 0;
-  for (let i = 0; i < gris.datos.length; i += 4) {
-    const d = gris.datos[i] - m;
-    s += d * d;
-  }
-  return Math.sqrt(s / (gris.datos.length / 4));
-}
-var UMBRALES_CALIDAD = {
-  nitidezRelativaMinima: 0.22,
-  nitidezRelativaBuena: 0.6,
-  nitidezMinima: 60,
-  nitidezBuena: 250,
-  brilloMinimo: 45,
-  brilloMaximo: 225,
-  contrasteMinimo: 28,
-  ladoMinimo: 600
-};
-function evaluarCalidad(img) {
-  const chica = redimensionar(img, 900);
-  const gris = aGrises(chica);
-  const nit = nitidez(gris);
-  const con = contraste(gris);
-  const relativa = con > 3 ? nit / (con * con) : 0;
-  const medidas = {
-    nitidez: Math.round(nit),
-    nitidezRelativa: Math.round(relativa * 1e3) / 1e3,
-    brillo: Math.round(brillo(gris)),
-    contraste: Math.round(con),
-    megapixeles: Math.round(img.ancho * img.alto / 1e5) / 10,
-    ladoMenor: Math.min(img.ancho, img.alto)
-  };
-  const problemas = [];
-  if (con > 3 && medidas.nitidezRelativa < UMBRALES_CALIDAD.nitidezRelativaMinima) {
-    problemas.push({
-      codigo: "movida",
-      mensaje: "La foto ha salido movida o desenfocada.",
-      consejo: "Apoya los codos, espera a que el móvil enfoque y vuelve a disparar. Es lo que más arregla la lectura."
-    });
-  }
-  if (medidas.brillo < UMBRALES_CALIDAD.brilloMinimo) {
-    problemas.push({
-      codigo: "oscura",
-      mensaje: "La foto ha salido demasiado oscura.",
-      consejo: "Acércate a una ventana o enciende una luz. Evita hacer sombra tú mismo sobre el envase."
-    });
-  }
-  if (medidas.brillo > UMBRALES_CALIDAD.brilloMaximo) {
-    problemas.push({
-      codigo: "quemada",
-      mensaje: "Hay un reflejo o un brillo que se come el texto.",
-      consejo: "Gira el envase o apártate de la luz directa. Los plásticos brillantes reflejan mucho."
-    });
-  }
-  if (medidas.contraste < UMBRALES_CALIDAD.contrasteMinimo) {
-    problemas.push({
-      codigo: "plana",
-      mensaje: "Apenas se distingue el texto del fondo.",
-      consejo: "Acércate hasta que la tabla ocupe casi toda la pantalla y vuelve a intentarlo."
-    });
-  }
-  if (medidas.ladoMenor < UMBRALES_CALIDAD.ladoMinimo) {
-    problemas.push({
-      codigo: "pequena",
-      mensaje: "La imagen tiene muy poca resolución para leer letra pequeña.",
-      consejo: "Haz la foto con la cámara en vez de recortar una imagen ya guardada."
-    });
-  }
-  const pNitidez = Math.min(1, medidas.nitidezRelativa / UMBRALES_CALIDAD.nitidezRelativaBuena);
-  const pContraste = Math.min(1, medidas.contraste / 60);
-  const desvioBrillo = Math.abs(medidas.brillo - 135) / 135;
-  const pBrillo = Math.max(0, 1 - desvioBrillo * 1.4);
-  const puntuacion = Math.round((0.45 * pNitidez + 0.3 * pContraste + 0.25 * pBrillo) * 100);
-  const grave = problemas.some((p) => p.codigo === "movida" || p.codigo === "pequena");
-  let nivel;
-  if (grave || puntuacion < 35) nivel = "mala";
-  else if (problemas.length > 0 || puntuacion < 60) nivel = "aceptable";
-  else nivel = "buena";
-  return { nivel, puntuacion, medidas, problemas, repetir: nivel === "mala" };
-}
-
-// src/lectura/tabla.ts
-var SINONIMOS = [
-  ["saturadas_g", [
-    "de las cuales acidos grasos saturados",
-    "de los cuales acidos grasos saturados",
-    "de las cuales saturadas",
-    "de los cuales saturados",
-    "de las quals saturades",
-    "dos quais saturados",
-    "of which saturates",
-    "acidos grasos saturados",
-    "grasas saturadas",
-    "greixos saturats",
-    "saturadas",
-    "saturados",
-    "saturates",
-    "saturats"
-  ]],
-  ["monoinsaturadas_g", [
-    "de las cuales monoinsaturadas",
-    "acidos grasos monoinsaturados",
-    "grasas monoinsaturadas",
-    "monoinsaturadas",
-    "monoinsaturados",
-    "monounsaturates"
-  ]],
-  ["poliinsaturadas_g", [
-    "de las cuales poliinsaturadas",
-    "acidos grasos poliinsaturados",
-    "grasas poliinsaturadas",
-    "poliinsaturadas",
-    "poliinsaturados",
-    "polyunsaturates"
-  ]],
-  ["trans_g", ["acidos grasos trans", "grasas trans", "de las cuales trans", "trans"]],
-  ["azucares_g", [
-    "de los cuales azucares",
-    "de las cuales azucares",
-    "dels quals sucres",
-    "of which sugars",
-    "dos quais acucares",
-    "azucares totales",
-    "azucares",
-    "sucres",
-    "sugars",
-    "acucares"
-  ]],
-  ["polialcoholes_g", ["de los cuales polialcoholes", "polialcoholes", "polioles", "polyols"]],
-  ["almidon_g", ["de los cuales almidon", "almidon", "starch"]],
-  ["hidratos_g", [
-    "hidratos de carbono",
-    "hidrats de carboni",
-    "carbohidratos",
-    "glucidos",
-    "glicidos",
-    "carbohydrate",
-    "hidratos",
-    // El lector se come letras del principio ("tdmtos de carbono"), pero
-    // "de carbono" sobrevive y es lo bastante distintivo para fiarse.
-    "de carbono",
-    "de carboni"
-  ]],
-  ["fibra_g", ["fibra alimentaria", "fibra dietetica", "fibra alimentar", "fibra", "fibre", "fibra"]],
-  ["proteinas_g", ["proteinas", "proteines", "proteinas", "protein", "proteina"]],
-  ["sal_g", ["sal equivalente", "equivalente en sal", "sal", "salt"]],
-  ["sodio_mg", ["sodio", "sodi", "sodium"]],
-  ["grasas_g", ["materia grasa", "grasas totales", "grasas", "greixos", "lipidos", "gorduras", "fat", "grasa"]],
-  ["energia_kcal", ["valor energetico", "valor energetic", "energia", "energy", "calorias"]]
-];
-var CABECERAS_100 = ["por 100 g", "por 100 ml", "per 100 g", "per 100 ml", "100 g", "100 ml", "/100g", "/100ml"];
-var CABECERAS_RACION = ["por racion", "per racio", "por porcion", "racion de", "porcion de", "per serving", "por unidad", "unidad"];
-var CABECERAS_ENVASE = ["por envase", "envase entero", "per envas", "por paquete"];
-function normalizar(s) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[·•‧∙]/g, " ").replace(/\s+/g, " ").trim();
-}
-var UNIDADES = "kcal|kcai|kca|keal|kj|kilojulios|kilocalorias|mg|mcg|ug|µg|g|ml|%";
-function normalizarUnidad(u) {
-  const x = u.toLowerCase();
-  if (/^(kcal|kcai|kca|keal|kilocalorias)$/.test(x)) return "kcal";
-  if (/^(kj|kilojulios)$/.test(x)) return "kj";
-  if (/^(µg|ug|mcg)$/.test(x)) return "ug";
-  return x;
-}
-function extraerNumeros(texto) {
-  const out = [];
-  const re = new RegExp(
-    `([<>~]?\\s?\\d{1,3}(?:[ .]\\d{3})+(?:[.,]\\d{1,2})?|[<>~]?\\s?\\d+(?:[.,]\\d{1,3})?)\\s*(${UNIDADES})?`,
-    "gi"
-  );
-  let m;
-  while ((m = re.exec(texto)) !== null) {
-    const bruto = m[0].trim();
-    let crudo = m[1].replace(/[<>~]/g, "").trim();
-    crudo = crudo.replace(/[ ](?=\d{3}\b)/g, "").replace(/\.(?=\d{3}\b)/g, "");
-    const valor = parseFloat(crudo.replace(",", "."));
-    if (!Number.isFinite(valor)) continue;
-    out.push({ valor, unidad: normalizarUnidad(m[2] ?? ""), bruto });
-  }
-  return out;
-}
-function marcadores(linea) {
-  const out = [];
-  const ocupado = new Array(linea.length).fill(false);
-  const todos = SINONIMOS.flatMap(([campo, nombres]) => nombres.map((n) => ({ campo, n }))).sort((a, b) => b.n.length - a.n.length);
-  for (const { campo, n } of todos) {
-    let desde = 0;
-    for (; ; ) {
-      const i = linea.indexOf(n, desde);
-      if (i === -1) break;
-      desde = i + 1;
-      const antes = i === 0 || /[^a-z0-9]/.test(linea[i - 1]);
-      const despues = i + n.length >= linea.length || /[^a-z0-9]/.test(linea[i + n.length]);
-      if (!antes || !despues) continue;
-      if (ocupado.slice(i, i + n.length).some(Boolean)) continue;
-      for (let k = i; k < i + n.length; k++) ocupado[k] = true;
-      out.push({ campo, desde: i, hasta: i + n.length, texto: n });
-      break;
-    }
-  }
-  const porCampo = /* @__PURE__ */ new Map();
-  for (const m of out.sort((a, b) => a.desde - b.desde)) {
-    if (!porCampo.has(m.campo)) porCampo.set(m.campo, m);
-  }
-  return [...porCampo.values()].sort((a, b) => a.desde - b.desde);
-}
-function detectarColumnas(lineas) {
-  for (const l of lineas) {
-    const tiene100 = CABECERAS_100.some((c) => l.includes(c));
-    const tieneRacion = CABECERAS_RACION.some((c) => l.includes(c));
-    const tieneEnvase = CABECERAS_ENVASE.some((c) => l.includes(c));
-    if (!tiene100 && !tieneRacion && !tieneEnvase) continue;
-    const pos = [];
-    for (const c of CABECERAS_100) {
-      const i = l.indexOf(c);
-      if (i >= 0) {
-        pos.push({ tipo: "por_100", i });
-        break;
-      }
-    }
-    for (const c of CABECERAS_RACION) {
-      const i = l.indexOf(c);
-      if (i >= 0) {
-        pos.push({ tipo: "por_racion", i });
-        break;
-      }
-    }
-    for (const c of CABECERAS_ENVASE) {
-      const i = l.indexOf(c);
-      if (i >= 0) {
-        pos.push({ tipo: "por_envase", i });
-        break;
-      }
-    }
-    pos.sort((a, b) => a.i - b.i);
-    const indice100 = pos.findIndex((p) => p.tipo === "por_100");
-    let racion;
-    const mr = l.match(/racion[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/porcion[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/\((\d+(?:[.,]\d+)?)\s*(?:g|ml)\)/);
-    if (mr) racion = parseFloat(mr[1].replace(",", "."));
-    if (indice100 >= 0) return { base: "por_100", indice100, racion };
-    if (pos.length) return { base: pos[0].tipo, indice100: 0, racion };
-  }
-  return { base: "desconocida", indice100: 0 };
-}
-function unirNombresConValores(lineas) {
-  const soloNumeros = (l) => /\d/.test(l) && l.replace(/\d+(?:[.,]\d+)?/g, " ").replace(new RegExp(`\\b(${UNIDADES})\\b`, "gi"), " ").replace(/[^\x20-\x7E]/g, "").replace(/[\s.,:;%/<>~+()·-]/g, "").length === 0;
-  const esBasura = (l) => marcadores(l).length === 0 && !soloNumeros(l) && !/\d+[.,]\d/.test(l);
-  const out = [];
-  const dudosos = /* @__PURE__ */ new Set();
-  let anteriorFueNombreSinValor = false;
-  for (let i = 0; i < lineas.length; i++) {
-    const actual = lineas[i];
-    const tieneNombre = marcadores(actual).length > 0;
-    const sinNumero = !/\d/.test(actual);
-    if (tieneNombre && sinNumero) {
-      let j = i + 1;
-      let saltados = 0;
-      while (j < lineas.length && saltados < 1 && esBasura(lineas[j])) {
-        j++;
-        saltados++;
-      }
-      if (j < lineas.length && soloNumeros(lineas[j])) {
-        if (anteriorFueNombreSinValor) dudosos.add(out.length);
-        out.push(`${actual} ${lineas[j]}`);
-        for (let k = i + 1; k < j; k++) out.push(lineas[k]);
-        i = j;
-        anteriorFueNombreSinValor = false;
-        continue;
-      }
-      anteriorFueNombreSinValor = true;
-      out.push(actual);
-      continue;
-    }
-    anteriorFueNombreSinValor = false;
-    out.push(actual);
-  }
-  return { lineas: out, dudosos };
-}
-function analizarTabla(textoCrudo) {
-  const lineasCrudas = textoCrudo.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 0);
-  const { lineas, dudosos } = unirNombresConValores(lineasCrudas.map(normalizar));
-  const { base: baseDetectada, indice100, racion } = detectarColumnas(lineas);
-  const valores = [];
-  const usadas = /* @__PURE__ */ new Set();
-  const avisos = [];
-  lineas.forEach((linea, iLinea) => {
-    const marcas = marcadores(linea);
-    if (marcas.length === 0) return;
-    marcas.forEach((marca, iMarca) => {
-      const fin = iMarca + 1 < marcas.length ? marcas[iMarca + 1].desde : linea.length;
-      const fragmento = linea.slice(marca.hasta, fin);
-      const nums = extraerNumeros(fragmento);
-      if (nums.length === 0) return;
-      usadas.add(iLinea);
-      if (marca.campo === "energia_kcal") {
-        const kj = nums.find((n2) => n2.unidad === "kj");
-        const kcal = nums.find((n2) => n2.unidad === "kcal");
-        if (kj) valores.push({ campo: "energia_kj", valor: kj.valor, unidad: "kJ", textoOriginal: kj.bruto, confianza: 0.95, columna: 0 });
-        if (kcal) valores.push({ campo: "energia_kcal", valor: kcal.valor, unidad: "kcal", textoOriginal: kcal.bruto, confianza: 0.95, columna: 0 });
-        if (!kj && !kcal) {
-          const n2 = elegirColumna(nums, indice100);
-          if (n2) {
-            const esKj = n2.valor > 900;
-            valores.push({
-              campo: esKj ? "energia_kj" : "energia_kcal",
-              valor: n2.valor,
-              unidad: esKj ? "kJ" : "kcal",
-              textoOriginal: n2.bruto,
-              confianza: 0.6,
-              columna: indice100
-            });
-            avisos.push("La energía venía sin unidad. Se ha supuesto por su magnitud, compruébala.");
-          }
-        }
-        return;
-      }
-      const n = elegirColumna(nums, indice100);
-      if (!n) return;
-      let valor = n.valor;
-      let unidad = n.unidad;
-      if (marca.campo === "sodio_mg") {
-        if (unidad === "g") {
-          valor = valor * 1e3;
-          unidad = "mg";
-        }
-      } else if (unidad === "mg") {
-        valor = valor / 1e3;
-        unidad = "g";
-      } else if (unidad === "ug" || unidad === "µg" || unidad === "mcg") {
-        valor = valor / 1e6;
-        unidad = "g";
-      }
-      let confianza2 = 0.9;
-      if (!n.unidad) confianza2 -= 0.2;
-      if (nums.length > 2) confianza2 -= 0.15;
-      if (marcas.length > 2) confianza2 -= 0.1;
-      if (dudosos.has(iLinea)) confianza2 = Math.min(confianza2, 0.4);
-      valores.push({
-        campo: marca.campo,
-        valor,
-        unidad: unidad || "",
-        textoOriginal: n.bruto,
-        confianza: Math.max(0.3, confianza2),
-        columna: indice100
-      });
-    });
-  });
-  const nutrientes = {};
-  const puestos = /* @__PURE__ */ new Set();
-  for (const v2 of valores) {
-    if (puestos.has(v2.campo)) continue;
-    puestos.add(v2.campo);
-    if (v2.campo === "almidon_g") continue;
-    const dato = {
-      valor: v2.valor,
-      estado: "leido",
-      textoOriginal: v2.textoOriginal,
-      confianzaOCR: v2.confianza
-    };
-    nutrientes[v2.campo] = dato;
-  }
-  let racionGramos = racion;
-  if (!racionGramos) {
-    for (const l of lineas) {
-      const m = l.match(/racion(?:es)?[^0-9]{0,15}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/porcion[^0-9]{0,15}(\d+(?:[.,]\d+)?)\s*(g|ml)/);
-      if (m) {
-        racionGramos = parseFloat(m[1].replace(",", "."));
-        break;
-      }
-    }
-  }
-  const columnas = Math.max(1, ...lineas.map((l) => {
-    const marcas = marcadores(l);
-    return marcas.length === 1 ? extraerNumeros(l.slice(marcas[0].hasta)).length : 0;
-  }));
-  let base = baseDetectada;
-  if (base === "desconocida") {
-    if (columnas > 1) {
-      base = "por_100";
-      avisos.push('No se ha encontrado la cabecera de la tabla. Se ha supuesto que la primera columna es la de "por 100 g", que es lo que manda la ley, pero conviene comprobarlo.');
-    } else {
-      base = "por_100";
-      avisos.push("No se ha encontrado la cabecera de la tabla. Comprueba que los valores son por 100 g y no por ración.");
-    }
-  } else if (base !== "por_100") {
-    avisos.push(`La columna leída es "${base === "por_racion" ? "por ración" : "por envase"}". Para comparar productos hacen falta los valores por 100 g.`);
-  }
-  const lineasSinUsar = lineas.filter((_, i) => !usadas.has(i));
-  if (dudosos.size > 0) {
-    const campos = valores.filter((v2) => v2.confianza <= 0.4).map((v2) => v2.campo);
-    if (campos.length > 0) {
-      avisos.push("Algún campo se ha quedado sin valor al leer, así que las cifras que vienen después podrían pertenecer al campo de arriba. Comprueba sobre todo: " + [...new Set(campos)].join(", ") + ".");
-    }
-  }
-  const OBLIGATORIOS2 = [
-    "energia_kcal",
-    "grasas_g",
-    "saturadas_g",
-    "hidratos_g",
-    "azucares_g",
-    "proteinas_g",
-    "sal_g"
-  ];
-  const hallados = OBLIGATORIOS2.filter((c) => puestos.has(c) || c === "energia_kcal" && puestos.has("energia_kj") || c === "sal_g" && puestos.has("sodio_mg")).length;
-  const completitud = hallados / OBLIGATORIOS2.length;
-  const mediaConfianza = valores.length ? valores.reduce((s, v2) => s + v2.confianza, 0) / valores.length : 0;
-  const confianza = Math.round((0.6 * completitud + 0.4 * mediaConfianza) * 100) / 100;
-  return { nutrientes, base, racionGramos, columnas, valores, lineasSinUsar, confianza, avisos };
-}
-function elegirColumna(nums, indice) {
-  if (nums.length === 0) return void 0;
-  const utiles = nums.filter((n) => n.unidad !== "%");
-  const lista = utiles.length ? utiles : nums;
-  return lista[Math.min(indice, lista.length - 1)];
-}
-
-// src/lectura/ingredientes.ts
-var CIERRES_SEGUROS = [
-  "conservar en",
-  "consérvese en",
-  "conservese en",
-  "una vez abierto",
-  "consumir preferentemente",
-  "modo de empleo",
-  "modo de preparacion",
-  "instrucciones",
-  "agitar antes",
-  "informacion nutricional",
-  "valores medios",
-  "peso neto",
-  "elaborado en",
-  "fabricado en",
-  "r.s.i",
-  "rgseaa"
-];
-var CIERRES_TRAS_PUNTO = [
-  "sin conservantes",
-  "sin colorantes",
-  "sin gluten",
-  "sin azucares anadidos",
-  "sin lactosa",
-  "sin aceite de palma",
-  "apto para",
-  "no contiene",
-  "producto"
-];
-var APERTURAS = [
-  "ingredientes:",
-  "ingredientes",
-  "ingredients:",
-  "ingredients",
-  "ingredientes,",
-  "composicion:",
-  "composicion",
-  "ingredientes >"
-];
-function partirRespetandoParentesis(texto) {
-  const CENTINELA = "";
-  const protegido = texto.replace(/(\d),(?=\d)/g, `$1${CENTINELA}`);
-  const out = [];
-  let actual = "";
-  let nivel = 0;
-  for (const c of protegido) {
-    if (c === "(" || c === "[" || c === "{") nivel++;
-    else if (c === ")" || c === "]" || c === "}") nivel = Math.max(0, nivel - 1);
-    if ((c === "," || c === ";") && nivel === 0) {
-      if (actual.trim()) out.push(actual.trim());
-      actual = "";
-    } else {
-      actual += c;
-    }
-  }
-  if (actual.trim()) out.push(actual.trim());
-  return out.map((t) => t.split(CENTINELA).join(","));
-}
-function analizarIngredientesTexto(crudo) {
-  const avisos = [];
-  let texto = crudo.replace(/[\n\r]+/g, " ").replace(/\s+/g, " ").trim();
-  const normal = normalizar(texto);
-  let marcadorEncontrado = false;
-  let inicio = 0;
-  for (const ap of APERTURAS) {
-    const i = normal.indexOf(ap);
-    if (i >= 0) {
-      inicio = i + ap.length;
-      marcadorEncontrado = true;
-      break;
-    }
-  }
-  if (!marcadorEncontrado) {
-    avisos.push('No se ha encontrado la palabra "Ingredientes". Se ha tomado todo el texto como si lo fuera, así que revísalo.');
-  }
-  texto = texto.slice(inicio).trim().replace(/^[:.\-–—\s]+/, "");
-  {
-    const normal2 = normalizar(texto);
-    let corte = -1;
-    const antes = (i) => normal2.slice(Math.max(0, i - 3), i);
-    for (const c of CIERRES_SEGUROS) {
-      const i = normal2.indexOf(c);
-      if (i > 0 && (corte === -1 || i < corte)) corte = i;
-    }
-    for (const c of CIERRES_TRAS_PUNTO) {
-      let desde = 0;
-      for (; ; ) {
-        const i = normal2.indexOf(c, desde);
-        if (i === -1) break;
-        desde = i + 1;
-        if (i > 0 && antes(i).includes(".") && (corte === -1 || i < corte)) {
-          corte = i;
-          break;
-        }
-      }
-    }
-    if (corte >= 0) {
-      texto = texto.slice(0, corte).trim().replace(/[.,;\s]+$/, "");
-      avisos.push("Se ha cortado el texto donde acaba la lista de ingredientes y empiezan los reclamos del envase. Comprueba que no falte ninguno.");
-    }
-  }
-  let parteTrazas = "";
-  const normalActual = normalizar(texto);
-  let cortePronto = -1;
-  for (const p of PATRONES_TRAZAS) {
-    const i = normalActual.indexOf(p);
-    if (i >= 0 && (cortePronto === -1 || i < cortePronto)) cortePronto = i;
-  }
-  if (cortePronto >= 0) {
-    parteTrazas = texto.slice(cortePronto);
-    texto = texto.slice(0, cortePronto).trim().replace(/[.,;\s]+$/, "");
-  }
-  const trozos = partirRespetandoParentesis(texto);
-  const ingredientes = [];
-  for (const trozo of trozos) {
-    let t = trozo.trim().replace(/^[.\-–—•*\s]+/, "").replace(/[.\s]+$/, "");
-    if (t.length < 2) continue;
-    if (/^[\d\s.,%]+$/.test(t)) continue;
-    let porcentaje;
-    const mp = t.match(/(\d{1,3}(?:[.,]\d{1,2})?)\s*%/);
-    if (mp) {
-      const v2 = parseFloat(mp[1].replace(",", "."));
-      if (v2 > 0 && v2 <= 100) porcentaje = v2;
-      t = t.replace(/\(?\s*\d{1,3}(?:[.,]\d{1,2})?\s*%\s*\)?/, " ").replace(/\s+/g, " ").trim();
-    }
-    let detalle;
-    const md = t.match(/\(([^)]*)\)/);
-    if (md && md[1].trim().length > 1) detalle = md[1].trim();
-    t = t.replace(/[.,;\s]+$/, "").trim();
-    if (t.length < 2) continue;
-    ingredientes.push({ texto: t, porcentaje, detalle });
-  }
-  const trazas = [];
-  if (parteTrazas) {
-    const limpio = parteTrazas.replace(new RegExp(PATRONES_TRAZAS.join("|"), "gi"), " ").replace(/\b(puede|contener|trazas|de|y|o|u|e)\b/gi, " ").replace(/\s+/g, " ").trim();
-    for (const t of partirRespetandoParentesis(limpio)) {
-      const l = t.replace(/[.\s]+$/, "").trim();
-      if (l.length > 2) trazas.push(l);
-    }
-  }
-  let confianza = 0.9;
-  if (!marcadorEncontrado) confianza -= 0.3;
-  if (ingredientes.length === 0) confianza = 0;
-  else if (ingredientes.length === 1) confianza -= 0.25;
-  const largos = ingredientes.filter((i) => i.texto.length > 60).length;
-  if (largos > 0) {
-    confianza -= 0.1 * largos;
-    avisos.push(`Hay ${largos} ingrediente(s) demasiado largos. Puede que falte alguna coma y se hayan juntado dos.`);
-  }
-  if (ingredientes.length > 40) {
-    avisos.push("Se han detectado más de 40 ingredientes. Comprueba que no se haya colado texto de otra parte del envase.");
-  }
-  return {
-    ingredientes,
-    trazas,
-    marcadorEncontrado,
-    confianza: Math.max(0, Math.round(confianza * 100) / 100),
-    avisos
   };
 }
 
@@ -5466,6 +3829,1658 @@ var INGREDIENTES_COMUNES = FILAS2.map(
   })
 );
 
+// src/datos/fuentes.ts
+var F = [
+  [
+    "ue-1169",
+    "Unión Europea",
+    "Reglamento (UE) 1169/2011 sobre información alimentaria facilitada al consumidor",
+    2011,
+    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32011R1169",
+    "Qué campos son obligatorios en la tabla nutricional, la lista de 14 alérgenos y los valores de referencia de nutrientes."
+  ],
+  [
+    "ue-1333",
+    "Unión Europea",
+    "Reglamento (CE) 1333/2008 sobre aditivos alimentarios",
+    2008,
+    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32008R1333",
+    "La numeración E, la función tecnológica de cada aditivo y sus condiciones de uso."
+  ],
+  [
+    "ue-1924",
+    "Unión Europea",
+    "Reglamento (CE) 1924/2006 sobre declaraciones nutricionales y de propiedades saludables",
+    2006,
+    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32006R1924",
+    'Los umbrales legales de "fuente de", "alto contenido en", "bajo en sal" y "sin azúcares añadidos".'
+  ],
+  [
+    "ue-2022-63",
+    "Unión Europea",
+    "Reglamento (UE) 2022/63: retirada del dióxido de titanio (E171)",
+    2022,
+    "https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32022R0063",
+    "La prohibición del E171 como aditivo alimentario en la Unión Europea."
+  ],
+  [
+    "efsa-aditivos",
+    "EFSA",
+    "Reevaluación de aditivos alimentarios autorizados antes de 2009",
+    2020,
+    "https://www.efsa.europa.eu/en/topics/topic/food-additives",
+    "Ingestas diarias admisibles y dictámenes de seguridad de cada aditivo."
+  ],
+  [
+    "efsa-cafeina",
+    "EFSA",
+    "Dictamen científico sobre la seguridad de la cafeína",
+    2015,
+    "https://www.efsa.europa.eu/en/efsajournal/pub/4102",
+    "El límite de 400 mg diarios en adultos y 200 mg en embarazo."
+  ],
+  [
+    "iarc-carne",
+    "IARC / OMS",
+    "Monografía 114: consumo de carne roja y carne procesada",
+    2018,
+    "https://publications.iarc.fr/564",
+    "La clasificación de la carne procesada como carcinógeno del grupo 1 y el papel de los nitritos."
+  ],
+  [
+    "iarc-aspartamo",
+    "IARC / OMS",
+    "Monografía 134: aspartamo, metileugenol e isoeugenol",
+    2024,
+    "https://publications.iarc.fr/636",
+    "La clasificación del aspartamo como posiblemente carcinógeno para el ser humano (grupo 2B)."
+  ],
+  [
+    "oms-azucar",
+    "OMS",
+    "Directriz: ingesta de azúcares para adultos y niños",
+    2015,
+    "https://www.who.int/publications/i/item/9789241549028",
+    "La recomendación de no superar el 10 % de la energía diaria en azúcares libres, y el objetivo del 5 %."
+  ],
+  [
+    "oms-sal",
+    "OMS",
+    "Directriz: ingesta de sodio en adultos y niños",
+    2012,
+    "https://www.who.int/publications/i/item/9789241504836",
+    "El límite de 5 g de sal al día, equivalente a 2 g de sodio."
+  ],
+  [
+    "oms-trans",
+    "OMS",
+    "Paquete de medidas REPLACE para eliminar las grasas trans industriales",
+    2018,
+    "https://www.who.int/teams/nutrition-and-food-safety/replace-trans-fat",
+    "Que no existe un nivel seguro de consumo de grasas trans industriales."
+  ],
+  [
+    "nutriscore-2023",
+    "Santé publique France",
+    "Nutri-Score: algoritmo actualizado para alimentos y bebidas",
+    2023,
+    "https://www.santepubliquefrance.fr/en/nutri-score",
+    "Las tablas de puntos y los cortes de letra del algoritmo que usa este motor."
+  ],
+  [
+    "nova",
+    "Universidad de São Paulo · Monteiro y col.",
+    "Clasificación NOVA de alimentos según su grado de procesamiento",
+    2019,
+    "https://www.fao.org/3/ca5644en/ca5644en.pdf",
+    "La definición de los cuatro grupos y de qué marca a un ultraprocesado."
+  ],
+  [
+    "fsa-semaforo",
+    "Food Standards Agency (Reino Unido)",
+    "Guía de etiquetado nutricional frontal por colores",
+    2016,
+    "https://www.gov.uk/government/publications/front-of-pack-nutrition-labelling-guidance",
+    'Los umbrales de "alto contenido" en azúcar, grasa saturada y sal que este motor usa como referencia de dosis.'
+  ],
+  [
+    "efsa-fosforo",
+    "EFSA",
+    "Reevaluación de los fosfatos como aditivos alimentarios",
+    2019,
+    "https://www.efsa.europa.eu/en/efsajournal/pub/5674",
+    "La ingesta admisible de fosfatos y la advertencia sobre la carga renal del fósforo añadido."
+  ],
+  [
+    "efsa-nitritos",
+    "EFSA",
+    "Reevaluación de nitritos y nitratos como aditivos alimentarios",
+    2017,
+    "https://www.efsa.europa.eu/en/efsajournal/pub/4786",
+    "La formación de nitrosaminas y los márgenes de exposición."
+  ],
+  [
+    "emulgentes-2021",
+    "Gastroenterology · Chassaing y col.",
+    "Ensayo controlado sobre carboximetilcelulosa y microbiota intestinal",
+    2021,
+    "https://pubmed.ncbi.nlm.nih.gov/34774538/",
+    "La alteración de la microbiota y de la capa de moco intestinal por emulgentes de uso común."
+  ],
+  [
+    "efsa-azoicos",
+    "EFSA",
+    "Dictámenes sobre colorantes azoicos y actividad en la infancia",
+    2009,
+    "https://www.efsa.europa.eu/en/efsajournal/pub/1330",
+    "La advertencia obligatoria de que pueden afectar a la actividad y la atención de los niños."
+  ]
+];
+var FUENTES = new Map(
+  F.map(([clave2, organismo, documento, anio, url, aporta]) => [
+    clave2,
+    { clave: clave2, organismo, documento, anio, url, aporta }
+  ])
+);
+function fuentesDe(claves) {
+  return claves.map((c) => FUENTES.get(c)).filter((f) => Boolean(f));
+}
+
+// src/nucleo/conocimiento.ts
+function deAditivo(a) {
+  return {
+    clave: a.codigo,
+    tipo: "aditivo",
+    nombre: `${a.codigo} · ${a.nombre}`,
+    sinonimos: [a.codigo, a.nombre],
+    categoria: a.funcion,
+    valoracion: -a.riesgo,
+    explicacion: a.motivo,
+    evidencia: a.evidencia,
+    fuentes: fuentesDe(a.fuentes ?? ["ue-1333"]),
+    fichada: a.fichado !== false
+  };
+}
+function construirCatalogo() {
+  const out = [];
+  for (const a of ADITIVOS.values()) out.push(deAditivo(a));
+  for (const al of ALERGENOS) {
+    out.push({
+      clave: `alergeno_${al.clave}`,
+      tipo: "alergeno",
+      nombre: al.nombre,
+      sinonimos: al.patrones,
+      categoria: "alérgeno de declaración obligatoria",
+      valoracion: 0,
+      explicacion: `${al.nota} Su declaración es obligatoria en la Unión Europea y en la etiqueta va resaltado.`,
+      evidencia: "alta",
+      fuentes: fuentesDe(["ue-1169"]),
+      fichada: true
+    });
+  }
+  for (const az of AZUCARES_ANADIDOS) {
+    out.push({
+      clave: `azucar_${az.replace(/\s/g, "_")}`,
+      tipo: "azucar",
+      nombre: az.charAt(0).toUpperCase() + az.slice(1),
+      sinonimos: [az],
+      categoria: "azúcar añadido",
+      valoracion: -2,
+      explicacion: "Es azúcar libre, aunque el nombre no lo parezca. Repartir el azúcar en varias formas distintas hace que ninguna suba a los primeros puestos de la lista de ingredientes.",
+      evidencia: "alta",
+      fuentes: fuentesDe(["oms-azucar", "ue-1169"]),
+      fichada: true
+    });
+  }
+  for (const g of GRASAS) {
+    out.push({
+      clave: `grasa_${g.patron.replace(/\s/g, "_")}`,
+      tipo: "grasa",
+      nombre: g.etiqueta,
+      sinonimos: [g.patron],
+      categoria: "grasa o aceite",
+      valoracion: g.valor,
+      explicacion: g.motivo,
+      evidencia: "media",
+      fuentes: fuentesDe(g.valor <= -3 ? ["oms-trans"] : ["fsa-semaforo"]),
+      fichada: true
+    });
+  }
+  for (const f of INGREDIENTES_COMUNES) {
+    out.push({
+      clave: `comun_${f.patron.replace(/\s/g, "_")}`,
+      tipo: "ingrediente",
+      nombre: f.titulo,
+      sinonimos: [f.patron],
+      categoria: f.categoria,
+      valoracion: f.valoracion,
+      explicacion: `${f.queEs} ${f.porQue}`,
+      evidencia: f.evidencia,
+      fuentes: fuentesDe(f.valoracion <= -2 ? ["oms-azucar", "nova"] : ["nova", "ue-1169"]),
+      fichada: true
+    });
+  }
+  for (const i of INGREDIENTES_REALES) {
+    if (INGREDIENTES_COMUNES.some((f) => f.patron === i.patron)) continue;
+    out.push({
+      clave: `real_${i.patron.replace(/\s/g, "_")}`,
+      tipo: "ingrediente",
+      nombre: i.etiqueta,
+      sinonimos: [i.patron],
+      categoria: "ingrediente favorable",
+      valoracion: Math.min(3, i.peso),
+      explicacion: i.motivo,
+      evidencia: "alta",
+      fuentes: fuentesDe(["nova"]),
+      fichada: true
+    });
+  }
+  for (const [clave2, v2] of Object.entries(VRN)) {
+    out.push({
+      clave: `nutriente_${clave2}`,
+      tipo: "nutriente",
+      nombre: v2.nombre,
+      sinonimos: [v2.nombre, clave2],
+      categoria: "vitamina o mineral",
+      valoracion: 2,
+      explicacion: `Valor de referencia diario en la Unión Europea: ${v2.cantidad} ${v2.unidad}. Un producto puede llamarse "fuente de" a partir del 15 % y "alto contenido en" a partir del 30 %.`,
+      evidencia: "alta",
+      fuentes: fuentesDe(["ue-1169", "ue-1924"]),
+      fichada: true
+    });
+  }
+  return out;
+}
+var CATALOGO = construirCatalogo();
+function buscar(termino, opts = {}) {
+  const t = normalizarTexto(termino);
+  const limite = opts.limite ?? 40;
+  let base = CATALOGO;
+  if (opts.tipos?.length) base = base.filter((f) => opts.tipos.includes(f.tipo));
+  if (opts.soloLimitar) base = base.filter((f) => f.valoracion < 0);
+  if (opts.soloFavorable) base = base.filter((f) => f.valoracion > 0);
+  if (!t) return base.slice(0, limite);
+  const puntuadas = base.map((f) => {
+    const nombre = normalizarTexto(f.nombre);
+    const sinonimos = f.sinonimos.map(normalizarTexto);
+    let p = 0;
+    if (nombre === t || sinonimos.includes(t)) p = 100;
+    else if (nombre.startsWith(t) || sinonimos.some((s) => s.startsWith(t))) p = 70;
+    else if (nombre.includes(t) || sinonimos.some((s) => s.includes(t))) p = 40;
+    else if (normalizarTexto(f.explicacion).includes(t)) p = 10;
+    return { f, p };
+  }).filter((x) => x.p > 0).sort((a, b) => b.p - a.p || Math.abs(b.f.valoracion) - Math.abs(a.f.valoracion));
+  return puntuadas.slice(0, limite).map((x) => x.f);
+}
+function ficha(clave2) {
+  const directa = CATALOGO.find((f) => f.clave === clave2);
+  if (directa) return directa;
+  if (/^E\d/i.test(clave2)) {
+    const a = buscarAditivo(clave2.toUpperCase());
+    if (a) return deAditivo(a);
+  }
+  return void 0;
+}
+function resumenCatalogo() {
+  const out = { aditivo: 0, alergeno: 0, nutriente: 0, ingrediente: 0, azucar: 0, grasa: 0 };
+  for (const f of CATALOGO) out[f.tipo]++;
+  return out;
+}
+
+// src/index.ts
+function analizarProducto(p, ahora = /* @__PURE__ */ new Date()) {
+  const categoria = p.categoria ?? "general";
+  const n = normalizarNutrientes(p.nutrientes);
+  const ing = analizarIngredientes(p.ingredientes ?? []);
+  const nova = clasificarNova(ing);
+  const primero = ing.lista[0]?.textoNormalizado ?? "";
+  const esProductoSalado = /^(sal|sal marina|sal yodada|cloruro sodico)\b/.test(primero) || ing.lista.some((i) => /\b(caldo|pastilla de caldo|cubito|concentrado de carne|sazonador|salsa de soja)\b/.test(i.textoNormalizado));
+  const validacion = validar(n, esProductoSalado);
+  validacion.incidencias.push(...validarContraIngredientes(n, {
+    total: ing.total,
+    hayFuenteAzucar: ing.fuentesAzucar.length > 0,
+    hayLacteo: ing.lista.some((i) => /\b(leche|lacteo|yogur|nata|suero|queso|lactosa)\b/.test(i.textoNormalizado)),
+    hayFruta: ing.lista.some((i) => /\b(fruta|zumo|pure|manzana|platano|naranja|fresa|melocoton|pera|uva)\b/.test(i.textoNormalizado)),
+    hayGrasaAnadida: ing.grasas.length > 0,
+    haySal: ing.salPresente
+  }));
+  validacion.errores = validacion.incidencias.filter((i) => i.gravedad === "error").length;
+  validacion.avisos = validacion.incidencias.filter((i) => i.gravedad === "aviso").length;
+  validacion.coherente = validacion.errores === 0;
+  validacion.indiceCoherencia = Math.max(0, 1 - validacion.errores * 0.28 - validacion.avisos * 0.08);
+  const contieneEdulcorante = ing.aditivos.some((a) => a.aditivo.funcion === "edulcorante");
+  const ns = calcularNutriScore(n, { categoria, esAgua: p.es_agua, contieneEdulcorante });
+  const limitar = construirLimitar(n, ing, nova, categoria);
+  const favorables = construirFavorables(n, ing, categoria, p.micronutrientes, nova.grupo === 4);
+  const { puntuacion, semaforo, vetos, componentes } = calcularPuntuacion(n, ing, nova, ns, categoria);
+  const faltanObligatorios = camposQueFaltan(n);
+  const faltanVoluntarios = voluntariosQueFaltan(n);
+  const sinIngredientes = ing.total === 0;
+  const datosFaltantes = [...faltanObligatorios];
+  if (sinIngredientes) datosFaltantes.push("Lista de ingredientes");
+  const analisisCompleto = faltanObligatorios.length === 0 && !sinIngredientes;
+  const avisosDeDatos = [];
+  const hayAlgunComponente = componentes.some((c) => c.nota !== null);
+  if (faltanObligatorios.length > 0) {
+    avisosDeDatos.push(
+      hayAlgunComponente ? `Faltan datos obligatorios de la etiqueta (${faltanObligatorios.join(", ")}). No se calcula el Nutri-Score y la nota se apoya solo en el resto.` : `Faltan datos obligatorios de la etiqueta (${faltanObligatorios.join(", ")}). Sin ellos no se puede dar ninguna nota.`
+    );
+  }
+  if (sinIngredientes) {
+    avisosDeDatos.push("Sin la lista de ingredientes no se puede saber si el azúcar es añadido, ni detectar aditivos, ni valorar el grado de procesamiento.");
+  }
+  if (faltanVoluntarios.includes("Fibra")) {
+    avisosDeDatos.push("La etiqueta no declara fibra. Es voluntario en la UE, así que el producto podría tener más de la que se le reconoce aquí.");
+  }
+  if (faltanVoluntarios.includes("Porcentaje de fruta, verdura y legumbre") && categoria !== "grasa_anadida") {
+    avisosDeDatos.push("No consta el porcentaje de fruta, verdura o legumbre. Si el producto lleva bastante, su nota real podría ser mejor.");
+  }
+  const confianza = calcularConfianza({
+    nutrientes: n,
+    hayIngredientes: !sinIngredientes,
+    indiceCoherencia: validacion.indiceCoherencia,
+    huboErrores: validacion.errores > 0
+  });
+  if (validacion.errores > 0) {
+    avisosDeDatos.push(
+      `Hay ${validacion.errores} dato(s) que no cuadran entre sí. La nota se ha calculado igualmente, pero conviene revisarlos antes de fiarse.`
+    );
+  }
+  const porQue = redactarPorQue(limitar, favorables, puntuacion, analisisCompleto);
+  let porRacion;
+  if (p.racion_declarada_g && p.racion_declarada_g > 0) {
+    const f = p.racion_declarada_g / 100;
+    const kcal = hay(n.energia_kcal) ? Math.round(n.energia_kcal.valor * f) : null;
+    const az = hay(n.azucares_g) ? Math.round(n.azucares_g.valor * f * 10) / 10 : null;
+    const sat = hay(n.saturadas_g) ? Math.round(n.saturadas_g.valor * f * 10) / 10 : null;
+    const sal = hay(n.sal_g) ? Math.round(n.sal_g.valor * f * 100) / 100 : null;
+    porRacion = {
+      gramos: p.racion_declarada_g,
+      kcal,
+      azucares_g: az,
+      saturadas_g: sat,
+      sal_g: sal,
+      pctSalOMS: sal === null ? null : Math.round(sal / LIMITES_DIARIOS.salOMS * 100),
+      pctAzucarOMS: az === null ? null : Math.round(az / LIMITES_DIARIOS.azucarLibreOMS * 100)
+    };
+  }
+  const avisos = [];
+  if (porRacion && p.racion_declarada_g < 35 && categoria !== "grasa_anadida") {
+    avisos.push(`La ración declarada es de solo ${p.racion_declarada_g} g. Comprueba si es lo que comes de verdad: las raciones pequeñas maquillan las cifras del frontal del envase.`);
+  }
+  if (porRacion?.pctAzucarOMS != null && porRacion.pctAzucarOMS >= 50) {
+    avisos.push(`Una sola ración cubre el ${porRacion.pctAzucarOMS} % del azúcar libre recomendado para todo el día.`);
+  }
+  if (porRacion?.pctSalOMS != null && porRacion.pctSalOMS >= 30) {
+    avisos.push(`Una sola ración cubre el ${porRacion.pctSalOMS} % de la sal recomendada para todo el día.`);
+  }
+  if (ing.aditivosSinFicha.length > 0) {
+    avisos.push(`No tenemos ficha de ${ing.aditivosSinFicha.join(", ")}. Se han identificado por su familia y pesan poco en la nota, pero conviene mirarlos aparte.`);
+  }
+  if (ing.alergenos.length > 0) {
+    avisos.push(`Alérgenos detectados: ${ing.alergenos.map((a) => a.nombre.toLowerCase()).join(", ")}. ${AVISO_ALERGENOS}`);
+  }
+  if (ing.fuentesAzucar.length >= 2) {
+    avisos.push("El azúcar aparece repartido en varias formas distintas. Súmalas mentalmente antes de fiarte del orden de la lista.");
+  }
+  if (hay(n.polialcoholes_g) && n.polialcoholes_g.valor > 10) {
+    avisos.push("Más de 10 g de polialcoholes por 100 g: puede provocar gases y efecto laxante.");
+  }
+  const sustancias = [];
+  for (const { aditivo } of ing.aditivos) {
+    if (sustancias.some((s) => s.codigo === aditivo.codigo)) continue;
+    sustancias.push({
+      codigo: aditivo.codigo,
+      nombre: aditivo.nombre,
+      tipo: aditivo.riesgo > 0 ? "limitar" : "favorable",
+      riesgo: aditivo.riesgo
+    });
+  }
+  for (const f of limitar) {
+    if (f.categoria === "aditivo") continue;
+    sustancias.push({ codigo: f.id, nombre: f.nombre, tipo: "limitar" });
+  }
+  for (const f of favorables) {
+    sustancias.push({ codigo: f.id, nombre: f.nombre, tipo: "favorable" });
+  }
+  return {
+    nombre: p.nombre ?? "Producto sin nombre",
+    marca: p.marca,
+    categoria,
+    versionAlgoritmo: VERSION_ALGORITMO,
+    fechaAnalisis: ahora.toISOString(),
+    puntuacion,
+    semaforo,
+    etiquetaSemaforo: semaforo ? ETIQUETAS_SEMAFORO[semaforo] : "Análisis incompleto",
+    porQue,
+    analisisCompleto,
+    datosFaltantes,
+    avisosDeDatos,
+    confianza,
+    incidencias: validacion.incidencias,
+    datosCoherentes: validacion.coherente,
+    componentes,
+    nutriScore: ns,
+    nova,
+    limitar,
+    favorables,
+    alergenos: ing.alergenos,
+    avisoAlergenos: AVISO_ALERGENOS,
+    vetos,
+    porRacion,
+    avisos,
+    sustancias
+  };
+}
+function redactarPorQue(limitar, favorables, puntuacion, completo) {
+  if (puntuacion === null) {
+    return "No hay datos suficientes para dar una nota. Completa la etiqueta y vuelve a analizarlo.";
+  }
+  const malos = limitar.filter((f) => f.peso >= 45).slice(0, 3).map((f) => f.nombre.toLowerCase());
+  const buenos = favorables.filter((f) => f.peso >= 45).slice(0, 2).map((f) => f.nombre.toLowerCase());
+  let txt = "";
+  if (malos.length) txt += `Lo que más pesa en contra: ${malos.join(", ")}.`;
+  else txt += "No se ha detectado ningún factor de peso que convenga limitar.";
+  if (buenos.length) txt += ` A favor: ${buenos.join(" y ")}.`;
+  if (!completo) txt += " Ojo: el análisis está incompleto y la nota puede cambiar al completar los datos.";
+  return txt;
+}
+
+// src/almacen/modelo.ts
+function nuevoId(prefijo = "p") {
+  const azar = Math.random().toString(36).slice(2, 10);
+  return `${prefijo}_${Date.now().toString(36)}_${azar}`;
+}
+function clave(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+var SEMAFOROS = ["rojo", "naranja", "amarillo", "verde_claro", "verde_parchis"];
+function filtrarYOrdenar(lista, f = {}) {
+  let out = lista;
+  if (f.texto) {
+    const t = clave(f.texto);
+    out = out.filter((p) => clave(`${p.nombre} ${p.marca ?? ""}`).includes(t));
+  }
+  if (f.semaforo?.length) out = out.filter((p) => p.semaforo !== null && f.semaforo.includes(p.semaforo));
+  if (f.categoria?.length) out = out.filter((p) => f.categoria.includes(p.categoria));
+  if (f.soloFavoritos) out = out.filter((p) => p.favorito === true);
+  if (f.desde) out = out.filter((p) => p.fechaAnalisis >= f.desde);
+  if (f.hasta) out = out.filter((p) => p.fechaAnalisis <= f.hasta);
+  const sinNota = (p) => p.puntuacion === null ? -1 : p.puntuacion;
+  const orden = f.orden ?? "fecha_desc";
+  out = [...out].sort((a, b) => {
+    switch (orden) {
+      case "fecha_asc":
+        return a.fechaAnalisis.localeCompare(b.fechaAnalisis);
+      case "nota_desc":
+        return sinNota(b) - sinNota(a);
+      case "nota_asc":
+        return sinNota(a) - sinNota(b);
+      case "nombre":
+        return a.nombre.localeCompare(b.nombre, "es");
+      default:
+        return b.fechaAnalisis.localeCompare(a.fechaAnalisis);
+    }
+  });
+  return f.limite ? out.slice(0, f.limite) : out;
+}
+function contarSustancias(lista, tipo) {
+  const mapa = /* @__PURE__ */ new Map();
+  for (const p of lista) {
+    const vistas = /* @__PURE__ */ new Set();
+    for (const s of p.veredicto?.sustancias ?? []) {
+      if (tipo && s.tipo !== tipo) continue;
+      if (vistas.has(s.codigo)) continue;
+      vistas.add(s.codigo);
+      const previa = mapa.get(s.codigo);
+      if (previa) {
+        previa.veces++;
+        if (previa.ejemplos.length < 5) previa.ejemplos.push(p.nombre);
+      } else {
+        mapa.set(s.codigo, {
+          codigo: s.codigo,
+          nombre: s.nombre,
+          tipo: s.tipo,
+          riesgo: s.riesgo,
+          veces: 1,
+          ejemplos: [p.nombre]
+        });
+      }
+    }
+  }
+  return [...mapa.values()].sort((a, b) => b.veces - a.veces || a.nombre.localeCompare(b.nombre, "es"));
+}
+function resumir(productos, fotos) {
+  const porSemaforo = Object.fromEntries(SEMAFOROS.map((s) => [s, 0]));
+  for (const p of productos) if (p.semaforo) porSemaforo[p.semaforo]++;
+  const fechas = productos.map((p) => p.fechaAnalisis).sort();
+  return {
+    productos: productos.length,
+    fotos: fotos.length,
+    bytesFotos: fotos.reduce((s, f) => s + f.datos.byteLength, 0),
+    porSemaforo,
+    primerAnalisis: fechas[0],
+    ultimoAnalisis: fechas[fechas.length - 1]
+  };
+}
+
+// src/almacen/memoria.ts
+var RepositorioMemoria = class {
+  constructor() {
+    __publicField(this, "productos", /* @__PURE__ */ new Map());
+    __publicField(this, "fotos", /* @__PURE__ */ new Map());
+    __publicField(this, "preferencias", /* @__PURE__ */ new Map());
+  }
+  async guardarProducto(p) {
+    this.productos.set(p.id, estructurar(p));
+  }
+  async obtenerProducto(id) {
+    const p = this.productos.get(id);
+    return p ? estructurar(p) : void 0;
+  }
+  async listarProductos(filtro) {
+    return filtrarYOrdenar([...this.productos.values()], filtro).map(estructurar);
+  }
+  async borrarProducto(id) {
+    const p = this.productos.get(id);
+    if (!p) return;
+    this.productos.delete(id);
+    const enUso = /* @__PURE__ */ new Set();
+    for (const otro of this.productos.values()) {
+      for (const f of otro.fotos) enUso.add(f.idFoto);
+    }
+    for (const f of p.fotos) if (!enUso.has(f.idFoto)) this.fotos.delete(f.idFoto);
+  }
+  async guardarFoto(f) {
+    this.fotos.set(f.id, f);
+  }
+  async obtenerFoto(id) {
+    return this.fotos.get(id);
+  }
+  async borrarFoto(id) {
+    this.fotos.delete(id);
+  }
+  async guardarPreferencia(clave2, valor) {
+    this.preferencias.set(clave2, valor);
+  }
+  async obtenerPreferencia(clave2) {
+    return this.preferencias.get(clave2);
+  }
+  async listarPreferencias() {
+    return Object.fromEntries(this.preferencias);
+  }
+  async estadisticas() {
+    return resumir([...this.productos.values()], [...this.fotos.values()]);
+  }
+  async recuentoSustancias(tipo) {
+    return contarSustancias([...this.productos.values()], tipo);
+  }
+  async vaciar() {
+    this.productos.clear();
+    this.fotos.clear();
+    this.preferencias.clear();
+  }
+};
+function estructurar(x) {
+  return structuredClone(x);
+}
+
+// src/almacen/indexeddb.ts
+var BASE = "comer-despues-de-usar";
+var VERSION_BASE = 1;
+var ALMACEN_PRODUCTOS = "productos";
+var ALMACEN_FOTOS = "fotos";
+var ALMACEN_PREFERENCIAS = "preferencias";
+function prometer(req) {
+  return new Promise((resuelve, rechaza) => {
+    req.onsuccess = () => resuelve(req.result);
+    req.onerror = () => rechaza(req.error ?? new Error("Fallo en la base de datos"));
+  });
+}
+function terminada(tx) {
+  return new Promise((resuelve, rechaza) => {
+    tx.oncomplete = () => resuelve();
+    tx.onerror = () => rechaza(tx.error ?? new Error("Transacción fallida"));
+    tx.onabort = () => rechaza(tx.error ?? new Error("Transacción abortada"));
+  });
+}
+var RepositorioIndexedDB = class {
+  constructor(nombreBase = BASE) {
+    __publicField(this, "bd", null);
+    __publicField(this, "nombreBase");
+    this.nombreBase = nombreBase;
+  }
+  /** Abre la base y crea los almacenes la primera vez. */
+  async abrir() {
+    if (this.bd) return this.bd;
+    this.bd = await new Promise((resuelve, rechaza) => {
+      const req = indexedDB.open(this.nombreBase, VERSION_BASE);
+      req.onupgradeneeded = () => {
+        const bd = req.result;
+        if (!bd.objectStoreNames.contains(ALMACEN_PRODUCTOS)) {
+          const st = bd.createObjectStore(ALMACEN_PRODUCTOS, { keyPath: "id" });
+          st.createIndex("fecha", "fechaAnalisis");
+          st.createIndex("semaforo", "semaforo");
+        }
+        if (!bd.objectStoreNames.contains(ALMACEN_FOTOS)) {
+          bd.createObjectStore(ALMACEN_FOTOS, { keyPath: "id" });
+        }
+        if (!bd.objectStoreNames.contains(ALMACEN_PREFERENCIAS)) {
+          bd.createObjectStore(ALMACEN_PREFERENCIAS);
+        }
+      };
+      req.onsuccess = () => resuelve(req.result);
+      req.onerror = () => rechaza(req.error ?? new Error("No se pudo abrir la base de datos"));
+      req.onblocked = () => rechaza(new Error("La base está bloqueada por otra pestaña abierta"));
+    });
+    return this.bd;
+  }
+  async leer(almacen, fn) {
+    const bd = await this.abrir();
+    const tx = bd.transaction(almacen, "readonly");
+    const res = await prometer(fn(tx.objectStore(almacen)));
+    await terminada(tx);
+    return res;
+  }
+  async escribir(almacen, fn) {
+    const bd = await this.abrir();
+    const tx = bd.transaction(almacen, "readwrite");
+    fn(tx.objectStore(almacen));
+    await terminada(tx);
+  }
+  async guardarProducto(p) {
+    await this.escribir(ALMACEN_PRODUCTOS, (st) => {
+      st.put(p);
+    });
+  }
+  async obtenerProducto(id) {
+    return this.leer(ALMACEN_PRODUCTOS, (st) => st.get(id));
+  }
+  async listarProductos(filtro) {
+    const todos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
+    return filtrarYOrdenar(todos ?? [], filtro);
+  }
+  async borrarProducto(id) {
+    const bd = await this.abrir();
+    const producto = await this.obtenerProducto(id);
+    if (!producto) return;
+    const tx = bd.transaction([ALMACEN_PRODUCTOS, ALMACEN_FOTOS], "readwrite");
+    const stProductos = tx.objectStore(ALMACEN_PRODUCTOS);
+    const stFotos = tx.objectStore(ALMACEN_FOTOS);
+    const resto = await prometer(stProductos.getAll());
+    const enUso = /* @__PURE__ */ new Set();
+    for (const otro of resto) {
+      if (otro.id === id) continue;
+      for (const f of otro.fotos) enUso.add(f.idFoto);
+    }
+    stProductos.delete(id);
+    for (const f of producto.fotos) if (!enUso.has(f.idFoto)) stFotos.delete(f.idFoto);
+    await terminada(tx);
+  }
+  async guardarFoto(f) {
+    await this.escribir(ALMACEN_FOTOS, (st) => {
+      st.put(f);
+    });
+  }
+  async obtenerFoto(id) {
+    return this.leer(ALMACEN_FOTOS, (st) => st.get(id));
+  }
+  async borrarFoto(id) {
+    await this.escribir(ALMACEN_FOTOS, (st) => {
+      st.delete(id);
+    });
+  }
+  async guardarPreferencia(clave2, valor) {
+    await this.escribir(ALMACEN_PREFERENCIAS, (st) => {
+      st.put(valor, clave2);
+    });
+  }
+  async obtenerPreferencia(clave2) {
+    return this.leer(ALMACEN_PREFERENCIAS, (st) => st.get(clave2));
+  }
+  async listarPreferencias() {
+    const bd = await this.abrir();
+    const tx = bd.transaction(ALMACEN_PREFERENCIAS, "readonly");
+    const st = tx.objectStore(ALMACEN_PREFERENCIAS);
+    const claves = await prometer(st.getAllKeys());
+    const valores = await prometer(st.getAll());
+    await terminada(tx);
+    const out = {};
+    claves.forEach((k, i) => {
+      out[String(k)] = valores[i];
+    });
+    return out;
+  }
+  async estadisticas() {
+    const productos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
+    const fotos = await this.leer(ALMACEN_FOTOS, (st) => st.getAll());
+    return resumir(productos ?? [], fotos ?? []);
+  }
+  async recuentoSustancias(tipo) {
+    const productos = await this.leer(ALMACEN_PRODUCTOS, (st) => st.getAll());
+    return contarSustancias(productos ?? [], tipo);
+  }
+  async vaciar() {
+    const bd = await this.abrir();
+    const tx = bd.transaction([ALMACEN_PRODUCTOS, ALMACEN_FOTOS, ALMACEN_PREFERENCIAS], "readwrite");
+    tx.objectStore(ALMACEN_PRODUCTOS).clear();
+    tx.objectStore(ALMACEN_FOTOS).clear();
+    tx.objectStore(ALMACEN_PREFERENCIAS).clear();
+    await terminada(tx);
+  }
+  async cerrar() {
+    this.bd?.close();
+    this.bd = null;
+  }
+};
+function hayIndexedDB() {
+  try {
+    return typeof indexedDB !== "undefined" && indexedDB !== null;
+  } catch {
+    return false;
+  }
+}
+
+// src/almacen/copia.ts
+var FORMATO = "comer-despues-de-usar/copia";
+var VERSION_FORMATO = 1;
+async function exportar(repo, opts = {}) {
+  const incluirFotos = opts.incluirFotos ?? true;
+  const productos = await repo.listarProductos({ orden: "fecha_asc" });
+  const preferencias = await repo.listarPreferencias();
+  const fotos = [];
+  if (incluirFotos) {
+    const vistas = /* @__PURE__ */ new Set();
+    for (const p of productos) {
+      for (const ref of p.fotos) {
+        if (vistas.has(ref.idFoto)) continue;
+        vistas.add(ref.idFoto);
+        const f = await repo.obtenerFoto(ref.idFoto);
+        if (!f) continue;
+        fotos.push({
+          id: f.id,
+          tipo: f.tipo,
+          mime: f.mime,
+          creada: f.creada,
+          datos64: aBase64(f.datos)
+        });
+      }
+    }
+  }
+  return {
+    formato: FORMATO,
+    version: VERSION_FORMATO,
+    fecha: (/* @__PURE__ */ new Date()).toISOString(),
+    versionAlgoritmo: VERSION_ALGORITMO,
+    incluyeFotos: incluirFotos,
+    productos,
+    fotos,
+    preferencias
+  };
+}
+function validarCopia(x) {
+  const errores = [];
+  if (!x || typeof x !== "object") {
+    return ["El fichero no contiene datos reconocibles."];
+  }
+  const c = x;
+  if (c.formato !== FORMATO) {
+    errores.push("El fichero no es una copia de seguridad de esta aplicación.");
+  }
+  if (typeof c.version !== "number") {
+    errores.push("Al fichero le falta el número de versión del formato.");
+  } else if (c.version > VERSION_FORMATO) {
+    errores.push(`La copia es de una versión más nueva (${c.version}) que esta aplicación (${VERSION_FORMATO}). Actualiza antes de importarla.`);
+  }
+  if (!Array.isArray(c.productos)) {
+    errores.push("El fichero no contiene una lista de productos.");
+  } else {
+    const malos = c.productos.filter(
+      (p) => !p || typeof p !== "object" || typeof p.id !== "string"
+    ).length;
+    if (malos > 0) errores.push(`Hay ${malos} producto(s) sin identificador válido.`);
+  }
+  if (c.fotos !== void 0 && !Array.isArray(c.fotos)) {
+    errores.push("La lista de fotos está corrupta.");
+  }
+  return errores;
+}
+async function importar(repo, copia, opts = {}) {
+  const errores = validarCopia(copia);
+  if (errores.length > 0) {
+    return { ok: false, productosImportados: 0, productosOmitidos: 0, fotosImportadas: 0, errores, avisos: [] };
+  }
+  const c = copia;
+  const modo = opts.modo ?? "fusionar";
+  const avisos = [];
+  if (modo === "reemplazar") await repo.vaciar();
+  let fotosImportadas = 0;
+  for (const f of c.fotos ?? []) {
+    try {
+      const foto = {
+        id: f.id,
+        tipo: f.tipo,
+        mime: f.mime,
+        creada: f.creada,
+        datos: deBase64(f.datos64)
+      };
+      await repo.guardarFoto(foto);
+      fotosImportadas++;
+    } catch {
+      avisos.push(`No se pudo restaurar la foto ${f.id}.`);
+    }
+  }
+  let importados = 0;
+  let omitidos = 0;
+  for (const p of c.productos) {
+    try {
+      if (modo === "fusionar" && await repo.obtenerProducto(p.id)) {
+        omitidos++;
+        continue;
+      }
+      await repo.guardarProducto(p);
+      importados++;
+    } catch {
+      omitidos++;
+      avisos.push(`No se pudo restaurar el producto "${p.nombre ?? p.id}".`);
+    }
+  }
+  for (const [k, v2] of Object.entries(c.preferencias ?? {})) {
+    await repo.guardarPreferencia(k, v2);
+  }
+  if (!c.incluyeFotos) {
+    avisos.push("Esta copia se guardó sin fotos, así que los productos se restauran sin imagen.");
+  }
+  if (c.versionAlgoritmo !== VERSION_ALGORITMO) {
+    avisos.push(`Los veredictos se calcularon con la versión ${c.versionAlgoritmo} del algoritmo y esta app usa la ${VERSION_ALGORITMO}. Puedes recalcularlos cuando quieras.`);
+  }
+  return {
+    ok: true,
+    productosImportados: importados,
+    productosOmitidos: omitidos,
+    fotosImportadas,
+    errores: [],
+    avisos
+  };
+}
+function nombreFichero(fecha = /* @__PURE__ */ new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `comer-copia-${fecha.getFullYear()}${p(fecha.getMonth() + 1)}${p(fecha.getDate())}-${p(fecha.getHours())}${p(fecha.getMinutes())}.json`;
+}
+function aBase64(datos) {
+  const bytes = new Uint8Array(datos);
+  let bin = "";
+  const trozo = 32768;
+  for (let i = 0; i < bytes.length; i += trozo) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + trozo));
+  }
+  return btoa(bin);
+}
+function deBase64(texto) {
+  const bin = atob(texto);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// src/imagen/procesar.ts
+function crearImagen(ancho, alto) {
+  return { datos: new Uint8ClampedArray(ancho * alto * 4), ancho, alto };
+}
+function redimensionar(img, ladoMax) {
+  const mayor = Math.max(img.ancho, img.alto);
+  if (mayor <= ladoMax) return img;
+  const escala = ladoMax / mayor;
+  const ancho = Math.max(1, Math.round(img.ancho * escala));
+  const alto = Math.max(1, Math.round(img.alto * escala));
+  const out = crearImagen(ancho, alto);
+  const px = img.ancho / ancho;
+  const py = img.alto / alto;
+  for (let y = 0; y < alto; y++) {
+    const y0 = Math.floor(y * py);
+    const y1 = Math.min(img.alto, Math.max(y0 + 1, Math.ceil((y + 1) * py)));
+    for (let x = 0; x < ancho; x++) {
+      const x0 = Math.floor(x * px);
+      const x1 = Math.min(img.ancho, Math.max(x0 + 1, Math.ceil((x + 1) * px)));
+      let r = 0, g = 0, b = 0, a = 0, n = 0;
+      for (let j = y0; j < y1; j++) {
+        for (let i = x0; i < x1; i++) {
+          const k2 = (j * img.ancho + i) * 4;
+          r += img.datos[k2];
+          g += img.datos[k2 + 1];
+          b += img.datos[k2 + 2];
+          a += img.datos[k2 + 3];
+          n++;
+        }
+      }
+      const k = (y * ancho + x) * 4;
+      out.datos[k] = r / n;
+      out.datos[k + 1] = g / n;
+      out.datos[k + 2] = b / n;
+      out.datos[k + 3] = a / n;
+    }
+  }
+  return out;
+}
+function aGrises(img) {
+  const out = crearImagen(img.ancho, img.alto);
+  for (let i = 0; i < img.datos.length; i += 4) {
+    const l = 0.2126 * img.datos[i] + 0.7152 * img.datos[i + 1] + 0.0722 * img.datos[i + 2];
+    out.datos[i] = out.datos[i + 1] = out.datos[i + 2] = l;
+    out.datos[i + 3] = 255;
+  }
+  return out;
+}
+function estirarContraste(img, recorte = 0.02) {
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < img.datos.length; i += 4) hist[img.datos[i] | 0]++;
+  const total = img.ancho * img.alto;
+  const fuera = Math.floor(total * recorte);
+  let bajo = 0, acumulado = 0;
+  for (let v2 = 0; v2 < 256; v2++) {
+    acumulado += hist[v2];
+    if (acumulado > fuera) {
+      bajo = v2;
+      break;
+    }
+  }
+  let alto = 255;
+  acumulado = 0;
+  for (let v2 = 255; v2 >= 0; v2--) {
+    acumulado += hist[v2];
+    if (acumulado > fuera) {
+      alto = v2;
+      break;
+    }
+  }
+  const out = crearImagen(img.ancho, img.alto);
+  const rango = Math.max(1, alto - bajo);
+  for (let i = 0; i < img.datos.length; i += 4) {
+    const v2 = Math.max(0, Math.min(255, (img.datos[i] - bajo) / rango * 255));
+    out.datos[i] = out.datos[i + 1] = out.datos[i + 2] = v2;
+    out.datos[i + 3] = 255;
+  }
+  return out;
+}
+function integrales(img) {
+  const { ancho: w, alto: h } = img;
+  const suma = new Float64Array((w + 1) * (h + 1));
+  const suma2 = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let fila = 0, fila2 = 0;
+    for (let x = 0; x < w; x++) {
+      const v2 = img.datos[(y * w + x) * 4];
+      fila += v2;
+      fila2 += v2 * v2;
+      const k = (y + 1) * (w + 1) + (x + 1);
+      suma[k] = suma[y * (w + 1) + (x + 1)] + fila;
+      suma2[k] = suma2[y * (w + 1) + (x + 1)] + fila2;
+    }
+  }
+  return { suma, suma2, w, h };
+}
+function binarizarSauvola(img, radio = 0, k = 0.2, R = 128) {
+  const { suma, suma2, w, h } = integrales(img);
+  const r = radio > 0 ? radio : Math.max(7, Math.round(Math.min(w, h) / 28));
+  const out = crearImagen(w, h);
+  const areaSuma = (x0, y0, x1, y1, tabla) => tabla[y1 * (w + 1) + x1] - tabla[y0 * (w + 1) + x1] - tabla[y1 * (w + 1) + x0] + tabla[y0 * (w + 1) + x0];
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+      const n = (x1 - x0) * (y1 - y0);
+      const s = areaSuma(x0, y0, x1, y1, suma);
+      const s2 = areaSuma(x0, y0, x1, y1, suma2);
+      const media2 = s / n;
+      const varianza = Math.max(0, s2 / n - media2 * media2);
+      const desv = Math.sqrt(varianza);
+      const umbral = media2 * (1 + k * (desv / R - 1));
+      const v2 = img.datos[(y * w + x) * 4] > umbral ? 255 : 0;
+      const kk = (y * w + x) * 4;
+      out.datos[kk] = out.datos[kk + 1] = out.datos[kk + 2] = v2;
+      out.datos[kk + 3] = 255;
+    }
+  }
+  return out;
+}
+function recortar(img, x, y, ancho, alto) {
+  const x0 = Math.max(0, Math.min(img.ancho - 1, Math.round(x)));
+  const y0 = Math.max(0, Math.min(img.alto - 1, Math.round(y)));
+  const w = Math.max(1, Math.min(img.ancho - x0, Math.round(ancho)));
+  const h = Math.max(1, Math.min(img.alto - y0, Math.round(alto)));
+  const out = crearImagen(w, h);
+  for (let j = 0; j < h; j++) {
+    const origen = ((y0 + j) * img.ancho + x0) * 4;
+    out.datos.set(img.datos.subarray(origen, origen + w * 4), j * w * 4);
+  }
+  return out;
+}
+function prepararParaLectura(img, opts = {}) {
+  const ladoMax = opts.ladoMax ?? 1600;
+  let out = redimensionar(img, ladoMax);
+  out = aGrises(out);
+  out = estirarContraste(out, opts.recorteHistograma ?? 0.02);
+  if (opts.binarizar !== false) out = binarizarSauvola(out);
+  return out;
+}
+var RECORTE_COMPLETO = { x0: 0, y0: 0, x1: 100, y1: 100 };
+function hayRecorte(r) {
+  return r.x0 > 0.5 || r.y0 > 0.5 || r.x1 < 99.5 || r.y1 < 99.5;
+}
+function recorteRelativo(img, r) {
+  const lim = (v2) => Math.max(0, Math.min(100, Number.isFinite(v2) ? v2 : 0));
+  let x0 = lim(r.x0), x1 = lim(r.x1), y0 = lim(r.y0), y1 = lim(r.y1);
+  if (x1 < x0) [x0, x1] = [x1, x0];
+  if (y1 < y0) [y0, y1] = [y1, y0];
+  if (x1 - x0 < 5 || y1 - y0 < 5) return img;
+  const px = Math.round(x0 / 100 * img.ancho);
+  const py = Math.round(y0 / 100 * img.alto);
+  const ancho = Math.max(1, Math.round((x1 - x0) / 100 * img.ancho));
+  const alto = Math.max(1, Math.round((y1 - y0) / 100 * img.alto));
+  return recortar(img, px, py, ancho, alto);
+}
+
+// src/imagen/calidad.ts
+function nitidez(gris) {
+  const { ancho: w, alto: h, datos } = gris;
+  if (w < 3 || h < 3) return 0;
+  let suma = 0, suma2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const c = (y * w + x) * 4;
+      const lap = -4 * datos[c] + datos[c - 4] + datos[c + 4] + datos[c - w * 4] + datos[c + w * 4];
+      suma += lap;
+      suma2 += lap * lap;
+      n++;
+    }
+  }
+  const media2 = suma / n;
+  return suma2 / n - media2 * media2;
+}
+function brillo(gris) {
+  let s = 0;
+  for (let i = 0; i < gris.datos.length; i += 4) s += gris.datos[i];
+  return s / (gris.datos.length / 4);
+}
+function contraste(gris) {
+  const m = brillo(gris);
+  let s = 0;
+  for (let i = 0; i < gris.datos.length; i += 4) {
+    const d = gris.datos[i] - m;
+    s += d * d;
+  }
+  return Math.sqrt(s / (gris.datos.length / 4));
+}
+var UMBRALES_CALIDAD = {
+  nitidezRelativaMinima: 0.22,
+  nitidezRelativaBuena: 0.6,
+  nitidezMinima: 60,
+  nitidezBuena: 250,
+  brilloMinimo: 45,
+  brilloMaximo: 225,
+  contrasteMinimo: 28,
+  ladoMinimo: 600
+};
+function evaluarCalidad(img) {
+  const chica = redimensionar(img, 900);
+  const gris = aGrises(chica);
+  const nit = nitidez(gris);
+  const con = contraste(gris);
+  const relativa = con > 3 ? nit / (con * con) : 0;
+  const medidas = {
+    nitidez: Math.round(nit),
+    nitidezRelativa: Math.round(relativa * 1e3) / 1e3,
+    brillo: Math.round(brillo(gris)),
+    contraste: Math.round(con),
+    megapixeles: Math.round(img.ancho * img.alto / 1e5) / 10,
+    ladoMenor: Math.min(img.ancho, img.alto)
+  };
+  const problemas = [];
+  if (con > 3 && medidas.nitidezRelativa < UMBRALES_CALIDAD.nitidezRelativaMinima) {
+    problemas.push({
+      codigo: "movida",
+      mensaje: "La foto ha salido movida o desenfocada.",
+      consejo: "Apoya los codos, espera a que el móvil enfoque y vuelve a disparar. Es lo que más arregla la lectura."
+    });
+  }
+  if (medidas.brillo < UMBRALES_CALIDAD.brilloMinimo) {
+    problemas.push({
+      codigo: "oscura",
+      mensaje: "La foto ha salido demasiado oscura.",
+      consejo: "Acércate a una ventana o enciende una luz. Evita hacer sombra tú mismo sobre el envase."
+    });
+  }
+  if (medidas.brillo > UMBRALES_CALIDAD.brilloMaximo) {
+    problemas.push({
+      codigo: "quemada",
+      mensaje: "Hay un reflejo o un brillo que se come el texto.",
+      consejo: "Gira el envase o apártate de la luz directa. Los plásticos brillantes reflejan mucho."
+    });
+  }
+  if (medidas.contraste < UMBRALES_CALIDAD.contrasteMinimo) {
+    problemas.push({
+      codigo: "plana",
+      mensaje: "Apenas se distingue el texto del fondo.",
+      consejo: "Acércate hasta que la tabla ocupe casi toda la pantalla y vuelve a intentarlo."
+    });
+  }
+  if (medidas.ladoMenor < UMBRALES_CALIDAD.ladoMinimo) {
+    problemas.push({
+      codigo: "pequena",
+      mensaje: "La imagen tiene muy poca resolución para leer letra pequeña.",
+      consejo: "Haz la foto con la cámara en vez de recortar una imagen ya guardada."
+    });
+  }
+  const pNitidez = Math.min(1, medidas.nitidezRelativa / UMBRALES_CALIDAD.nitidezRelativaBuena);
+  const pContraste = Math.min(1, medidas.contraste / 60);
+  const desvioBrillo = Math.abs(medidas.brillo - 135) / 135;
+  const pBrillo = Math.max(0, 1 - desvioBrillo * 1.4);
+  const puntuacion = Math.round((0.45 * pNitidez + 0.3 * pContraste + 0.25 * pBrillo) * 100);
+  const grave = problemas.some((p) => p.codigo === "movida" || p.codigo === "pequena");
+  let nivel;
+  if (grave || puntuacion < 35) nivel = "mala";
+  else if (problemas.length > 0 || puntuacion < 60) nivel = "aceptable";
+  else nivel = "buena";
+  return { nivel, puntuacion, medidas, problemas, repetir: nivel === "mala" };
+}
+
+// src/lectura/tabla.ts
+var SINONIMOS = [
+  ["saturadas_g", [
+    "de las cuales acidos grasos saturados",
+    "de los cuales acidos grasos saturados",
+    "de las cuales saturadas",
+    "de los cuales saturados",
+    "de las quals saturades",
+    "dos quais saturados",
+    "of which saturates",
+    "acidos grasos saturados",
+    "grasas saturadas",
+    "greixos saturats",
+    "saturadas",
+    "saturados",
+    "saturates",
+    "saturats"
+  ]],
+  ["monoinsaturadas_g", [
+    "de las cuales monoinsaturadas",
+    "acidos grasos monoinsaturados",
+    "grasas monoinsaturadas",
+    "monoinsaturadas",
+    "monoinsaturados",
+    "monounsaturates"
+  ]],
+  ["poliinsaturadas_g", [
+    "de las cuales poliinsaturadas",
+    "acidos grasos poliinsaturados",
+    "grasas poliinsaturadas",
+    "poliinsaturadas",
+    "poliinsaturados",
+    "polyunsaturates"
+  ]],
+  ["trans_g", ["acidos grasos trans", "grasas trans", "de las cuales trans", "trans"]],
+  ["azucares_g", [
+    "de los cuales azucares",
+    "de las cuales azucares",
+    "dels quals sucres",
+    "of which sugars",
+    "dos quais acucares",
+    "azucares totales",
+    "azucares",
+    "sucres",
+    "sugars",
+    "acucares"
+  ]],
+  ["polialcoholes_g", ["de los cuales polialcoholes", "polialcoholes", "polioles", "polyols"]],
+  ["almidon_g", ["de los cuales almidon", "almidon", "starch"]],
+  ["hidratos_g", [
+    "hidratos de carbono",
+    "hidrats de carboni",
+    "carbohidratos",
+    "glucidos",
+    "glicidos",
+    "carbohydrate",
+    "hidratos",
+    // El lector se come letras del principio ("tdmtos de carbono"), pero
+    // "de carbono" sobrevive y es lo bastante distintivo para fiarse.
+    "de carbono",
+    "de carboni"
+  ]],
+  ["fibra_g", ["fibra alimentaria", "fibra dietetica", "fibra alimentar", "fibra", "fibre", "fibra"]],
+  ["proteinas_g", ["proteinas", "proteines", "proteinas", "protein", "proteina"]],
+  ["sal_g", ["sal equivalente", "equivalente en sal", "sal", "salt"]],
+  ["sodio_mg", ["sodio", "sodi", "sodium"]],
+  ["grasas_g", ["materia grasa", "grasas totales", "grasas", "greixos", "lipidos", "gorduras", "fat", "grasa"]],
+  ["energia_kcal", ["valor energetico", "valor energetic", "energia", "energy", "calorias"]]
+];
+var CABECERAS_100 = ["por 100 g", "por 100 ml", "per 100 g", "per 100 ml", "100 g", "100 ml", "/100g", "/100ml"];
+var CABECERAS_RACION = ["por racion", "per racio", "por porcion", "racion de", "porcion de", "per serving", "por unidad", "unidad"];
+var CABECERAS_ENVASE = ["por envase", "envase entero", "per envas", "por paquete"];
+function normalizar(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[·•‧∙]/g, " ").replace(/\s+/g, " ").trim();
+}
+var UNIDADES = "kcal|kcai|kca|keal|kj|kilojulios|kilocalorias|mg|mcg|ug|µg|g|ml|%";
+function normalizarUnidad(u) {
+  const x = u.toLowerCase();
+  if (/^(kcal|kcai|kca|keal|kilocalorias)$/.test(x)) return "kcal";
+  if (/^(kj|kilojulios)$/.test(x)) return "kj";
+  if (/^(µg|ug|mcg)$/.test(x)) return "ug";
+  return x;
+}
+function extraerNumeros(texto) {
+  const out = [];
+  const re = new RegExp(
+    `([<>~]?\\s?\\d{1,3}(?:[ .]\\d{3})+(?:[.,]\\d{1,2})?|[<>~]?\\s?\\d+(?:[.,]\\d{1,3})?)\\s*(${UNIDADES})?`,
+    "gi"
+  );
+  let m;
+  while ((m = re.exec(texto)) !== null) {
+    const bruto = m[0].trim();
+    let crudo = m[1].replace(/[<>~]/g, "").trim();
+    crudo = crudo.replace(/[ ](?=\d{3}\b)/g, "").replace(/\.(?=\d{3}\b)/g, "");
+    const valor = parseFloat(crudo.replace(",", "."));
+    if (!Number.isFinite(valor)) continue;
+    out.push({ valor, unidad: normalizarUnidad(m[2] ?? ""), bruto });
+  }
+  return out;
+}
+function marcadores(linea) {
+  const out = [];
+  const ocupado = new Array(linea.length).fill(false);
+  const todos = SINONIMOS.flatMap(([campo, nombres]) => nombres.map((n) => ({ campo, n }))).sort((a, b) => b.n.length - a.n.length);
+  for (const { campo, n } of todos) {
+    let desde = 0;
+    for (; ; ) {
+      const i = linea.indexOf(n, desde);
+      if (i === -1) break;
+      desde = i + 1;
+      const antes = i === 0 || /[^a-z0-9]/.test(linea[i - 1]);
+      const despues = i + n.length >= linea.length || /[^a-z0-9]/.test(linea[i + n.length]);
+      if (!antes || !despues) continue;
+      if (ocupado.slice(i, i + n.length).some(Boolean)) continue;
+      for (let k = i; k < i + n.length; k++) ocupado[k] = true;
+      out.push({ campo, desde: i, hasta: i + n.length, texto: n });
+      break;
+    }
+  }
+  const porCampo = /* @__PURE__ */ new Map();
+  for (const m of out.sort((a, b) => a.desde - b.desde)) {
+    if (!porCampo.has(m.campo)) porCampo.set(m.campo, m);
+  }
+  return [...porCampo.values()].sort((a, b) => a.desde - b.desde);
+}
+function detectarColumnas(lineas) {
+  for (const l of lineas) {
+    const tiene100 = CABECERAS_100.some((c) => l.includes(c));
+    const tieneRacion = CABECERAS_RACION.some((c) => l.includes(c));
+    const tieneEnvase = CABECERAS_ENVASE.some((c) => l.includes(c));
+    if (!tiene100 && !tieneRacion && !tieneEnvase) continue;
+    const pos = [];
+    for (const c of CABECERAS_100) {
+      const i = l.indexOf(c);
+      if (i >= 0) {
+        pos.push({ tipo: "por_100", i });
+        break;
+      }
+    }
+    for (const c of CABECERAS_RACION) {
+      const i = l.indexOf(c);
+      if (i >= 0) {
+        pos.push({ tipo: "por_racion", i });
+        break;
+      }
+    }
+    for (const c of CABECERAS_ENVASE) {
+      const i = l.indexOf(c);
+      if (i >= 0) {
+        pos.push({ tipo: "por_envase", i });
+        break;
+      }
+    }
+    pos.sort((a, b) => a.i - b.i);
+    const indice100 = pos.findIndex((p) => p.tipo === "por_100");
+    let racion;
+    const mr = l.match(/racion[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/porcion[^0-9]{0,12}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/\((\d+(?:[.,]\d+)?)\s*(?:g|ml)\)/);
+    if (mr) racion = parseFloat(mr[1].replace(",", "."));
+    if (indice100 >= 0) return { base: "por_100", indice100, racion };
+    if (pos.length) return { base: pos[0].tipo, indice100: 0, racion };
+  }
+  return { base: "desconocida", indice100: 0 };
+}
+function unirNombresConValores(lineas) {
+  const soloNumeros = (l) => /\d/.test(l) && l.replace(/\d+(?:[.,]\d+)?/g, " ").replace(new RegExp(`\\b(${UNIDADES})\\b`, "gi"), " ").replace(/[^\x20-\x7E]/g, "").replace(/[\s.,:;%/<>~+()·-]/g, "").length === 0;
+  const esBasura = (l) => marcadores(l).length === 0 && !soloNumeros(l) && !/\d+[.,]\d/.test(l);
+  const out = [];
+  const dudosos = /* @__PURE__ */ new Set();
+  let anteriorFueNombreSinValor = false;
+  for (let i = 0; i < lineas.length; i++) {
+    const actual = lineas[i];
+    const tieneNombre = marcadores(actual).length > 0;
+    const sinNumero = !/\d/.test(actual);
+    if (tieneNombre && sinNumero) {
+      let j = i + 1;
+      let saltados = 0;
+      while (j < lineas.length && saltados < 1 && esBasura(lineas[j])) {
+        j++;
+        saltados++;
+      }
+      if (j < lineas.length && soloNumeros(lineas[j])) {
+        if (anteriorFueNombreSinValor) dudosos.add(out.length);
+        out.push(`${actual} ${lineas[j]}`);
+        for (let k = i + 1; k < j; k++) out.push(lineas[k]);
+        i = j;
+        anteriorFueNombreSinValor = false;
+        continue;
+      }
+      anteriorFueNombreSinValor = true;
+      out.push(actual);
+      continue;
+    }
+    anteriorFueNombreSinValor = false;
+    out.push(actual);
+  }
+  return { lineas: out, dudosos };
+}
+function analizarTabla(textoCrudo) {
+  const lineasCrudas = textoCrudo.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 0);
+  const { lineas, dudosos } = unirNombresConValores(lineasCrudas.map(normalizar));
+  const { base: baseDetectada, indice100, racion } = detectarColumnas(lineas);
+  const valores = [];
+  const usadas = /* @__PURE__ */ new Set();
+  const avisos = [];
+  lineas.forEach((linea, iLinea) => {
+    const marcas = marcadores(linea);
+    if (marcas.length === 0) return;
+    marcas.forEach((marca, iMarca) => {
+      const fin = iMarca + 1 < marcas.length ? marcas[iMarca + 1].desde : linea.length;
+      const fragmento = linea.slice(marca.hasta, fin);
+      const nums = extraerNumeros(fragmento);
+      if (nums.length === 0) return;
+      usadas.add(iLinea);
+      if (marca.campo === "energia_kcal") {
+        const kj = nums.find((n2) => n2.unidad === "kj");
+        const kcal = nums.find((n2) => n2.unidad === "kcal");
+        if (kj) valores.push({ campo: "energia_kj", valor: kj.valor, unidad: "kJ", textoOriginal: kj.bruto, confianza: 0.95, columna: 0 });
+        if (kcal) valores.push({ campo: "energia_kcal", valor: kcal.valor, unidad: "kcal", textoOriginal: kcal.bruto, confianza: 0.95, columna: 0 });
+        if (!kj && !kcal) {
+          const n2 = elegirColumna(nums, indice100);
+          if (n2) {
+            const esKj = n2.valor > 900;
+            valores.push({
+              campo: esKj ? "energia_kj" : "energia_kcal",
+              valor: n2.valor,
+              unidad: esKj ? "kJ" : "kcal",
+              textoOriginal: n2.bruto,
+              confianza: 0.6,
+              columna: indice100
+            });
+            avisos.push("La energía venía sin unidad. Se ha supuesto por su magnitud, compruébala.");
+          }
+        }
+        return;
+      }
+      const n = elegirColumna(nums, indice100);
+      if (!n) return;
+      let valor = n.valor;
+      let unidad = n.unidad;
+      if (marca.campo === "sodio_mg") {
+        if (unidad === "g") {
+          valor = valor * 1e3;
+          unidad = "mg";
+        }
+      } else if (unidad === "mg") {
+        valor = valor / 1e3;
+        unidad = "g";
+      } else if (unidad === "ug" || unidad === "µg" || unidad === "mcg") {
+        valor = valor / 1e6;
+        unidad = "g";
+      }
+      let confianza2 = 0.9;
+      if (!n.unidad) confianza2 -= 0.2;
+      if (nums.length > 2) confianza2 -= 0.15;
+      if (marcas.length > 2) confianza2 -= 0.1;
+      if (dudosos.has(iLinea)) confianza2 = Math.min(confianza2, 0.4);
+      valores.push({
+        campo: marca.campo,
+        valor,
+        unidad: unidad || "",
+        textoOriginal: n.bruto,
+        confianza: Math.max(0.3, confianza2),
+        columna: indice100
+      });
+    });
+  });
+  const nutrientes = {};
+  const puestos = /* @__PURE__ */ new Set();
+  for (const v2 of valores) {
+    if (puestos.has(v2.campo)) continue;
+    puestos.add(v2.campo);
+    if (v2.campo === "almidon_g") continue;
+    const dato = {
+      valor: v2.valor,
+      estado: "leido",
+      textoOriginal: v2.textoOriginal,
+      confianzaOCR: v2.confianza
+    };
+    nutrientes[v2.campo] = dato;
+  }
+  let racionGramos = racion;
+  if (!racionGramos) {
+    for (const l of lineas) {
+      const m = l.match(/racion(?:es)?[^0-9]{0,15}(\d+(?:[.,]\d+)?)\s*(g|ml)/) ?? l.match(/porcion[^0-9]{0,15}(\d+(?:[.,]\d+)?)\s*(g|ml)/);
+      if (m) {
+        racionGramos = parseFloat(m[1].replace(",", "."));
+        break;
+      }
+    }
+  }
+  const columnas = Math.max(1, ...lineas.map((l) => {
+    const marcas = marcadores(l);
+    return marcas.length === 1 ? extraerNumeros(l.slice(marcas[0].hasta)).length : 0;
+  }));
+  let base = baseDetectada;
+  if (base === "desconocida") {
+    if (columnas > 1) {
+      base = "por_100";
+      avisos.push('No se ha encontrado la cabecera de la tabla. Se ha supuesto que la primera columna es la de "por 100 g", que es lo que manda la ley, pero conviene comprobarlo.');
+    } else {
+      base = "por_100";
+      avisos.push("No se ha encontrado la cabecera de la tabla. Comprueba que los valores son por 100 g y no por ración.");
+    }
+  } else if (base !== "por_100") {
+    avisos.push(`La columna leída es "${base === "por_racion" ? "por ración" : "por envase"}". Para comparar productos hacen falta los valores por 100 g.`);
+  }
+  const lineasSinUsar = lineas.filter((_, i) => !usadas.has(i));
+  if (dudosos.size > 0) {
+    const campos = valores.filter((v2) => v2.confianza <= 0.4).map((v2) => v2.campo);
+    if (campos.length > 0) {
+      avisos.push("Algún campo se ha quedado sin valor al leer, así que las cifras que vienen después podrían pertenecer al campo de arriba. Comprueba sobre todo: " + [...new Set(campos)].join(", ") + ".");
+    }
+  }
+  const OBLIGATORIOS2 = [
+    "energia_kcal",
+    "grasas_g",
+    "saturadas_g",
+    "hidratos_g",
+    "azucares_g",
+    "proteinas_g",
+    "sal_g"
+  ];
+  const hallados = OBLIGATORIOS2.filter((c) => puestos.has(c) || c === "energia_kcal" && puestos.has("energia_kj") || c === "sal_g" && puestos.has("sodio_mg")).length;
+  const completitud = hallados / OBLIGATORIOS2.length;
+  const mediaConfianza = valores.length ? valores.reduce((s, v2) => s + v2.confianza, 0) / valores.length : 0;
+  const confianza = Math.round((0.6 * completitud + 0.4 * mediaConfianza) * 100) / 100;
+  return { nutrientes, base, racionGramos, columnas, valores, lineasSinUsar, confianza, avisos };
+}
+function elegirColumna(nums, indice) {
+  if (nums.length === 0) return void 0;
+  const utiles = nums.filter((n) => n.unidad !== "%");
+  const lista = utiles.length ? utiles : nums;
+  return lista[Math.min(indice, lista.length - 1)];
+}
+
+// src/lectura/ingredientes.ts
+var CIERRES_SEGUROS = [
+  "conservar en",
+  "consérvese en",
+  "conservese en",
+  "una vez abierto",
+  "consumir preferentemente",
+  "modo de empleo",
+  "modo de preparacion",
+  "instrucciones",
+  "agitar antes",
+  "informacion nutricional",
+  "valores medios",
+  "peso neto",
+  "elaborado en",
+  "fabricado en",
+  "r.s.i",
+  "rgseaa"
+];
+var CIERRES_TRAS_PUNTO = [
+  "sin conservantes",
+  "sin colorantes",
+  "sin gluten",
+  "sin azucares anadidos",
+  "sin lactosa",
+  "sin aceite de palma",
+  "apto para",
+  "no contiene",
+  "producto"
+];
+var APERTURAS = [
+  "ingredientes:",
+  "ingredientes",
+  "ingredients:",
+  "ingredients",
+  "ingredientes,",
+  "composicion:",
+  "composicion",
+  "ingredientes >"
+];
+function partirRespetandoParentesis(texto) {
+  const CENTINELA = "";
+  const protegido = texto.replace(/(\d),(?=\d)/g, `$1${CENTINELA}`);
+  const out = [];
+  let actual = "";
+  let nivel = 0;
+  for (const c of protegido) {
+    if (c === "(" || c === "[" || c === "{") nivel++;
+    else if (c === ")" || c === "]" || c === "}") nivel = Math.max(0, nivel - 1);
+    if ((c === "," || c === ";") && nivel === 0) {
+      if (actual.trim()) out.push(actual.trim());
+      actual = "";
+    } else {
+      actual += c;
+    }
+  }
+  if (actual.trim()) out.push(actual.trim());
+  return out.map((t) => t.split(CENTINELA).join(","));
+}
+function analizarIngredientesTexto(crudo) {
+  const avisos = [];
+  let texto = crudo.replace(/[\n\r]+/g, " ").replace(/\s+/g, " ").trim();
+  const normal = normalizar(texto);
+  let marcadorEncontrado = false;
+  let inicio = 0;
+  for (const ap of APERTURAS) {
+    const i = normal.indexOf(ap);
+    if (i >= 0) {
+      inicio = i + ap.length;
+      marcadorEncontrado = true;
+      break;
+    }
+  }
+  if (!marcadorEncontrado) {
+    avisos.push('No se ha encontrado la palabra "Ingredientes". Se ha tomado todo el texto como si lo fuera, así que revísalo.');
+  }
+  texto = texto.slice(inicio).trim().replace(/^[:.\-–—\s]+/, "");
+  {
+    const normal2 = normalizar(texto);
+    let corte = -1;
+    const antes = (i) => normal2.slice(Math.max(0, i - 3), i);
+    for (const c of CIERRES_SEGUROS) {
+      const i = normal2.indexOf(c);
+      if (i > 0 && (corte === -1 || i < corte)) corte = i;
+    }
+    for (const c of CIERRES_TRAS_PUNTO) {
+      let desde = 0;
+      for (; ; ) {
+        const i = normal2.indexOf(c, desde);
+        if (i === -1) break;
+        desde = i + 1;
+        if (i > 0 && antes(i).includes(".") && (corte === -1 || i < corte)) {
+          corte = i;
+          break;
+        }
+      }
+    }
+    if (corte >= 0) {
+      texto = texto.slice(0, corte).trim().replace(/[.,;\s]+$/, "");
+      avisos.push("Se ha cortado el texto donde acaba la lista de ingredientes y empiezan los reclamos del envase. Comprueba que no falte ninguno.");
+    }
+  }
+  let parteTrazas = "";
+  const normalActual = normalizar(texto);
+  let cortePronto = -1;
+  for (const p of PATRONES_TRAZAS) {
+    const i = normalActual.indexOf(p);
+    if (i >= 0 && (cortePronto === -1 || i < cortePronto)) cortePronto = i;
+  }
+  if (cortePronto >= 0) {
+    parteTrazas = texto.slice(cortePronto);
+    texto = texto.slice(0, cortePronto).trim().replace(/[.,;\s]+$/, "");
+  }
+  const trozos = partirRespetandoParentesis(texto);
+  const ingredientes = [];
+  for (const trozo of trozos) {
+    let t = trozo.trim().replace(/^[.\-–—•*\s]+/, "").replace(/[.\s]+$/, "");
+    if (t.length < 2) continue;
+    if (/^[\d\s.,%]+$/.test(t)) continue;
+    let porcentaje;
+    const mp = t.match(/(\d{1,3}(?:[.,]\d{1,2})?)\s*%/);
+    if (mp) {
+      const v2 = parseFloat(mp[1].replace(",", "."));
+      if (v2 > 0 && v2 <= 100) porcentaje = v2;
+      t = t.replace(/\(?\s*\d{1,3}(?:[.,]\d{1,2})?\s*%\s*\)?/, " ").replace(/\s+/g, " ").trim();
+    }
+    let detalle;
+    const md = t.match(/\(([^)]*)\)/);
+    if (md && md[1].trim().length > 1) detalle = md[1].trim();
+    t = t.replace(/[.,;\s]+$/, "").trim();
+    if (t.length < 2) continue;
+    ingredientes.push({ texto: t, porcentaje, detalle });
+  }
+  const trazas = [];
+  if (parteTrazas) {
+    const limpio = parteTrazas.replace(new RegExp(PATRONES_TRAZAS.join("|"), "gi"), " ").replace(/\b(puede|contener|trazas|de|y|o|u|e)\b/gi, " ").replace(/\s+/g, " ").trim();
+    for (const t of partirRespetandoParentesis(limpio)) {
+      const l = t.replace(/[.\s]+$/, "").trim();
+      if (l.length > 2) trazas.push(l);
+    }
+  }
+  let confianza = 0.9;
+  if (!marcadorEncontrado) confianza -= 0.3;
+  if (ingredientes.length === 0) confianza = 0;
+  else if (ingredientes.length === 1) confianza -= 0.25;
+  const largos = ingredientes.filter((i) => i.texto.length > 60).length;
+  if (largos > 0) {
+    confianza -= 0.1 * largos;
+    avisos.push(`Hay ${largos} ingrediente(s) demasiado largos. Puede que falte alguna coma y se hayan juntado dos.`);
+  }
+  if (ingredientes.length > 40) {
+    avisos.push("Se han detectado más de 40 ingredientes. Comprueba que no se haya colado texto de otra parte del envase.");
+  }
+  return {
+    ingredientes,
+    trazas,
+    marcadorEncontrado,
+    confianza: Math.max(0, Math.round(confianza * 100) / 100),
+    avisos
+  };
+}
+
 // src/nucleo/explicar.ts
 function veredictoDe(v2) {
   if (v2 > 0) return "favorable";
@@ -5981,7 +5996,9 @@ function queBuscarEnLugarDe(v2) {
         break;
       default:
         if (f.categoria === "aditivo") {
-          consejos.push(`Uno sin ${f.nombre.split("·")[0].trim()}.`);
+          const partes = f.nombre.split("·").map((x) => x.trim());
+          const sustancia = partes.length > 1 ? partes[1] : partes[0];
+          consejos.push(`Uno sin ${sustancia.toLowerCase()} (${partes[0]}).`);
         }
     }
   }

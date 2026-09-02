@@ -15,12 +15,26 @@
 let motorLector = null;
 let cargando = null;
 
-export const RUTA_LECTOR = './lector/';
+export const RUTA_LECTOR = 'lector/';
+
+/**
+ * Ruta absoluta desde la raíz de la app.
+ *
+ * Hace falta porque fetch() e import() NO resuelven igual una ruta relativa:
+ * fetch la calcula desde la página, e import desde el fichero que la escribe,
+ * que vive en js/. El resultado era que la comprobación encontraba el fichero
+ * y la carga lo buscaba en js/escaner/, donde no hay nada, y la app concluía
+ * que el lector no estaba instalado.
+ */
+function rutaApp(relativa) {
+  return new URL(relativa, document.baseURI).href;
+}
+
 
 /** ¿Está la carpeta del lector en el servidor? */
 export async function lectorDisponible() {
   try {
-    const r = await fetch(`${RUTA_LECTOR}tesseract.js`, { method: 'HEAD' });
+    const r = await fetch(rutaApp(`${RUTA_LECTOR}tesseract.js`), { method: 'HEAD' });
     return r.ok;
   } catch {
     return false;
@@ -38,11 +52,11 @@ async function prepararLector(alProgresar = () => {}) {
   cargando = (async () => {
     if (!(await lectorDisponible())) return null;
 
-    const { createWorker } = await import(`${RUTA_LECTOR}tesseract.js`);
+    const { createWorker } = await import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`));
     const worker = await createWorker('spa', 1, {
-      workerPath: `${RUTA_LECTOR}worker.js`,
-      corePath: RUTA_LECTOR,
-      langPath: RUTA_LECTOR,
+      workerPath: rutaApp(`${RUTA_LECTOR}worker.js`),
+      corePath: rutaApp(RUTA_LECTOR),
+      langPath: rutaApp(RUTA_LECTOR),
       gzip: true,
       logger: (m) => {
         if (typeof m.progress === 'number') alProgresar(m.progress, m.status);

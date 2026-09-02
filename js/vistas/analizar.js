@@ -186,7 +186,7 @@ export function analizar() {
     </button>
 
     <div style="margin-top:24px">
-      ${pendiente('<b>Hasta aquí llega el módulo 6.</b> La lectura ya funciona y verás abajo lo que ha entendido. La pantalla donde podrás corregir campo por campo antes de analizar es el módulo 7.')}
+      ${pendiente('<b>Tres formas, y ninguna sustituye a las otras.</b> El código de barras es la más rápida; pegar el texto copiado del iPhone, la más fiable; las fotos, la que funciona sin internet. Elige la que te venga bien en cada momento.')}
     </div>
   `;
 }
