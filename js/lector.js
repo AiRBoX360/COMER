@@ -87,8 +87,35 @@ async function prepararLector(alProgresar = () => {}) {
       return null;
     }
 
-    const { createWorker } = await import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`));
-    const worker = await createWorker('spa', 1, {
+    // Sin este try/catch, un fallo al arrancar el lector se perdía por el
+    // camino y la pantalla se quedaba en "Preparando el lector…" para siempre.
+    // Un error que no se cuenta es peor que un error.
+    try {
+      return await arrancar(alProgresar);
+    } catch (err) {
+      motivoNoDisponible = `El lector no ha podido arrancar. ${err.message}. Usa la vía de pegar texto, que no necesita descargar nada.`;
+      cargando = null;
+      return null;
+    }
+  })();
+
+  return cargando;
+}
+
+/** Arranca el lector, con tope de tiempo para que no se quede colgado. */
+async function arrancar(alProgresar) {
+  const TOPE = 180000;   // tres minutos: son casi nueve megas por una red móvil
+
+  const conTope = (promesa) => Promise.race([
+    promesa,
+    new Promise((_, rechaza) => setTimeout(
+      () => rechaza(new Error('Ha tardado más de tres minutos en descargarse')), TOPE)),
+  ]);
+
+  const { createWorker } = await conTope(
+    import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`)));
+
+  const worker = await conTope(createWorker('spa', 1, {
       workerPath: rutaApp(`${RUTA_LECTOR}worker.js`),
       // Se apunta al fichero exacto y no a la carpeta: así el lector no busca
       // el núcleo alternativo, que no viene incluido para no doblar el peso.
@@ -98,22 +125,20 @@ async function prepararLector(alProgresar = () => {}) {
       logger: (m) => {
         if (typeof m.progress === 'number') alProgresar(m.progress, m.status);
       },
-    });
+      errorHandler: (m) => { console.error('Lector:', m); },
+    }));
 
-    // Ajustes pensados para etiquetas, no para novelas.
-    await worker.setParameters({
-      // Un bloque de texto uniforme: es lo que es una tabla nutricional.
-      tessedit_pageseg_mode: '6',
-      // Conservar los espacios entre columnas: son la pista de qué número va
-      // con qué campo cuando la tabla tiene dos columnas.
-      preserve_interword_spaces: '1',
-    });
+  // Ajustes pensados para etiquetas, no para novelas.
+  await worker.setParameters({
+    // Un bloque de texto uniforme: es lo que es una tabla nutricional.
+    tessedit_pageseg_mode: '6',
+    // Conservar los espacios entre columnas: son la pista de qué número va
+    // con qué campo cuando la tabla tiene dos columnas.
+    preserve_interword_spaces: '1',
+  });
 
-    motorLector = worker;
-    return worker;
-  })();
-
-  return cargando;
+  motorLector = worker;
+  return worker;
 }
 
 /**
@@ -150,4 +175,54 @@ export async function soltarLector() {
     motorLector = null;
     cargando = null;
   }
+}
+
+/**
+ * Comprobación del lector, fichero por fichero.
+ *
+ * Existe porque cuando algo falla al arrancar, "no funciona" no es un
+ * diagnóstico. Esto dice cuál de las cinco piezas falta y con qué respuesta
+ * del servidor, que es lo único con lo que se puede arreglar algo.
+ */
+export async function diagnosticarLector() {
+  const FICHEROS = [
+    'tesseract.js',
+    'worker.js',
+    'tesseract-core-simd-lstm.wasm.js',
+    'tesseract-core-simd-lstm.wasm',
+    'spa.traineddata.gz',
+  ];
+
+  const filas = [];
+  for (const f of FICHEROS) {
+    const url = rutaApp(`${RUTA_LECTOR}${f}`);
+    try {
+      const r = await fetch(url, { method: 'HEAD' });
+      const tipo = r.headers.get('content-type') ?? '';
+      const bytes = Number(r.headers.get('content-length') ?? 0);
+      filas.push({
+        fichero: f,
+        ok: r.ok,
+        detalle: r.ok
+          ? `${bytes ? (bytes / 1048576).toFixed(1) + ' MB' : 'encontrado'}${tipo.includes('text/html') ? ' · OJO: el servidor devuelve una página, no el fichero' : ''}`
+          : `no está (${r.status})`,
+      });
+    } catch (err) {
+      filas.push({ fichero: f, ok: false, detalle: `error de red: ${err.message}` });
+    }
+  }
+
+  filas.push({
+    fichero: 'Instrucciones SIMD',
+    ok: await admiteSIMD(),
+    detalle: (await admiteSIMD()) ? 'admitidas' : 'no admitidas, hace falta iOS 16.4 o posterior',
+  });
+
+  filas.push({
+    fichero: 'Trabajadores en segundo plano',
+    ok: typeof Worker !== 'undefined',
+    detalle: typeof Worker !== 'undefined' ? 'disponibles' : 'no disponibles en este navegador',
+  });
+
+  return filas;
 }

@@ -1,7 +1,7 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
-import { leerTexto, lectorDisponible, porQueNoHayLector } from '../lector.js';
+import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { escanear, hayEscaner } from '../escaner.js';
@@ -182,6 +182,8 @@ export function analizar() {
       <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
     </button>
     <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
+    <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
+    <div id="diagLector" style="margin-top:12px"></div>
 
     <div id="resumenLectura" style="margin-top:24px"></div>
     <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
@@ -367,17 +369,29 @@ export function analizarActivo(raiz, { repintar, irA }) {
       ${avisos ? `<div class="pendiente" style="margin-top:12px"><ul style="margin:0;padding-left:1.1em">${avisos}</ul></div>` : ''}`;
   }
 
-  raiz.querySelector('#btnLeer')?.addEventListener('click', async () => {
-    estado.textContent = 'Preparando el lector…';
-    for (const clave of ['tabla', 'ingredientes']) {
-      const r = await leerCaptura(clave, (p, s2) => {
-        estado.textContent = `${s2 === 'recognizing text' ? 'Leyendo' : 'Preparando'} ${clave}… ${Math.round(p * 100)} %`;
-      });
-      if (!r.ok) { estado.textContent = r.motivo; return; }
-      interpretar(clave, r.texto);
+  raiz.querySelector('#btnLeer')?.addEventListener('click', async (e) => {
+    const boton = e.target.closest('button');
+    if (boton) boton.disabled = true;
+    estado.textContent = 'Preparando el lector… la primera vez descarga casi nueve megas y puede tardar un par de minutos.';
+    try {
+      for (const clave of ['tabla', 'ingredientes']) {
+        const r = await leerCaptura(clave, (p, s2) => {
+          const fase = s2 === 'recognizing text' ? 'Leyendo'
+            : s2 === 'loading language traineddata' ? 'Descargando el idioma'
+            : s2 === 'initializing api' ? 'Arrancando' : 'Preparando';
+          estado.textContent = `${fase} ${clave}… ${Math.round(p * 100)} %`;
+        });
+        if (!r.ok) { estado.textContent = r.motivo; return; }
+        interpretar(clave, r.texto);
+      }
+      estado.textContent = 'Listo. Revisa abajo lo que ha entendido.';
+      pintarResumen();
+    } catch (err) {
+      // Nada de quedarse en silencio: si esto revienta, se dice qué reventó.
+      estado.textContent = `Algo ha fallado al leer las fotos: ${err.message}. Pulsa "Comprobar el lector de fotos" para ver qué falta.`;
+    } finally {
+      if (boton) boton.disabled = false;
     }
-    estado.textContent = 'Listo. Revisa abajo lo que ha entendido.';
-    pintarResumen();
   });
 
   raiz.querySelector('#btnPegado')?.addEventListener('click', () => {
@@ -467,6 +481,24 @@ export function analizarActivo(raiz, { repintar, irA }) {
     zonaCamara.hidden = true;
     escaneando = false;
     estadoCodigo.textContent = '';
+  });
+
+  raiz.querySelector('#btnDiagLector')?.addEventListener('click', async (e) => {
+    const caja = raiz.querySelector('#diagLector');
+    e.target.disabled = true;
+    caja.innerHTML = '<p class="texto">Comprobando…</p>';
+    const filas = await diagnosticarLector();
+    e.target.disabled = false;
+    caja.innerHTML = `
+      <div class="tarjeta">
+        <ul class="diagnostico">
+          ${filas.map((f) => `
+            <li><span>${esc(f.fichero)}</span><b class="${f.ok ? 'si' : 'no'}">${esc(f.detalle)}</b></li>`).join('')}
+        </ul>
+      </div>
+      ${filas.every((f) => f.ok)
+        ? '<p class="texto" style="margin-top:12px">Todo en su sitio. Si aun así no lee, mándame esta pantalla.</p>'
+        : '<p class="texto" style="margin-top:12px">Lo que salga en naranja es lo que falla. Mándame esta pantalla.</p>'}`;
   });
 
   raiz.querySelector('#btnRevisar')?.addEventListener('click', () => irA('revisar'));

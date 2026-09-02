@@ -1004,3 +1004,6 @@ button{touch-action:manipulation}
 .rapido__peso{width:2.4rem; flex:none; text-align:center; font-size:1.1rem; color:var(--ceniza-tenue)}
 .rapido b{display:block; font-family:var(--display); font-weight:600; font-size:1.05rem}
 .rapido span{display:block; font-size:0.85rem; color:var(--ceniza-tenue); margin-top:2px}
+/* En el diagnóstico, los detalles largos no deben ir en mayúsculas ni cortarse. */
+.diagnostico b{max-width:58%; text-align:right; overflow-wrap:anywhere}
+.diagnostico b.no{text-transform:none; letter-spacing:.01em}
