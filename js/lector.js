@@ -113,8 +113,21 @@ async function arrancar(alProgresar) {
   ]);
 
   alProgresar(0.05, 'cargando el lector');
-  const { createWorker } = await conTope(
+  const modulo = await conTope(
     import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`)));
+
+  // El fichero del lector exporta UN SOLO objeto por defecto, no exportaciones
+  // con nombre. Pedirle createWorker directamente devolvía undefined, y el
+  // error solo aparecía al intentar usarlo. Se admiten las dos formas por si
+  // una versión futura cambia de empaquetado.
+  const createWorker = modulo.createWorker ?? modulo.default?.createWorker;
+  if (typeof createWorker !== 'function') {
+    throw new Error(
+      `El fichero del lector no ofrece la función de arranque. Exporta: ${
+        [...Object.keys(modulo), ...(modulo.default ? Object.keys(modulo.default) : [])]
+          .slice(0, 8).join(', ') || 'nada reconocible'}`,
+    );
+  }
 
   alProgresar(0.1, 'arrancando el trabajador');
   const worker = await conTope(createWorker('spa', 1, {
