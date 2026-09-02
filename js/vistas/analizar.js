@@ -2,8 +2,9 @@ import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
 import { leerTexto, lectorDisponible } from '../lector.js';
-import { enCurso } from '../estado.js';
+import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
+import { escanear, hayEscaner } from '../escaner.js';
 import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
 /**
@@ -107,10 +108,32 @@ function tarjetaToma(t) {
     </div>`;
 }
 
+/**
+ * Qué producto hay cargado ahora mismo.
+ *
+ * Sin esto, los datos de un producto se colaban en el siguiente sin que nada
+ * lo delatara: si la lectura nueva no reconocía los ingredientes, quedaban los
+ * del anterior y el veredicto salía mal en silencio. Un análisis a medias
+ * invisible es peor que uno vacío.
+ */
+function barraEnCurso() {
+  if (!hayAlgoEnCurso()) return '';
+  const r = resumenEnCurso();
+  return `
+    <div class="en-curso">
+      <div class="en-curso__texto">
+        <b>${esc(r.nombre || 'Producto sin nombre')}</b>
+        <span>${r.campos} dato(s) de la tabla · ${r.ingredientes} ingrediente(s)</span>
+      </div>
+      <button class="boton" id="btnEmpezarDeNuevo">Empezar de nuevo</button>
+    </div>`;
+}
+
 export function analizar() {
   const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
   return `
     <h1 class="titulo">Analizar</h1>
+    ${barraEnCurso()}
     <p class="texto">Fotografía la tabla y los ingredientes. Las fotos no salen de tu teléfono: se procesan aquí dentro.</p>
 
     <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
@@ -137,7 +160,17 @@ export function analizar() {
       hay que comprobarlo contra el envase: la ficha puede ser de una versión
       anterior del producto.
     </p>
+    <div class="escaner" id="zonaEscaner" hidden>
+      <video id="videoEscaner" muted playsinline></video>
+      <div class="escaner__mira"></div>
+      <button class="boton" id="btnCancelarEscaner">Cancelar</button>
+    </div>
+    <button class="boton-grande" id="btnEscanear" style="margin-bottom:12px">
+      ESCANEAR EL CÓDIGO
+      <small>Apunta con la cámara, sin teclear nada</small>
+    </button>
     <div class="campo">
+      <label class="campo__nombre" for="codigoBarras">O tecléalo</label>
       <div class="campo__entrada">
         <input id="codigoBarras" type="text" inputmode="numeric"
                placeholder="8480000123456" autocomplete="off">
@@ -353,15 +386,33 @@ export function analizarActivo(raiz, { repintar, irA }) {
     pintarResumen();
   });
 
+  raiz.querySelector('#btnEmpezarDeNuevo')?.addEventListener('click', () => {
+    if (!confirm('¿Descartar lo que hay cargado y empezar con otro producto?')) return;
+    reiniciar();
+    capturas.clear();
+    leido.tabla = null;
+    leido.ingredientes = null;
+    repintar();
+  });
+
   const estadoCodigo = raiz.querySelector('#estadoCodigo');
-  raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', async () => {
-    const codigo = raiz.querySelector('#codigoBarras')?.value ?? '';
+
+  /** Busca y carga un producto por su código, venga de la cámara o tecleado. */
+  async function buscarYCargar(codigo) {
     estadoCodigo.textContent = 'Consultando…';
     const r = await buscarPorCodigo(codigo);
 
     if (!r.ok) { estadoCodigo.textContent = r.mensaje; return; }
 
     const p = r.producto;
+    // Un código de barras identifica un producto entero, así que sustituye lo
+    // que hubiera cargado en vez de sumarse. Si la ficha viene sin ingredientes
+    // y se conservaran los del producto anterior, el veredicto saldría mal sin
+    // que nada lo delatara.
+    reiniciar();
+    capturas.clear();
+    leido.ingredientes = null;
+
     // Lo que llega de la base se trata igual que lo leído de una foto: entra
     // como dato leído, no como dato confirmado, y va a la pantalla de revisión.
     enCurso.nombre = p.nombre;
@@ -378,6 +429,40 @@ export function analizarActivo(raiz, { repintar, irA }) {
       `Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
       (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
     repintar();
+  }
+
+  raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', () => {
+    buscarYCargar(raiz.querySelector('#codigoBarras')?.value ?? '');
+  });
+
+  const zonaCamara = raiz.querySelector('#zonaEscaner');
+  const video = raiz.querySelector('#videoEscaner');
+  let escaneando = false;
+
+  raiz.querySelector('#btnEscanear')?.addEventListener('click', async () => {
+    if (escaneando) return;
+    if (!(await hayEscaner())) {
+      estadoCodigo.textContent = 'El lector de códigos no está instalado en esta copia de la app. Teclea el número a mano, que funciona igual.';
+      return;
+    }
+    escaneando = true;
+    zonaCamara.hidden = false;
+    const r = await escanear({ video, alEstado: (t) => { estadoCodigo.textContent = t; } });
+    zonaCamara.hidden = true;
+    video.srcObject = null;
+    escaneando = false;
+    if (!r.ok) { estadoCodigo.textContent = r.mensaje; return; }
+    const caja = raiz.querySelector('#codigoBarras');
+    if (caja) caja.value = r.codigo;
+    estadoCodigo.textContent = `Código leído: ${r.codigo}. Consultando…`;
+    await buscarYCargar(r.codigo);
+  });
+
+  raiz.querySelector('#btnCancelarEscaner')?.addEventListener('click', () => {
+    video.srcObject?.getTracks().forEach((t) => t.stop());
+    zonaCamara.hidden = true;
+    escaneando = false;
+    estadoCodigo.textContent = '';
   });
 
   raiz.querySelector('#btnRevisar')?.addEventListener('click', () => irA('revisar'));

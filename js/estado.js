@@ -19,6 +19,23 @@ export const enCurso = {
   avisosLectura: [],
 };
 
+/**
+ * ¿Hay algo cargado ahora mismo?
+ * Sirve para poder enseñarlo en pantalla: un análisis a medias invisible es
+ * justo lo que hace que los datos de un producto se cuelen en el siguiente.
+ */
+export function hayAlgoEnCurso() {
+  return Object.keys(enCurso.nutrientes).length > 0 || enCurso.ingredientes.length > 0;
+}
+
+export function resumenEnCurso() {
+  return {
+    nombre: enCurso.nombre,
+    campos: Object.keys(enCurso.nutrientes).length,
+    ingredientes: enCurso.ingredientes.length,
+  };
+}
+
 export function reiniciar() {
   enCurso.nombre = '';
   enCurso.categoria = 'general';

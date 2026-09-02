@@ -1,6 +1,7 @@
 import { banda, marcador, esc, vacio } from '../ui.js';
-import { enCurso } from '../estado.js';
-import { analizarProducto } from '../motor.js';
+import { enCurso, reiniciar } from '../estado.js';
+import { analizarProducto, revisarVigilancia } from '../motor.js';
+import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis } from '../almacen.js';
 import { capturasActuales } from './analizar.js';
@@ -44,6 +45,30 @@ function bloque(titulo, pista, lista, signo) {
       ${resto.map((f) => filaFactor(f, signo)).join('')}</details>` : ''}`;
 }
 
+/**
+ * Tu lista de vigilancia, arriba del todo.
+ *
+ * Va antes que la nota a propósito: si has pedido que te avisen de los
+ * nitritos, eso lo quieres ver antes que un número. Y no toca la puntuación:
+ * es un aviso, no una opinión.
+ */
+function bloqueVigilancia(v) {
+  const avisos = revisarVigilancia(v, enCurso.ingredientes, vigilanciaActiva())
+    .filter((a) => a.salta);
+  if (avisos.length === 0) return '';
+  return `
+    <div class="vigila">
+      <h3>${avisos.length === 1 ? 'Ojo con esto' : `Ojo con estas ${avisos.length} cosas`}</h3>
+      <ul>
+        ${avisos.map((a) => `
+          <li>
+            <b>${esc(a.etiqueta)}</b>
+            <span>${a.sentido === 'buscar' ? 'no lo lleva' : a.donde ? `detectado en "${esc(a.donde)}"` : 'detectado'}</span>
+          </li>`).join('')}
+      </ul>
+    </div>`;
+}
+
 export function resultado() {
   const hayDatos = Object.keys(enCurso.nutrientes).length > 0 || enCurso.ingredientes.length > 0;
   if (!hayDatos) {
@@ -65,6 +90,8 @@ export function resultado() {
   return `
     <h2 class="rotulo">Producto analizado</h2>
     <h1 class="titulo">${esc(v.nombre)}</h1>
+
+    ${bloqueVigilancia(v)}
 
     ${sinNota ? `
       <div class="pendiente" style="border-left-color:var(--naranja); margin-bottom:16px">
@@ -153,7 +180,12 @@ export function resultadoActivo(raiz, { irA }) {
       refrescarDespensa();
       refrescarConocimiento();
       refrescarComparador();
-      estado.textContent = 'Guardado. Ya está en tu Despensa.';
+      // Guardado y cerrado: el siguiente producto empieza limpio. Dejar los
+      // datos cargados era la puerta por la que se colaban de un producto al
+      // siguiente.
+      reiniciar();
+      capturasActuales().clear();
+      estado.textContent = 'Guardado. Ya está en tu Despensa, y el análisis queda cerrado para empezar otro.';
       boton.textContent = 'GUARDADO';
     } catch (err) {
       boton.disabled = false;

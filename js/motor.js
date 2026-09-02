@@ -1080,7 +1080,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.10.0";
+var VERSION_ALGORITMO = "1.13.0";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -3245,10 +3245,10 @@ function binarizarSauvola(img, radio = 0, k = 0.2, R = 128) {
       const n = (x1 - x0) * (y1 - y0);
       const s = areaSuma(x0, y0, x1, y1, suma);
       const s2 = areaSuma(x0, y0, x1, y1, suma2);
-      const media = s / n;
-      const varianza = Math.max(0, s2 / n - media * media);
+      const media2 = s / n;
+      const varianza = Math.max(0, s2 / n - media2 * media2);
       const desv = Math.sqrt(varianza);
-      const umbral = media * (1 + k * (desv / R - 1));
+      const umbral = media2 * (1 + k * (desv / R - 1));
       const v2 = img.datos[(y * w + x) * 4] > umbral ? 255 : 0;
       const kk = (y * w + x) * 4;
       out.datos[kk] = out.datos[kk + 1] = out.datos[kk + 2] = v2;
@@ -3308,8 +3308,8 @@ function nitidez(gris) {
       n++;
     }
   }
-  const media = suma / n;
-  return suma2 / n - media * media;
+  const media2 = suma / n;
+  return suma2 / n - media2 * media2;
 }
 function brillo(gris) {
   let s = 0;
@@ -4606,6 +4606,844 @@ var FILAS2 = [
     "Su perfil de grasas se parece al del aceite de oliva y aguanta mucho mejor el calor que el girasol corriente, así que se oxida menos al freír. Sigue siendo un aceite refinado, sin los polifenoles del virgen extra.",
     "media"
   ],
+  // --- Panadería y cereales elaborados ------------------------------------
+  [
+    "pan rallado",
+    "Pan rallado",
+    "cereal refinado",
+    -1,
+    "Pan seco molido, casi siempre a partir de pan blanco industrial.",
+    "Hidratos de absorción rápida sin fibra. En un rebozado además absorbe bastante aceite al freír.",
+    "media"
+  ],
+  [
+    "copos de maiz",
+    "Copos de maíz",
+    "cereal procesado",
+    -1,
+    "Maíz cocido, prensado y tostado en forma de copo.",
+    "El proceso rompe el almidón y lo deja muy disponible: el índice glucémico de los copos de maíz está entre los más altos de todos los alimentos corrientes.",
+    "alta"
+  ],
+  [
+    "arroz inflado",
+    "Arroz inflado",
+    "cereal procesado",
+    -1,
+    "Grano de arroz expandido con calor y presión.",
+    "Mismo problema que los copos de maíz: mucho aire, poca fibra y un índice glucémico muy alto.",
+    "media"
+  ],
+  [
+    "cuscus",
+    "Cuscús",
+    "cereal refinado",
+    0,
+    "Sémola de trigo duro humedecida y enrollada en granos diminutos.",
+    "Perfil parecido al de la pasta blanca. La versión integral aporta bastante más fibra.",
+    "media"
+  ],
+  [
+    "bulgur",
+    "Bulgur",
+    "cereal integral",
+    3,
+    "Trigo cocido, secado y partido, conservando el salvado.",
+    "Conserva fibra y minerales del grano entero, y se cocina en diez minutos.",
+    "media"
+  ],
+  [
+    "mijo",
+    "Mijo",
+    "cereal integral",
+    2,
+    "Grano pequeño sin gluten, muy usado en países del Sahel.",
+    "Fibra, magnesio y hierro. Buena alternativa sin gluten a los cereales corrientes.",
+    "media"
+  ],
+  [
+    "harina de algarroba",
+    "Harina de algarroba",
+    "harina de legumbre",
+    1,
+    "Vaina de algarrobo tostada y molida. Se usa como sustituto del cacao.",
+    "Fibra y sabor dulce natural, sin cafeína ni teobromina. Aporta bastante azúcar propio.",
+    "media"
+  ],
+  // --- Lácteos --------------------------------------------------------------
+  [
+    "kefir",
+    "Kéfir",
+    "lácteo fermentado",
+    3,
+    "Leche fermentada con una comunidad de bacterias y levaduras más amplia que la del yogur.",
+    "Mayor variedad de microorganismos vivos que el yogur, y mejor tolerado por quien digiere mal la lactosa.",
+    "alta"
+  ],
+  [
+    "requeson",
+    "Requesón",
+    "lácteo",
+    2,
+    "Proteína del suero coagulada por calor, no por cuajo.",
+    "Mucha proteína y poca grasa. Bastante menos sal que la mayoría de los quesos.",
+    "alta"
+  ],
+  [
+    "queso fresco",
+    "Queso fresco",
+    "lácteo",
+    1,
+    "Queso sin curar, con mucha agua todavía.",
+    "Menos grasa y menos sal que un queso curado, y buena proteína.",
+    "alta"
+  ],
+  [
+    "leche condensada",
+    "Leche condensada",
+    "lácteo azucarado",
+    -3,
+    "Leche a la que se ha quitado agua y añadido una cantidad enorme de azúcar.",
+    "Alrededor de la mitad de su peso es azúcar. Cuenta como azúcar añadido, no como lácteo.",
+    "alta"
+  ],
+  [
+    "leche evaporada",
+    "Leche evaporada",
+    "lácteo concentrado",
+    0,
+    "Leche a la que se ha evaporado parte del agua, sin añadir azúcar.",
+    "Concentra proteína y calcio. No confundir con la condensada, que sí lleva azúcar.",
+    "media"
+  ],
+  [
+    "bebida de avena",
+    "Bebida de avena",
+    "bebida vegetal",
+    0,
+    "Avena triturada con agua y filtrada. No es leche, aunque se use igual.",
+    "Poca proteína comparada con la leche, y su almidón se convierte en azúcares durante la elaboración: muchas llevan azúcar sin que figure como añadido.",
+    "media"
+  ],
+  [
+    "bebida de soja",
+    "Bebida de soja",
+    "bebida vegetal",
+    2,
+    "Soja triturada con agua y filtrada.",
+    "La única bebida vegetal con proteína comparable a la de la leche. Elígela sin azúcares añadidos y enriquecida en calcio.",
+    "alta"
+  ],
+  [
+    "bebida de almendra",
+    "Bebida de almendra",
+    "bebida vegetal",
+    0,
+    "Almendra triturada con agua, normalmente en muy poca proporción.",
+    "Suele llevar entre un 2 % y un 7 % de almendra: es casi agua. Poca proteína y poco de todo.",
+    "media"
+  ],
+  // --- Carnes procesadas ----------------------------------------------------
+  [
+    "carne separada mecanicamente",
+    "Carne separada mecánicamente",
+    "carne procesada",
+    -3,
+    "Restos de carne arrancados del hueso a presión, quedando una pasta.",
+    "Materia prima de peor calidad, con más grasa y tejido conjuntivo que la carne entera. Su presencia indica un producto muy barato de fabricar.",
+    "alta"
+  ],
+  [
+    "bacon",
+    "Bacon",
+    "carne curada",
+    -2,
+    "Panceta de cerdo curada con sal y nitritos, y a menudo ahumada.",
+    "Carne procesada, que la OMS clasifica como carcinógeno del grupo 1. Mucha sal y mucha grasa saturada.",
+    "alta"
+  ],
+  [
+    "panceta",
+    "Panceta",
+    "carne grasa",
+    -2,
+    "Corte graso del vientre del cerdo, fresco o curado.",
+    "Muy alta en grasa saturada, y si va curada también en sal y nitritos.",
+    "alta"
+  ],
+  [
+    "chorizo",
+    "Chorizo",
+    "embutido",
+    -2,
+    "Carne de cerdo picada, curada con sal, pimentón y normalmente nitritos.",
+    "Carne procesada: grupo 1 de la OMS. Aporta mucha sal y grasa saturada.",
+    "alta"
+  ],
+  [
+    "salchichon",
+    "Salchichón",
+    "embutido",
+    -2,
+    "Embutido curado de carne de cerdo con especias.",
+    "Carne procesada, con mucha sal y grasa saturada.",
+    "alta"
+  ],
+  [
+    "mortadela",
+    "Mortadela",
+    "embutido",
+    -2,
+    "Emulsión de carne y grasa de cerdo, cocida en molde.",
+    "Suele llevar poca carne, mucha grasa, almidón y varios aditivos. De los fiambres con peor perfil.",
+    "alta"
+  ],
+  [
+    "jamon cocido",
+    "Jamón cocido",
+    "fiambre",
+    -1,
+    "Pierna de cerdo cocida en molde, con salmuera inyectada.",
+    "Mira el porcentaje de carne: por debajo del 80 % lo que hay es agua, almidón y proteínas añadidas. Casi siempre lleva nitritos.",
+    "alta"
+  ],
+  [
+    "fiambre de pavo",
+    "Fiambre de pavo",
+    "fiambre",
+    -1,
+    "Carne de pavo picada, salmuerizada y cocida en molde.",
+    "Suena más ligero que el de cerdo y a veces lo es, pero sigue siendo carne procesada con sal y nitritos. Comprueba el porcentaje de pavo.",
+    "alta"
+  ],
+  [
+    "tocino",
+    "Tocino",
+    "grasa animal",
+    -2,
+    "Capa de grasa que hay bajo la piel del cerdo, salada o fresca.",
+    "Prácticamente toda grasa, de la cual la mitad saturada.",
+    "alta"
+  ],
+  // --- Pescado y mar --------------------------------------------------------
+  [
+    "surimi",
+    "Surimi",
+    "pescado procesado",
+    -1,
+    "Pasta de pescado blanco lavada y refinada, con almidón, azúcar y aroma.",
+    "Del pescado original queda poco: es una formulación con almidón, sal y aroma de cangrejo. Poca proteína útil para lo que parece.",
+    "media"
+  ],
+  [
+    "merluza",
+    "Merluza",
+    "pescado blanco",
+    2,
+    "Pescado blanco magro, fresco, congelado o en filete.",
+    "Proteína de calidad con muy poca grasa. Poco mercurio por ser de tamaño medio.",
+    "alta"
+  ],
+  [
+    "bacalao",
+    "Bacalao",
+    "pescado blanco",
+    2,
+    "Pescado blanco, fresco o conservado en sal.",
+    "Excelente proteína. Si va salado, hay que desalarlo: seco puede llevar más de 15 g de sal por 100 g.",
+    "alta"
+  ],
+  [
+    "anchoa",
+    "Anchoa",
+    "pescado azul curado",
+    1,
+    "Boquerón curado en sal y conservado en aceite.",
+    "Omega-3 y calcio, pero con mucha sal: alrededor de 10 g por 100 g. Se come en poca cantidad, y así está bien.",
+    "alta"
+  ],
+  [
+    "mejillon",
+    "Mejillón",
+    "molusco",
+    3,
+    "Molusco bivalvo, fresco o en conserva.",
+    "Muchísimo hierro y vitamina B12, poca grasa y proteína de calidad. De los alimentos con mejor relación entre nutrientes y calorías.",
+    "alta"
+  ],
+  // --- Verduras y hortalizas ------------------------------------------------
+  [
+    "pimiento",
+    "Pimiento",
+    "hortaliza",
+    3,
+    "Fruto de la planta del pimiento, en cualquier color.",
+    "Más vitamina C que una naranja, y carotenoides si es rojo.",
+    "alta"
+  ],
+  [
+    "calabacin",
+    "Calabacín",
+    "hortaliza",
+    2,
+    "Hortaliza de verano, muy rica en agua.",
+    "Muy poca energía y algo de potasio. Bien para dar volumen a un plato sin sumar calorías.",
+    "alta"
+  ],
+  [
+    "brocoli",
+    "Brócoli",
+    "verdura",
+    3,
+    "Inflorescencia de la familia de las coles.",
+    "Sulforafano, folato, vitamina C y fibra. De las verduras más estudiadas por sus compuestos protectores.",
+    "alta"
+  ],
+  [
+    "coliflor",
+    "Coliflor",
+    "verdura",
+    3,
+    "De la misma familia que el brócoli, sin clorofila.",
+    "Fibra, vitamina C y compuestos azufrados. Muy poca energía.",
+    "alta"
+  ],
+  [
+    "champinon",
+    "Champiñón",
+    "seta",
+    2,
+    "Seta cultivada, fresca o en conserva.",
+    "Fibra, selenio y vitaminas del grupo B. Si le ha dado el sol, también vitamina D.",
+    "media"
+  ],
+  [
+    "aceituna",
+    "Aceituna",
+    "fruto en salmuera",
+    1,
+    "Fruto del olivo, curado en salmuera o en sosa.",
+    "Grasa monoinsaturada y polifenoles, pero también bastante sal por la salmuera.",
+    "alta"
+  ],
+  [
+    "pepinillo",
+    "Pepinillo",
+    "encurtido",
+    0,
+    "Pepino pequeño encurtido en vinagre.",
+    "Muy poca energía, pero aporta sal. Sin más pegas.",
+    "media"
+  ],
+  [
+    "tomate frito",
+    "Tomate frito",
+    "salsa",
+    0,
+    "Tomate triturado y cocinado con aceite, y casi siempre con azúcar y sal.",
+    "El licopeno se absorbe mejor cocinado y con grasa, así que eso suma. Pero mira el azúcar: muchos llevan entre 5 y 9 g por 100 g.",
+    "alta"
+  ],
+  [
+    "sofrito",
+    "Sofrito",
+    "base culinaria",
+    1,
+    "Cebolla, tomate y a veces ajo y pimiento, cocinados en aceite.",
+    "Base de verdura de verdad. Su valor depende del aceite que lleve y de si le han añadido azúcar.",
+    "media"
+  ],
+  // --- Fruta -----------------------------------------------------------------
+  [
+    "naranja",
+    "Naranja",
+    "fruta",
+    3,
+    "Cítrico de invierno, entero, en gajos o exprimido.",
+    "Vitamina C, folato y fibra. Entera vale mucho más que en zumo: el zumo pierde la fibra y su azúcar pasa a ser libre.",
+    "alta"
+  ],
+  [
+    "limon",
+    "Limón",
+    "cítrico",
+    2,
+    "Cítrico ácido, usado sobre todo como condimento o conservante natural.",
+    "Vitamina C y ácido cítrico, que además mejora la absorción del hierro vegetal.",
+    "alta"
+  ],
+  [
+    "fresa",
+    "Fresa",
+    "fruta",
+    3,
+    "Fruto rojo, fresco o congelado.",
+    "Mucha vitamina C, antocianinas y muy poco azúcar comparada con otras frutas.",
+    "alta"
+  ],
+  [
+    "pasas",
+    "Pasas",
+    "fruta desecada",
+    0,
+    "Uva secada, con el agua evaporada y el azúcar concentrado.",
+    "Conserva fibra y minerales, pero su azúcar queda muy concentrado: unos 60 g por 100 g. En una etiqueta, cuenta casi como azúcar.",
+    "alta"
+  ],
+  [
+    "arandano",
+    "Arándano",
+    "fruta",
+    3,
+    "Fruto rojo pequeño, fresco, congelado o deshidratado.",
+    "De las mayores concentraciones de antocianinas de la fruta corriente. Deshidratado y azucarado pierde casi toda la ventaja.",
+    "alta"
+  ],
+  [
+    "coco rallado",
+    "Coco rallado",
+    "fruto seco",
+    -1,
+    "Pulpa de coco desecada y rallada.",
+    "Fibra, pero más del 30 % de su peso es grasa y la mayor parte saturada.",
+    "media"
+  ],
+  // --- Legumbres y derivados --------------------------------------------------
+  [
+    "tofu",
+    "Tofu",
+    "derivado de soja",
+    3,
+    "Bebida de soja cuajada y prensada, como un queso vegetal.",
+    "Proteína completa, calcio si se cuaja con sales cálcicas, y muy poca grasa saturada.",
+    "alta"
+  ],
+  [
+    "tempeh",
+    "Tempeh",
+    "derivado de soja fermentado",
+    3,
+    "Soja entera fermentada con un hongo, prensada en bloque.",
+    "Proteína completa, fibra y fermentación, que mejora la digestión de la soja.",
+    "media"
+  ],
+  [
+    "hummus",
+    "Hummus",
+    "plato de legumbre",
+    2,
+    "Puré de garbanzo con tahini, limón y aceite.",
+    "Legumbre, sésamo y aceite de oliva. Buen aporte de proteína vegetal y fibra si lleva poco aceite añadido.",
+    "media"
+  ],
+  [
+    "tahini",
+    "Tahini",
+    "pasta de semilla",
+    2,
+    "Pasta de sésamo tostado y molido.",
+    "Calcio, hierro y grasa insaturada. Alérgeno de declaración obligatoria.",
+    "alta"
+  ],
+  [
+    "cacahuete",
+    "Cacahuete",
+    "legumbre oleaginosa",
+    2,
+    "Legumbre que se come como fruto seco, cruda, tostada o en crema.",
+    "Proteína, grasa monoinsaturada y niacina. Alérgeno de los más potentes, de declaración obligatoria.",
+    "alta"
+  ],
+  // --- Grasas y aceites -------------------------------------------------------
+  [
+    "aceite de sesamo",
+    "Aceite de sésamo",
+    "aceite vegetal",
+    1,
+    "Aceite prensado de semilla de sésamo, crudo o tostado.",
+    "Buen perfil de grasas y sesamol, un antioxidante propio. Alérgeno de declaración obligatoria.",
+    "media"
+  ],
+  [
+    "aceite de lino",
+    "Aceite de lino",
+    "aceite vegetal",
+    2,
+    "Aceite de semilla de lino, siempre en crudo.",
+    "La fuente vegetal más concentrada de omega-3 de cadena corta. Se oxida con facilidad: no sirve para cocinar.",
+    "media"
+  ],
+  [
+    "aceite de aguacate",
+    "Aceite de aguacate",
+    "aceite vegetal",
+    2,
+    "Aceite extraído de la pulpa del aguacate.",
+    "Muy rico en ácido oleico, como el de oliva, y aguanta bien el calor.",
+    "media"
+  ],
+  [
+    "aceite de pescado",
+    "Aceite de pescado",
+    "grasa marina",
+    2,
+    "Grasa extraída de pescado azul.",
+    "EPA y DHA, los omega-3 con efecto cardiovascular directo. Se enrancia con facilidad.",
+    "alta"
+  ],
+  [
+    "ghee",
+    "Mantequilla clarificada",
+    "grasa láctea",
+    -1,
+    "Mantequilla a la que se ha retirado el agua y la proteína láctea.",
+    "Grasa casi pura, muy saturada. Aguanta más calor que la mantequilla, pero su perfil es igual de graso.",
+    "media"
+  ],
+  // --- Condimentos y bebidas --------------------------------------------------
+  [
+    "cafe",
+    "Café",
+    "infusión",
+    1,
+    "Semilla de café tostada y molida, o su extracto.",
+    "Polifenoles y cafeína. El consumo moderado se asocia a menor mortalidad, pero altera el sueño y no conviene pasar de 400 mg de cafeína al día.",
+    "alta"
+  ],
+  [
+    "te verde",
+    "Té verde",
+    "infusión",
+    2,
+    "Hoja de té sin fermentar, en hoja o en extracto.",
+    "Catequinas con actividad antioxidante. Su cafeína se absorbe más despacio que la del café.",
+    "media"
+  ],
+  [
+    "achicoria",
+    "Achicoria",
+    "raíz tostada",
+    1,
+    "Raíz tostada que se usa como sustituto del café.",
+    "Aporta inulina, una fibra prebiótica. Sin cafeína.",
+    "media"
+  ],
+  [
+    "cacao soluble",
+    "Cacao soluble",
+    "preparado de cacao",
+    -2,
+    "Mezcla de cacao desgrasado con mucho azúcar, y a veces con aromas.",
+    "Los más vendidos llevan entre un 70 % y un 80 % de azúcar y menos de un 25 % de cacao. Es azúcar con sabor a cacao, no al revés.",
+    "alta"
+  ],
+  [
+    "pimenton",
+    "Pimentón",
+    "especia",
+    1,
+    "Pimiento rojo secado y molido, en versión dulce, picante o ahumada al humo de encina.",
+    "Aporta carotenoides y mucho sabor sin necesidad de sal, que es lo que más se agradece en un producto envasado.",
+    "media"
+  ],
+  [
+    "oregano",
+    "Orégano",
+    "hierba aromática",
+    1,
+    "Hoja seca de una planta aromática mediterránea, entera o molida.",
+    "Da sabor sin sal ni azúcar, que es su mayor virtud en un producto envasado.",
+    "media"
+  ],
+  [
+    "canela",
+    "Canela",
+    "especia",
+    1,
+    "Corteza seca del canelo, en rama o molida.",
+    "Aporta dulzor percibido sin azúcar. Hay indicios modestos de efecto sobre la glucemia.",
+    "media"
+  ],
+  [
+    "jengibre",
+    "Jengibre",
+    "especia",
+    1,
+    "Raíz picante de una planta tropical, fresca, seca o molida.",
+    "Gingeroles con efecto sobre las náuseas y la digestión. Sabor intenso sin sal.",
+    "media"
+  ],
+  [
+    "pimienta",
+    "Pimienta",
+    "especia",
+    1,
+    "Grano de pimienta seco, entero o molido.",
+    "Su piperina mejora la absorción de algunos compuestos, como la curcumina. Sabor sin sal.",
+    "media"
+  ],
+  [
+    "nuez moscada",
+    "Nuez moscada",
+    "especia",
+    0,
+    "Semilla molida de un árbol tropical.",
+    "Se usa en cantidades ínfimas. Sin efecto nutricional a esas dosis.",
+    "baja"
+  ],
+  [
+    "vainilla",
+    "Vainilla",
+    "especia",
+    1,
+    "Vaina de orquídea, o su extracto. No confundir con el aroma de vainillina, que es de síntesis.",
+    'La vainilla de verdad es cara y aparece poco. Si en la etiqueta pone "vainillina" o "aroma de vainilla", es de síntesis.',
+    "media"
+  ],
+  [
+    "salsa de soja",
+    "Salsa de soja",
+    "condimento fermentado",
+    -1,
+    "Soja y trigo fermentados con sal durante meses.",
+    "Da mucho sabor con poco volumen, pero es de los alimentos con más sal que existen: entre 14 y 18 g por 100 g.",
+    "alta"
+  ],
+  [
+    "levadura quimica",
+    "Levadura química",
+    "gasificante",
+    0,
+    "Mezcla de bicarbonato y un acidulante que hace subir la masa sin fermentar.",
+    "No es levadura viva y no aporta nada nutricionalmente. Sin pegas, salvo el sodio del bicarbonato.",
+    "alta"
+  ],
+  // --- Los que faltaban de etiquetas reales -------------------------------
+  [
+    "cloruro sodico",
+    "Sal (cloruro sódico)",
+    "sal",
+    -1,
+    "Es la sal común, escrita con su nombre químico. Cloruro sódico y sal son exactamente lo mismo.",
+    "Necesaria en pequeña cantidad, pero la media española dobla el límite de 5 g diarios de la OMS. Es el principal factor dietético modificable de la hipertensión.",
+    "alta"
+  ],
+  [
+    "magro de cerdo",
+    "Magro de cerdo",
+    "carne",
+    1,
+    "Carne de cerdo sin la grasa visible, la parte que no es tocino ni panceta.",
+    "Buena proteína, hierro y vitamina B1, con poca grasa. Lo que suele pesar en contra en un producto de magro es la sal y los conservantes que lo acompañan, no la carne.",
+    "alta"
+  ],
+  [
+    "lactosa",
+    "Lactosa",
+    "azúcar de la leche",
+    0,
+    "El azúcar propio de la leche, formado por glucosa y galactosa.",
+    "No es azúcar añadido: viene con el lácteo. Solo es un problema para quien no la digiere, que son bastantes adultos. Si aparece como ingrediente suelto en algo que no es lácteo, ahí sí actúa como azúcar añadido.",
+    "alta"
+  ],
+  [
+    "jarabe de sorbitol",
+    "Jarabe de sorbitol",
+    "polialcohol",
+    -1,
+    "Forma líquida del sorbitol, usada para endulzar y mantener la humedad.",
+    "Efecto laxante y gases por encima de 20 g, y mal tolerado en colon irritable.",
+    "alta"
+  ],
+  [
+    "grasa de palma",
+    "Grasa de palma",
+    "grasa vegetal",
+    -2,
+    "Fracción sólida del aceite de palma.",
+    "Cerca del 50 % de grasa saturada. Su refinado genera ésteres glicidílicos, contaminantes de proceso que la EFSA vigila.",
+    "alta"
+  ],
+  [
+    "proteina de leche",
+    "Proteína de leche",
+    "proteína aislada",
+    -1,
+    "Proteína extraída de la leche y añadida aparte.",
+    "Sube la proteína de la etiqueta a bajo coste, pero fuera de su matriz láctea. Marcador de producto formulado y alérgeno para quien lo sea a la leche.",
+    "media"
+  ],
+  [
+    "colageno",
+    "Colágeno",
+    "proteína animal",
+    0,
+    "Proteína de piel, huesos y tendones, normalmente hidrolizada.",
+    "Proteína incompleta: le faltan aminoácidos esenciales. Los efectos que se le atribuyen sobre piel y articulaciones tienen evidencia débil.",
+    "media"
+  ],
+  [
+    "proteina hidrolizada",
+    "Proteína hidrolizada",
+    "proteína aislada",
+    -1,
+    "Proteína rota en fragmentos más pequeños mediante enzimas o ácido.",
+    "Se usa para dar sabor o textura. Su presencia delata una formulación industrial, y a veces aporta glutamato libre sin declararlo como tal.",
+    "media"
+  ],
+  [
+    "almidon de patata",
+    "Almidón de patata",
+    "almidón",
+    -1,
+    "Almidón extraído de la patata, usado para espesar y retener agua.",
+    "Hidrato de absorción rápida sin fibra ni micronutrientes. En un embutido sirve para retener agua y abaratar la fórmula.",
+    "alta"
+  ],
+  [
+    "fecula",
+    "Fécula",
+    "almidón",
+    -1,
+    "Almidón extraído de un tubérculo, normalmente patata o mandioca.",
+    "Igual que cualquier almidón aislado: energía sin fibra ni micronutrientes.",
+    "alta"
+  ],
+  [
+    "jarabe de maltitol",
+    "Jarabe de maltitol",
+    "polialcohol",
+    -1,
+    'Forma líquida del maltitol, muy usada en productos "sin azúcar".',
+    "Sube la glucemia más que otros polialcoholes y da efecto laxante por encima de 20 o 30 g.",
+    "alta"
+  ],
+  [
+    "grasa de coco",
+    "Grasa de coco",
+    "grasa vegetal",
+    -1,
+    "Fracción sólida del aceite de coco.",
+    "Más del 80 % de grasa saturada, pese a su fama saludable.",
+    "alta"
+  ],
+  [
+    "huevo en polvo",
+    "Huevo en polvo",
+    "ovoproducto",
+    0,
+    "Huevo deshidratado, entero o solo la clara.",
+    "Conserva la proteína del huevo, pero su presencia indica un producto industrial. Alérgeno declarado.",
+    "media"
+  ],
+  [
+    "clara de huevo",
+    "Clara de huevo",
+    "ovoproducto",
+    2,
+    "Parte transparente del huevo, sin la yema.",
+    "Proteína casi pura, sin grasa ni colesterol. Alérgeno declarado.",
+    "alta"
+  ],
+  [
+    "nata liquida",
+    "Nata líquida",
+    "lácteo graso",
+    -1,
+    "Parte grasa de la leche, separada y en forma líquida.",
+    "Muy alta en grasa saturada y densa en calorías.",
+    "alta"
+  ],
+  [
+    "aroma natural de vainilla",
+    "Aroma natural de vainilla",
+    "aroma",
+    -1,
+    "Molécula de vainillina obtenida de una fuente natural, que casi nunca es la vaina de vainilla.",
+    "Suena a vainilla de verdad y no lo es. Sigue siendo un marcador de ultraprocesado: hace falta añadir sabor porque el producto no lo tiene.",
+    "media"
+  ],
+  [
+    "agua mineral",
+    "Agua",
+    "agua",
+    0,
+    "Agua, sola o como base del producto.",
+    "Neutra. Pero si aparece entre los primeros ingredientes de un fiambre, significa que estás pagando peso en agua.",
+    "alta"
+  ],
+  [
+    "zumo de limon",
+    "Zumo de limón",
+    "acidulante natural",
+    1,
+    "Zumo de limón usado para acidificar y conservar.",
+    "Conserva sin aditivos y su vitamina C mejora la absorción del hierro vegetal.",
+    "alta"
+  ],
+  [
+    "perejil",
+    "Perejil",
+    "hierba aromática",
+    1,
+    "Hoja verde aromática, fresca o seca.",
+    "Aporta sabor sin sal, y algo de vitamina C y hierro en las cantidades en que se usa fresco.",
+    "media"
+  ],
+  [
+    "laurel",
+    "Laurel",
+    "hierba aromática",
+    1,
+    "Hoja seca aromática, usada en guisos y conservas.",
+    "Da sabor sin sal ni azúcar, que es su virtud en un producto envasado.",
+    "baja"
+  ],
+  [
+    "tomillo",
+    "Tomillo",
+    "hierba aromática",
+    1,
+    "Hierba aromática mediterránea, fresca o seca.",
+    "Sabor sin sal, y compuestos aromáticos con actividad antimicrobiana leve.",
+    "baja"
+  ],
+  [
+    "comino",
+    "Comino",
+    "especia",
+    1,
+    "Semilla aromática molida o entera.",
+    "Da sabor sin sal. Tradicionalmente usado para mejorar la digestión de las legumbres.",
+    "baja"
+  ],
+  [
+    "curcuma",
+    "Cúrcuma",
+    "especia",
+    1,
+    "Rizoma molido de color naranja intenso.",
+    "Su curcumina tiene actividad antiinflamatoria en estudios, pero se absorbe muy mal: a dosis de condimento el efecto es pequeño.",
+    "media"
+  ],
+  [
+    "ajo en polvo",
+    "Ajo en polvo",
+    "condimento",
+    1,
+    "Ajo deshidratado y molido, muy usado en adobos y en productos cárnicos.",
+    "Conserva parte de los compuestos azufrados del ajo fresco. Da sabor sin sal.",
+    "media"
+  ],
+  [
+    "cebolla en polvo",
+    "Cebolla en polvo",
+    "condimento",
+    1,
+    "Cebolla deshidratada y molida, usada para dar sabor sin aportar humedad.",
+    "Sabor sin sal. Menos compuestos activos que la cebolla fresca.",
+    "media"
+  ],
   [
     "aroma de humo",
     "Aroma de humo",
@@ -4735,7 +5573,7 @@ function explicarIngrediente(texto, porcentaje, profundidad = 0) {
   }
   const candidatas = INGREDIENTES_COMUNES.filter((f) => casa(t, f.patron));
   if (candidatas.length > 0) {
-    const f = candidatas.reduce((a, b) => b.patron.length > a.patron.length ? b : a);
+    const f = [...candidatas].sort((a, b) => b.patron.length - a.patron.length || t.indexOf(a.patron) - t.indexOf(b.patron))[0];
     return {
       ...base,
       titulo: f.titulo,
@@ -5231,6 +6069,162 @@ async function recalcularTodo(repo, soloEstos) {
     cambios
   };
 }
+
+// src/nucleo/tendencia.ts
+var MINIMO_PARA_TENDENCIA = 6;
+var MINIMO_POR_TRAMO = 3;
+var VACIO2 = {
+  rojo: 0,
+  naranja: 0,
+  amarillo: 0,
+  verde_claro: 0,
+  verde_parchis: 0
+};
+function media(xs) {
+  return xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length * 10) / 10 : null;
+}
+function mediana(xs) {
+  if (!xs.length) return null;
+  const o = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(o.length / 2);
+  return o.length % 2 ? o[m] : Math.round((o[m - 1] + o[m]) / 2 * 10) / 10;
+}
+function calcularTendencia(productos) {
+  const conNota = productos.filter((p) => typeof p.puntuacion === "number").sort((a, b) => a.fechaAnalisis.localeCompare(b.fechaAnalisis));
+  const notas = conNota.map((p) => p.puntuacion);
+  const porSemaforo = { ...VACIO2 };
+  for (const p of conNota) if (p.semaforo) porSemaforo[p.semaforo]++;
+  const verdes = porSemaforo.verde_claro + porSemaforo.verde_parchis;
+  const pctVerdes = conNota.length ? Math.round(verdes / conNota.length * 100) : null;
+  let mediaAntes = null;
+  let mediaDespues = null;
+  if (conNota.length >= MINIMO_POR_TRAMO * 2) {
+    const corte = Math.floor(conNota.length / 2);
+    mediaAntes = media(notas.slice(0, corte));
+    mediaDespues = media(notas.slice(corte));
+  }
+  const evolucion = mediaAntes !== null && mediaDespues !== null ? Math.round((mediaDespues - mediaAntes) * 10) / 10 : null;
+  const ordenadosPorNota = [...conNota].sort(
+    (a, b) => b.puntuacion - a.puntuacion
+  );
+  const cuenta = /* @__PURE__ */ new Map();
+  for (const p of conNota) {
+    const vistos = /* @__PURE__ */ new Set();
+    for (const f of p.veredicto?.limitar ?? []) {
+      if (f.peso < 40) continue;
+      if (vistos.has(f.nombre)) continue;
+      vistos.add(f.nombre);
+      cuenta.set(f.nombre, (cuenta.get(f.nombre) ?? 0) + 1);
+    }
+  }
+  const repetidos = [...cuenta.entries()].map(([nombre, veces]) => ({
+    nombre,
+    veces,
+    pctProductos: Math.round(veces / conNota.length * 100)
+  })).sort((a, b) => b.veces - a.veces).slice(0, 6);
+  const fiable = conNota.length >= MINIMO_PARA_TENDENCIA;
+  const m = media(notas);
+  let resumen;
+  if (conNota.length === 0) {
+    resumen = "Todavía no has guardado ningún producto con nota.";
+  } else if (!fiable) {
+    resumen = `Llevas ${conNota.length} producto(s) guardado(s). Con ${MINIMO_PARA_TENDENCIA} o más se puede empezar a hablar de tendencia; con menos, cualquier cosa que dijera sería ruido.`;
+  } else if (evolucion === null) {
+    resumen = `La media de lo que analizas es ${m}. Aún no hay suficientes para comparar cómo comprabas antes y cómo compras ahora.`;
+  } else if (evolucion >= 5) {
+    resumen = `Vas a mejor: de una media de ${mediaAntes} en tus primeros análisis a ${mediaDespues} en los últimos. Son ${evolucion} puntos.`;
+  } else if (evolucion <= -5) {
+    resumen = `Vas a peor: de una media de ${mediaAntes} a ${mediaDespues}. Son ${Math.abs(evolucion)} puntos menos.`;
+  } else {
+    resumen = `Te mantienes: la media apenas se ha movido, de ${mediaAntes} a ${mediaDespues}. Un cambio de menos de 5 puntos no significa nada.`;
+  }
+  return {
+    total: conNota.length,
+    fiable,
+    media: m,
+    mediana: mediana(notas),
+    porSemaforo,
+    pctVerdes,
+    mediaAntes,
+    mediaDespues,
+    evolucion,
+    mejor: ordenadosPorNota[0] ? { nombre: ordenadosPorNota[0].nombre, puntuacion: ordenadosPorNota[0].puntuacion } : null,
+    peor: ordenadosPorNota.length > 1 ? {
+      nombre: ordenadosPorNota[ordenadosPorNota.length - 1].nombre,
+      puntuacion: ordenadosPorNota[ordenadosPorNota.length - 1].puntuacion
+    } : null,
+    repetidos,
+    resumen,
+    primerAnalisis: conNota[0]?.fechaAnalisis,
+    ultimoAnalisis: conNota[conNota.length - 1]?.fechaAnalisis
+  };
+}
+
+// src/nucleo/vigilancia.ts
+var VIGILABLES = [
+  { id: "palma", etiqueta: "Aceite de palma", sentido: "evitar", patrones: ["palma", "palmiste"] },
+  { id: "nitritos", etiqueta: "Nitritos y nitratos", sentido: "evitar", patrones: ["e249", "e250", "e251", "e252", "nitrito", "nitrato"] },
+  { id: "azucar", etiqueta: "Azúcar añadido", sentido: "evitar", patrones: ["azucar", "jarabe", "dextrosa", "maltodextrina", "sacarosa", "fructosa", "melaza", "sirope"] },
+  { id: "edulcorantes", etiqueta: "Edulcorantes", sentido: "evitar", patrones: ["aspartamo", "sucralosa", "acesulfamo", "sacarina", "ciclamato", "e950", "e951", "e952", "e954", "e955"] },
+  { id: "colorantes", etiqueta: "Colorantes con advertencia", sentido: "evitar", patrones: ["e102", "e104", "e110", "e122", "e124", "e129", "tartrazina"] },
+  { id: "glutamato", etiqueta: "Potenciadores del sabor", sentido: "evitar", patrones: ["e621", "e627", "e631", "e635", "glutamato", "extracto de levadura"] },
+  { id: "aromas", etiqueta: "Aromas", sentido: "evitar", patrones: ["aroma", "saborizante"] },
+  { id: "hidrogenadas", etiqueta: "Grasas hidrogenadas", sentido: "evitar", patrones: ["hidrogenad", "interesterificad"] },
+  { id: "gluten", etiqueta: "Gluten", sentido: "evitar", patrones: ["gluten", "trigo", "centeno", "cebada", "espelta", "kamut"] },
+  { id: "lactosa", etiqueta: "Leche y lactosa", sentido: "evitar", patrones: ["leche", "lactosa", "suero", "caseina", "nata", "mantequilla", "queso"] },
+  { id: "huevo", etiqueta: "Huevo", sentido: "evitar", patrones: ["huevo", "clara", "yema", "ovoalbumina", "lisozima"] },
+  { id: "frutos_secos", etiqueta: "Frutos de cáscara", sentido: "evitar", patrones: ["almendra", "avellana", "nuez", "anacardo", "pistacho", "macadamia", "pacana"] },
+  { id: "soja", etiqueta: "Soja", sentido: "evitar", patrones: ["soja", "soya", "lecitina de soja", "tofu"] },
+  { id: "integral", etiqueta: "Que sea integral", sentido: "buscar", patrones: ["integral"] },
+  { id: "aove", etiqueta: "Que lleve aceite de oliva", sentido: "buscar", patrones: ["aceite de oliva"] }
+];
+function textoDe(v2, ingredientes) {
+  const aditivos = v2.sustancias.filter((s) => typeof s.riesgo === "number");
+  return normalizarTexto([
+    ...ingredientes.map((i) => i.texto),
+    ...aditivos.map((s) => `${s.codigo} ${s.nombre}`),
+    ...v2.alergenos.map((a) => a.nombre)
+  ].join(" | "));
+}
+function revisarVigilancia(v2, ingredientes, activas) {
+  if (activas.length === 0) return [];
+  const texto = textoDe(v2, ingredientes);
+  return VIGILABLES.filter((r) => activas.includes(r.id)).map((r) => {
+    const encontrado = r.patrones.find((p) => texto.includes(p));
+    return {
+      id: r.id,
+      etiqueta: r.etiqueta,
+      sentido: r.sentido,
+      // 'evitar' salta si aparece; 'buscar' salta si NO aparece.
+      salta: r.sentido === "evitar" ? Boolean(encontrado) : !encontrado,
+      donde: encontrado ?? ""
+    };
+  });
+}
+function sugerirVigilancia(productos) {
+  if (productos.length < 3) return [];
+  const cuenta = /* @__PURE__ */ new Map();
+  for (const p of productos) {
+    if (!p.veredicto) continue;
+    const texto = textoDe(p.veredicto, p.entrada?.ingredientes ?? []);
+    for (const r of VIGILABLES) {
+      if (r.sentido !== "evitar") continue;
+      if (r.patrones.some((x) => texto.includes(x))) {
+        cuenta.set(r.id, (cuenta.get(r.id) ?? 0) + 1);
+      }
+    }
+  }
+  return [...cuenta.entries()].filter(([, veces]) => veces >= 2).map(([id, veces]) => {
+    const r = VIGILABLES.find((x) => x.id === id);
+    const pct = Math.round(veces / productos.length * 100);
+    return {
+      id,
+      etiqueta: r.etiqueta,
+      veces,
+      motivo: `Aparece en ${veces} de tus ${productos.length} productos, el ${pct} %.`
+    };
+  }).sort((a, b) => b.veces - a.veces).slice(0, 5);
+}
 export {
   ADITIVOS,
   ALERGENOS,
@@ -5239,11 +6233,13 @@ export {
   COLORES_SEMAFORO,
   ETIQUETAS_SEMAFORO,
   FUENTES,
+  MINIMO_PARA_TENDENCIA,
   RECORTE_COMPLETO,
   RepositorioIndexedDB,
   RepositorioMemoria,
   UMBRALES_CALIDAD,
   VERSION_ALGORITMO,
+  VIGILABLES,
   aGrises,
   analizarIngredientesTexto,
   analizarProducto,
@@ -5252,6 +6248,7 @@ export {
   buscar,
   buscarAditivo,
   calcularConfianza,
+  calcularTendencia,
   codigoValido,
   comparar,
   contarSustancias,
@@ -5285,7 +6282,9 @@ export {
   recorteRelativo,
   redimensionar,
   resumenCatalogo,
+  revisarVigilancia,
   simularRecalculo,
+  sugerirVigilancia,
   traducirProducto,
   validar,
   validarContraIngredientes,

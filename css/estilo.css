@@ -850,3 +850,157 @@ button{touch-action:manipulation}
   opacity:.55; flex:none;
 }
 .banda__tramo.es-actual .banda__pos{opacity:1}
+
+/* --- Qué hay cargado ahora mismo ------------------------------------------ */
+/* Un análisis a medias invisible es lo que hace que los datos de un producto
+   se cuelen en el siguiente. Aquí se ve siempre. */
+.en-curso{
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon-alto);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--hueso);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e4);
+}
+.en-curso__texto{flex:1; min-width:0}
+.en-curso__texto b{
+  display:block; font-family:var(--display); font-weight:600; font-size:1.05rem;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.en-curso__texto span{
+  display:block; margin-top:2px;
+  font-family:var(--datos); font-size:0.78rem; color:var(--ceniza-tenue);
+}
+.en-curso .boton{flex:none; font-size:0.88rem; padding:var(--e2) var(--e3)}
+
+/* --- Escáner de código de barras ------------------------------------------ */
+.escaner{position:relative; margin-bottom:var(--e4)}
+.escaner video{
+  width:100%; display:block;
+  aspect-ratio:4/3; object-fit:cover;
+  border-radius:var(--radio); background:#000;
+}
+/* La mira: una franja apaisada, que es la forma de un código de barras. */
+.escaner__mira{
+  position:absolute; left:8%; right:8%; top:34%; height:32%;
+  border:2px solid var(--hueso);
+  border-radius:var(--radio-s);
+  box-shadow:0 0 0 9999px rgba(16,19,25,.55);
+  pointer-events:none;
+}
+.escaner__mira::after{
+  content:""; position:absolute; left:0; right:0; top:50%;
+  height:2px; background:var(--rojo); opacity:.8;
+}
+.escaner .boton{margin-top:var(--e3); width:100%}
+
+/* --- Qué es y qué no es --------------------------------------------------- */
+.aviso-fuerte{
+  background:var(--carbon);
+  border:1px solid var(--naranja);
+  border-radius:var(--radio);
+  padding:var(--e5) var(--e4);
+  margin-bottom:var(--e6);
+}
+.aviso-fuerte h2{
+  margin:0 0 var(--e4);
+  font-family:var(--display); font-weight:800; font-size:1.35rem;
+  color:var(--naranja); letter-spacing:-.015em;
+}
+.aviso-fuerte ul{margin:0; padding-left:1.1em; color:var(--ceniza); font-size:1rem; line-height:1.5}
+.aviso-fuerte li{margin-bottom:var(--e3)}
+.aviso-fuerte li:last-child{margin-bottom:0}
+.aviso-fuerte b{color:var(--hueso)}
+
+.nivel{
+  background:var(--carbon); border:1px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio-s);
+  padding:var(--e4); margin-bottom:var(--e3);
+}
+.nivel--1{border-left-color:var(--verde-parchis)}
+.nivel--2{border-left-color:var(--verde-claro)}
+.nivel--3{border-left-color:var(--amarillo)}
+.nivel h3{
+  margin:0 0 var(--e2);
+  font-family:var(--display); font-weight:600; font-size:1.08rem;
+}
+.nivel p{margin:0 0 var(--e2); font-size:0.98rem; color:var(--ceniza); line-height:1.5}
+.nivel p:last-child{margin-bottom:0}
+.nivel b{color:var(--hueso)}
+.ficha__fuente a{color:var(--ceniza); word-break:break-all}
+
+/* --- Tendencia ------------------------------------------------------------ */
+.evolucion{
+  display:flex; align-items:center; justify-content:center; gap:var(--e4);
+  flex-wrap:wrap;
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio); padding:var(--e5) var(--e4);
+  margin:var(--e4) 0;
+}
+.evolucion .cifra{font-size:2.4rem; font-weight:600; color:var(--ceniza)}
+.evolucion__flecha{font-size:2rem; color:var(--ceniza-tenue)}
+.evolucion[data-signo="sube"] .cifra:last-of-type,
+.evolucion[data-signo="sube"] .evolucion__flecha{color:var(--verde-claro)}
+.evolucion[data-signo="baja"] .cifra:last-of-type,
+.evolucion[data-signo="baja"] .evolucion__flecha{color:var(--naranja)}
+.evolucion small{
+  flex-basis:100%; text-align:center; margin-top:var(--e2);
+  font-size:0.82rem; color:var(--ceniza-tenue);
+}
+
+.reparto{display:flex; align-items:center; gap:var(--e3); margin-bottom:var(--e2)}
+.reparto__nombre{width:9rem; flex:none; font-size:0.88rem; color:var(--ceniza)}
+.reparto__barra{flex:1; height:1.1rem; background:var(--carbon-alto); border-radius:var(--radio-s); overflow:hidden}
+.reparto__barra i{display:block; height:100%; border-radius:var(--radio-s)}
+.reparto__barra i[data-nivel="rojo"]{background:var(--rojo)}
+.reparto__barra i[data-nivel="naranja"]{background:var(--naranja)}
+.reparto__barra i[data-nivel="amarillo"]{background:var(--amarillo)}
+.reparto__barra i[data-nivel="verde_claro"]{background:var(--verde-claro)}
+.reparto__barra i[data-nivel="verde_parchis"]{background:var(--verde-parchis)}
+.reparto__n{width:2rem; flex:none; text-align:right; font-size:0.92rem; color:var(--ceniza-tenue)}
+
+/* --- Avisos de tu lista de vigilancia ------------------------------------- */
+.vigila{
+  background:var(--carbon); border:1px solid var(--naranja);
+  border-radius:var(--radio); padding:var(--e4); margin-bottom:var(--e4);
+}
+.vigila h3{
+  margin:0 0 var(--e3);
+  font-family:var(--display); font-weight:800; font-size:1.15rem; color:var(--naranja);
+}
+.vigila ul{list-style:none; margin:0; padding:0}
+.vigila li{
+  display:flex; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0; font-size:1rem; color:var(--hueso);
+}
+.vigila li span{font-size:0.85rem; color:var(--ceniza-tenue)}
+/* El segundo botón grande pesa menos: hay una acción principal, no dos. */
+.boton-grande--suave{
+  background:var(--carbon); color:var(--hueso);
+  border:1px solid var(--linea);
+}
+.boton-grande--suave small{color:var(--ceniza-tenue)}
+
+/* --- Modo supermercado ---------------------------------------------------- */
+.sin-revisar{
+  background:var(--carbon); border:1px dashed var(--amarillo);
+  border-radius:var(--radio-s); padding:var(--e4);
+  margin-bottom:var(--e4);
+  font-size:0.98rem; color:var(--ceniza); line-height:1.5;
+}
+.sin-revisar b{color:var(--amarillo)}
+
+.rapido{
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon); border:1px solid var(--linea);
+  border-left:3px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.rapido--malo{border-left-color:var(--rojo)}
+.rapido--bueno{border-left-color:var(--verde-claro)}
+.rapido__peso{width:2.4rem; flex:none; text-align:center; font-size:1.1rem; color:var(--ceniza-tenue)}
+.rapido b{display:block; font-family:var(--display); font-weight:600; font-size:1.05rem}
+.rapido span{display:block; font-size:0.85rem; color:var(--ceniza-tenue); margin-top:2px}

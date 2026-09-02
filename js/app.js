@@ -11,6 +11,9 @@ import { resultado, resultadoActivo } from './vistas/resultado.js';
 import { revisar, revisarActivo } from './vistas/revisar.js';
 import { escucharGestos, deslizarActivado, ponerDeslizar } from './gestos.js';
 import { vistaComparar, compararActivo } from './vistas/comparar.js';
+import { acerca } from './vistas/acerca.js';
+import { tendencia, tendenciaActiva } from './vistas/tendencia.js';
+import { supermercado, supermercadoActivo } from './vistas/supermercado.js';
 import { conocimiento, conocimientoActivo } from './vistas/conocimiento.js';
 import { despensa, despensaActivo } from './vistas/despensa.js';
 import {
@@ -21,7 +24,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.16.0';
+export const VERSION = '0.19.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -54,6 +57,10 @@ const VISTAS = {
   despensa: { pinta: despensa, activa: despensaActivo, titulo: 'Despensa' },
   // Comparar cuelga de la Despensa: es lo que se hace con lo guardado.
   comparar: { pinta: vistaComparar, activa: compararActivo, titulo: 'Comparar', pestana: 'despensa' },
+  // Cuelgan de Inicio: son sobre ti, no sobre un producto concreto.
+  tendencia: { pinta: tendencia, activa: tendenciaActiva, titulo: 'Tu tendencia', pestana: 'inicio' },
+  acerca: { pinta: acerca, titulo: 'Qué es y qué no es', pestana: 'inicio' },
+  supermercado: { pinta: supermercado, activa: supermercadoActivo, titulo: 'En el supermercado', pestana: 'analizar' },
 };
 
 const contenedor = document.getElementById('contenedorVista');
@@ -193,6 +200,8 @@ ponerEscala(escala());
 // Volver a ver un producto guardado, desde la Despensa.
 window.addEventListener('comer:ver-resultado', () => irA('resultado'));
 window.addEventListener('comer:comparar', () => irA('comparar'));
+window.addEventListener('comer:tendencia', () => irA('tendencia'));
+window.addEventListener('comer:acerca', () => irA('acerca'));
 
 export { irA };
 

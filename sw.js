@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'comer-v0.16.0';
+const CACHE = 'comer-v0.19.0';
 
 const ARCHIVOS = [
   './',
@@ -19,10 +19,14 @@ const ARCHIVOS = [
   './js/vistas/inicio.js',
   './js/vistas/revisar.js',
   './js/vistas/comparar.js',
+  './js/vistas/acerca.js',
+  './js/vistas/tendencia.js',
+  './js/vistas/supermercado.js',
   './js/estado.js',
   './js/gestos.js',
   './js/almacen.js',
   './js/codigobarras.js',
+  './js/escaner.js',
   './js/vistas/analizar.js',
   './js/vistas/resultado.js',
   './js/vistas/conocimiento.js',
@@ -66,7 +70,7 @@ self.addEventListener('activate', (e) => {
  * Las tipografias y los iconos van primero a la copia guardada, porque no
  * cambian y pedirlos por red en cada arranque solo gasta tiempo y bateria.
  */
-const INMUTABLE = /\/(fuentes|iconos|lector)\//;
+const INMUTABLE = /\/(fuentes|iconos|lector|escaner)\//;
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;

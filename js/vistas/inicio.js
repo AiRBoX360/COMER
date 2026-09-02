@@ -23,9 +23,13 @@ export function inicio({ irA }) {
     <h1 class="titulo">Qué llevas en la mano</h1>
     <p class="texto">Fotografía la tabla nutricional y los ingredientes. Verdicto lee la etiqueta, la analiza y te dice qué conviene limitar y qué merece la pena.</p>
 
-    <button class="boton-grande" id="btnAnalizar" style="margin:24px 0">
-      ANALIZAR PRODUCTO
-      <small>Tabla nutricional e ingredientes</small>
+    <button class="boton-grande" id="btnSupermercado" style="margin:24px 0 12px">
+      ESTOY EN EL SUPERMERCADO
+      <small>Escanea y sabe en tres segundos si lo echas al carro</small>
+    </button>
+    <button class="boton-grande boton-grande--suave" id="btnAnalizar" style="margin-bottom:24px">
+      ANALIZAR CON CALMA
+      <small>Fotos, texto pegado o código, con revisión</small>
     </button>
 
     <h2 class="rotulo">Tamaño del texto</h2>
@@ -50,6 +54,11 @@ export function inicio({ irA }) {
       ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán en esta lista y en la Despensa.')}
     </div>
 
+    <div class="toma__botones" style="margin:24px 0">
+      <button class="boton" id="btnTendencia">Tu tendencia</button>
+      <button class="boton" id="btnAcerca">Qué es y qué no es</button>
+    </div>
+
     <h2 class="subtitulo">Estado de la instalación</h2>
     <p class="texto">Esta sección existe para que puedas comprobar que todo está en su sitio. Desaparecerá cuando la app esté terminada.</p>
     <div class="tarjeta" style="margin-top:16px">
@@ -61,6 +70,9 @@ export function inicio({ irA }) {
 export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar }) {
   const btn = raiz.querySelector('#btnAnalizar');
   if (btn) btn.addEventListener('click', () => irA('analizar'));
+  raiz.querySelector('#btnSupermercado')?.addEventListener('click', () => irA('supermercado'));
+  raiz.querySelector('#btnTendencia')?.addEventListener('click', () => irA('tendencia'));
+  raiz.querySelector('#btnAcerca')?.addEventListener('click', () => irA('acerca'));
 
   const control = raiz.querySelector('#controlEscala');
   if (control) {

@@ -92,6 +92,8 @@ export function despensa() {
     <h1 class="titulo">Despensa</h1>
     <p class="texto">Todo lo que has analizado, de lo que menos conviene a lo que más.</p>
 
+    ${bloqueRecalculo()}
+
     ${!almacenDuradero() ? `
       <div class="pendiente" style="border-left-color:var(--naranja); margin-bottom:16px">
         <div><b>Este navegador no deja guardar nada.</b> Puedes analizar productos, pero se perderán al cerrar. Suele pasar en navegación privada.</div>
@@ -111,8 +113,6 @@ export function despensa() {
           <h2 class="rotulo">Sin nota, por datos incompletos</h2>
           ${sinNota.map(ficha).join('')}
         </section>` : ''}`}
-
-    ${bloqueRecalculo()}
 
     ${total >= 2 ? `
       <button class="boton-grande" id="btnComparar" style="margin:24px 0">

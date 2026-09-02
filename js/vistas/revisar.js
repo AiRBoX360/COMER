@@ -13,7 +13,7 @@
  */
 
 import { esc } from '../ui.js';
-import { CAMPOS, CATEGORIAS, corregir, enCurso } from '../estado.js';
+import { CAMPOS, CATEGORIAS, corregir, enCurso, resumenEnCurso } from '../estado.js';
 import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista } from '../motor.js';
 
 /** Cifra con coma decimal, que es como se escribe en español. */
@@ -127,6 +127,12 @@ export function revisar() {
 
   return `
     <h1 class="titulo">Revisar antes de analizar</h1>
+    <div class="en-curso">
+      <div class="en-curso__texto">
+        <b>${esc(enCurso.nombre || 'Producto sin nombre')}</b>
+        <span>${resumenEnCurso().campos} dato(s) · ${resumenEnCurso().ingredientes} ingrediente(s)</span>
+      </div>
+    </div>
     <p class="texto">Comprueba las cifras contra el envase. Toca cualquiera para cambiarla. Lo que corrijas queda marcado y pasa a valer más que lo leído.</p>
 
     ${errores > 0 || faltan.length > 0 ? `
