@@ -1,7 +1,7 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
-import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector } from '../lector.js';
+import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { escanear, hayEscaner } from '../escaner.js';
@@ -183,6 +183,7 @@ export function analizar() {
     </button>
     <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
     <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
+    <p class="texto" style="font-size:0.9rem; margin-top:8px">Revisa los ficheros y luego intenta arrancarlo de verdad. Tarda un poco la primera vez.</p>
     <div id="diagLector" style="margin-top:12px"></div>
 
     <div id="resumenLectura" style="margin-top:24px"></div>
@@ -495,17 +496,36 @@ export function analizarActivo(raiz, { repintar, irA }) {
     e.target.disabled = true;
     caja.innerHTML = '<p class="texto">Comprobando…</p>';
     const filas = await diagnosticarLector();
-    e.target.disabled = false;
-    caja.innerHTML = `
+    const tabla = () => `
       <div class="tarjeta">
         <ul class="diagnostico">
           ${filas.map((f) => `
             <li><span>${esc(f.fichero)}</span><b class="${f.ok ? 'si' : 'no'}">${esc(f.detalle)}</b></li>`).join('')}
         </ul>
-      </div>
-      ${filas.every((f) => f.ok)
-        ? '<p class="texto" style="margin-top:12px">Todo en su sitio. Si aun así no lee, mándame esta pantalla.</p>'
-        : '<p class="texto" style="margin-top:12px">Lo que salga en naranja es lo que falla. Mándame esta pantalla.</p>'}`;
+      </div>`;
+
+    if (!filas.every((f) => f.ok)) {
+      e.target.disabled = false;
+      caja.innerHTML = tabla() +
+        '<p class="texto" style="margin-top:12px">Lo que sale en naranja es lo que falla. Mándame esta pantalla.</p>';
+      return;
+    }
+
+    // Los ficheros están. Lo que hay que saber es si arranca.
+    caja.innerHTML = tabla() + '<p class="texto" id="faseArranque" role="status" aria-live="polite" style="margin-top:12px">Intentando arrancarlo…</p>';
+    const linea = caja.querySelector('#faseArranque');
+    const r = await probarArranque((p, fase) => {
+      linea.textContent = `${fase ?? 'arrancando'} · ${Math.round(p * 100)} %`;
+    });
+    e.target.disabled = false;
+    caja.innerHTML = tabla() + `
+      <div class="pendiente" style="margin-top:12px; border-left-color:var(--${r.ok ? 'verde-claro' : 'naranja'})">
+        <div>
+          <b>${r.ok ? 'El lector arranca' : 'El lector NO arranca'}</b><br>
+          ${esc(r.mensaje)}<br>
+          <span class="cifra" style="font-size:0.85rem">fase: ${esc(r.fase)} · ${esc(r.segundos)} s</span>
+        </div>
+      </div>`;
   });
 
   raiz.querySelector('#btnRevisar')?.addEventListener('click', () => irA('revisar'));

@@ -236,3 +236,59 @@ export async function diagnosticarLector() {
 
   return filas;
 }
+
+/**
+ * Intenta arrancar el lector de verdad y cuenta hasta dónde llega.
+ *
+ * Comprobar que los ficheros están no dice nada de si el lector funciona.
+ * Esto lo arranca, y si se atasca dice en qué fase, que es lo único con lo
+ * que se puede arreglar algo.
+ */
+export async function probarArranque(alProgresar = () => {}) {
+  let ultimaFase = 'sin empezar';
+  const t0 = Date.now();
+
+  // Se olvida cualquier intento anterior: si falló, no queremos su resultado.
+  motorLector = null;
+  cargando = null;
+  motivoNoDisponible = '';
+
+  try {
+    const worker = await prepararLector((p, fase) => {
+      ultimaFase = fase ?? ultimaFase;
+      alProgresar(p, fase);
+    });
+    const segundos = ((Date.now() - t0) / 1000).toFixed(1);
+
+    if (!worker) {
+      return { ok: false, fase: ultimaFase, mensaje: porQueNoHayLector(), segundos };
+    }
+
+    // Arrancó. Ahora se le da algo minúsculo que leer, para ver si de verdad
+    // funciona y no solo si se ha cargado.
+    const lienzo = document.createElement('canvas');
+    lienzo.width = 220; lienzo.height = 70;
+    const ctx = lienzo.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 220, 70);
+    ctx.fillStyle = '#000'; ctx.font = 'bold 40px sans-serif';
+    ctx.fillText('Sal 0,8 g', 12, 50);
+
+    const { data } = await worker.recognize(lienzo);
+    const leido = (data.text ?? '').trim().replace(/\s+/g, ' ');
+    return {
+      ok: true,
+      fase: 'funcionando',
+      segundos: ((Date.now() - t0) / 1000).toFixed(1),
+      mensaje: leido
+        ? `Arrancó y leyó una prueba: "${leido}". El lector funciona.`
+        : 'Arrancó, pero no ha sacado nada de una imagen de prueba muy sencilla. Algo va mal por dentro.',
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      fase: ultimaFase,
+      segundos: ((Date.now() - t0) / 1000).toFixed(1),
+      mensaje: `Se ha parado en la fase "${ultimaFase}". ${err.message || err}`,
+    };
+  }
+}
