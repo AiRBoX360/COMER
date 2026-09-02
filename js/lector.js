@@ -14,6 +14,13 @@
 
 let motorLector = null;
 let cargando = null;
+/** Por qué no se ha podido, para poder decirlo en pantalla. */
+let motivoNoDisponible = '';
+
+export function porQueNoHayLector() {
+  return motivoNoDisponible ||
+    'El lector automático no está instalado en esta copia de la app. Usa la vía de pegar texto: en tu iPhone sale mejor.';
+}
 
 export const RUTA_LECTOR = 'lector/';
 
@@ -30,6 +37,30 @@ function rutaApp(relativa) {
   return new URL(relativa, document.baseURI).href;
 }
 
+
+/**
+ * ¿Admite este móvil las instrucciones SIMD?
+ *
+ * El lector trae dos núcleos, uno para móviles que las admiten y otro para los
+ * que no, y cada uno pesa casi siete megas. Incluir los dos serían dieciséis.
+ * Así que va solo el rápido y se comprueba antes: más vale decir "tu móvil no
+ * lo admite" que dejar que falle sin explicar por qué.
+ *
+ * Safari las admite desde iOS 16.4, de marzo de 2023.
+ */
+async function admiteSIMD() {
+  try {
+    // Un módulo WebAssembly mínimo que usa una instrucción SIMD. Si el
+    // navegador no las entiende, ni siquiera lo compila.
+    const prueba = new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3,
+      2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11,
+    ]);
+    return WebAssembly.validate(prueba);
+  } catch {
+    return false;
+  }
+}
 
 /** ¿Está la carpeta del lector en el servidor? */
 export async function lectorDisponible() {
@@ -51,11 +82,17 @@ async function prepararLector(alProgresar = () => {}) {
 
   cargando = (async () => {
     if (!(await lectorDisponible())) return null;
+    if (!(await admiteSIMD())) {
+      motivoNoDisponible = 'Este navegador no admite las instrucciones que necesita el lector de texto. Hace falta iOS 16.4 o posterior. Las otras dos vías funcionan igual.';
+      return null;
+    }
 
     const { createWorker } = await import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`));
     const worker = await createWorker('spa', 1, {
       workerPath: rutaApp(`${RUTA_LECTOR}worker.js`),
-      corePath: rutaApp(RUTA_LECTOR),
+      // Se apunta al fichero exacto y no a la carpeta: así el lector no busca
+      // el núcleo alternativo, que no viene incluido para no doblar el peso.
+      corePath: rutaApp(`${RUTA_LECTOR}tesseract-core-simd-lstm.wasm.js`),
       langPath: rutaApp(RUTA_LECTOR),
       gzip: true,
       logger: (m) => {

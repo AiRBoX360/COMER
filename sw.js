@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'comer-v0.21.0';
+const CACHE = 'comer-v0.24.0';
 
 const ARCHIVOS = [
   './',

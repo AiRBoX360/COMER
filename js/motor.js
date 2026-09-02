@@ -1080,7 +1080,7 @@ function analizarIngredientes(crudos) {
 }
 
 // src/config/pesos.ts
-var VERSION_ALGORITMO = "1.14.0";
+var VERSION_ALGORITMO = "1.15.0";
 var PESOS = {
   nutriScore: 0.36,
   nova: 0.28,
@@ -2000,6 +2000,29 @@ var EN_GRAMOS = [
 var v = (d) => d.valor;
 var r13 = (x) => Math.round(x * 10) / 10;
 var r2 = (x) => Math.abs(x) < 10 ? Math.round(x * 100) / 100 : Math.round(x * 10) / 10;
+function proponerPara(campo, valor, enMiligramos) {
+  const texto = String(valor);
+  if (/9$/.test(texto)) {
+    const sinNueve = parseFloat(texto.slice(0, -1));
+    if (Number.isFinite(sinNueve) && sinNueve > 0 && sinNueve <= 100) {
+      return {
+        campo,
+        valorActual: valor,
+        valorPropuesto: sinNueve,
+        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
+      };
+    }
+  }
+  if (enMiligramos > 0 && enMiligramos <= 100) {
+    return {
+      campo,
+      valorActual: valor,
+      valorPropuesto: r2(enMiligramos),
+      motivo: "La cifra encaja si estaba en miligramos y se leyó como gramos."
+    };
+  }
+  return void 0;
+}
 var May = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 function validar(n, esProductoSalado = false) {
   const inc = [];
@@ -2023,12 +2046,7 @@ function validar(n, esProductoSalado = false) {
       gravedad: "error",
       campos: [campo],
       mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${v(d)} g por 100 g. Es imposible: no caben más de 100 gramos en 100 gramos.`,
-      correccion: enMiligramos <= 100 ? {
-        campo,
-        valorActual: v(d),
-        valorPropuesto: r2(enMiligramos),
-        motivo: "La cifra encaja si estaba en miligramos y se leyó como gramos."
-      } : void 0
+      correccion: proponerPara(campo, v(d), enMiligramos)
     });
   }
   if (hay(n.azucares_g) && hay(n.hidratos_g) && v(n.azucares_g) > v(n.hidratos_g) + 0.15) {
@@ -2117,6 +2135,28 @@ function validar(n, esProductoSalado = false) {
         valorActual: v(n.sal_g),
         valorPropuesto: v(n.sal_g) > 100 ? r2(v(n.sal_g) / 1e3) : r2(v(n.sal_g) / 10),
         motivo: "Suele venir de una coma decimal que se ha perdido al leer."
+      }
+    });
+  }
+  for (const campo of EN_GRAMOS) {
+    const d = n[campo];
+    if (!hay(d)) continue;
+    if (d.estado === "corregido") continue;
+    const bruto = (d.textoOriginal ?? String(d.valor).replace(".", ",")).trim();
+    if (/[a-zA-Z]/.test(bruto)) continue;
+    if (!/^\d+[.,]\d9$/.test(bruto.replace(/\s/g, ""))) continue;
+    const sinNueve = parseFloat(bruto.replace(",", ".").slice(0, -1));
+    if (!Number.isFinite(sinNueve)) continue;
+    inc.push({
+      codigo: "unidad_leida_como_nueve",
+      gravedad: "aviso",
+      campos: [campo],
+      mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${bruto} sin unidad. Cuando la "g" va pegada al número, los lectores la confunden con un nueve: puede que en el envase ponga ${r13(sinNueve)} g.`,
+      correccion: {
+        campo,
+        valorActual: v(d),
+        valorPropuesto: r2(sinNueve),
+        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
       }
     });
   }

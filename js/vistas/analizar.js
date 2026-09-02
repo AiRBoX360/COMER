@@ -1,7 +1,7 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
-import { leerTexto, lectorDisponible } from '../lector.js';
+import { leerTexto, lectorDisponible, porQueNoHayLector } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { escanear, hayEscaner } from '../escaner.js';
@@ -134,32 +134,11 @@ export function analizar() {
   return `
     <h1 class="titulo">Analizar</h1>
     ${barraEnCurso()}
-    <p class="texto">Fotografía la tabla y los ingredientes. Las fotos no salen de tu teléfono: se procesan aquí dentro.</p>
+    <p class="texto">Tres formas de meter una etiqueta, ordenadas de la más rápida a la más laboriosa. Ninguna sustituye a las otras.</p>
 
-    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
+    <h2 class="subtitulo">1 · Código de barras</h2>
+    <p class="texto">Lo más rápido. La app consulta Open Food Facts, una base abierta hecha por voluntarios.</p>
 
-    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:24px">
-      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
-      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
-    </button>
-    <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
-
-    <h2 class="subtitulo">O pega el texto</h2>
-    <p class="texto">Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
-    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
-    <textarea id="pegaTabla" class="pegar pegar--alta" rows="12" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
-    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
-    <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
-    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
-
-    <h2 class="subtitulo">O busca por código de barras</h2>
-    <p class="texto">Teclea el número de debajo del código de barras. La app consulta Open Food Facts, una base abierta hecha por voluntarios.</p>
-    <p class="texto" style="font-size:0.9rem">
-      <strong>Esta es la única parte de la app que sale a internet.</strong>
-      Viaja solo el número, ninguna foto ni ningún dato tuyo. Y lo que devuelva
-      hay que comprobarlo contra el envase: la ficha puede ser de una versión
-      anterior del producto.
-    </p>
     <div class="escaner" id="zonaEscaner" hidden>
       <video id="videoEscaner" muted playsinline></video>
       <div class="escaner__mira"></div>
@@ -178,6 +157,31 @@ export function analizar() {
     </div>
     <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
     <p class="texto" id="estadoCodigo" role="status" aria-live="polite" style="margin-top:12px"></p>
+    <p class="texto" style="font-size:0.9rem">
+      <strong>Esta es la única parte de la app que sale a internet.</strong>
+      Viaja solo el número, ninguna foto ni ningún dato tuyo. Y lo que devuelva
+      hay que comprobarlo contra el envase: la ficha puede ser de una versión
+      anterior del producto.
+    </p>
+
+    <h2 class="subtitulo">2 · Pegar el texto</h2>
+    <p class="texto">Lo más fiable. Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
+    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
+    <textarea id="pegaTabla" class="pegar pegar--alta" rows="12" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
+    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
+    <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
+    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
+
+    <h2 class="subtitulo">3 · Fotos dentro de la app</h2>
+    <p class="texto">Funciona sin internet y sin salir de aquí. Puedes recortar para dejar dentro solo lo que interesa.</p>
+
+    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
+
+    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:16px">
+      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
+      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
+    </button>
+    <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
 
     <div id="resumenLectura" style="margin-top:24px"></div>
     <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
@@ -186,7 +190,7 @@ export function analizar() {
     </button>
 
     <div style="margin-top:24px">
-      ${pendiente('<b>Tres formas, y ninguna sustituye a las otras.</b> El código de barras es la más rápida; pegar el texto copiado del iPhone, la más fiable; las fotos, la que funciona sin internet. Elige la que te venga bien en cada momento.')}
+      ${pendiente('<b>Tres formas, y ninguna sustituye a las otras.</b> El código de barras es la más rápida; pegar el texto copiado del iPhone, la más fiable; las fotos, la única que funciona sin internet. Elige la que te venga bien en cada momento.')}
     </div>
   `;
 }
@@ -504,7 +508,7 @@ export async function leerCaptura(clave, alProgresar) {
   if (!r) {
     return {
       ok: false,
-      motivo: 'El lector automático no está instalado en esta copia de la app. Usa la vía de pegar texto: en tu iPhone sale mejor.',
+      motivo: porQueNoHayLector(),
     };
   }
   return { ok: true, texto: r.texto, confianza: r.confianza };
