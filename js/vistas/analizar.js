@@ -376,10 +376,17 @@ export function analizarActivo(raiz, { repintar, irA }) {
     try {
       for (const clave of ['tabla', 'ingredientes']) {
         const r = await leerCaptura(clave, (p, s2) => {
-          const fase = s2 === 'recognizing text' ? 'Leyendo'
-            : s2 === 'loading language traineddata' ? 'Descargando el idioma'
-            : s2 === 'initializing api' ? 'Arrancando' : 'Preparando';
-          estado.textContent = `${fase} ${clave}… ${Math.round(p * 100)} %`;
+          const FASES = {
+            'cargando el lector': 'Cargando el lector',
+            'arrancando el trabajador': 'Arrancando el lector',
+            'loading tesseract core': 'Descargando el núcleo',
+            'initializing tesseract': 'Arrancando el núcleo',
+            'loading language traineddata': 'Descargando el idioma español',
+            'initializing api': 'Preparando',
+            'recognizing text': 'Leyendo la foto',
+            listo: 'Listo',
+          };
+          estado.textContent = `${FASES[s2] ?? s2} · ${clave} · ${Math.round(p * 100)} %`;
         });
         if (!r.ok) { estado.textContent = r.motivo; return; }
         interpretar(clave, r.texto);

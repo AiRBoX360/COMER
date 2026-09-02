@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'comer-v0.25.0';
+const CACHE = 'comer-v0.26.0';
 
 const ARCHIVOS = [
   './',
@@ -70,7 +70,18 @@ self.addEventListener('activate', (e) => {
  * Las tipografias y los iconos van primero a la copia guardada, porque no
  * cambian y pedirlos por red en cada arranque solo gasta tiempo y bateria.
  */
-const INMUTABLE = /\/(fuentes|iconos|lector|escaner)\//;
+// Ficheros que no cambian nunca y son pequeños: se guardan en la copia local.
+const INMUTABLE = /\/(fuentes|iconos)\//;
+
+// Ficheros que no cambian nunca pero son ENORMES: el lector de texto son casi
+// nueve megas y el de códigos algo más de uno. Estos pasan directos a la red
+// sin clonarse ni guardarse.
+//
+// Clonar una respuesta de cuatro megas para meterla en la copia local puede
+// bloquear la descarga a medias si el guardado se atasca o no cabe: es un
+// problema conocido de clonar respuestas grandes. Y guardarlos aquí no aporta
+// nada, porque el navegador ya los conserva por su cuenta.
+const GRANDES = /\/(lector|escaner)\//;
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
@@ -78,6 +89,9 @@ self.addEventListener('fetch', (e) => {
   // Lo de fuera (la consulta a la base de productos) va directo a la red y no
   // se guarda: una ficha vieja en la copia sería peor que no tenerla.
   if (url.origin !== self.location.origin) return;
+
+  // Los grandes, directos a la red. Sin clonar, sin guardar, sin tocar nada.
+  if (GRANDES.test(url.pathname)) return;
 
   if (INMUTABLE.test(url.pathname)) {
     e.respondWith(

@@ -112,9 +112,11 @@ async function arrancar(alProgresar) {
       () => rechaza(new Error('Ha tardado más de tres minutos en descargarse')), TOPE)),
   ]);
 
+  alProgresar(0.05, 'cargando el lector');
   const { createWorker } = await conTope(
     import(/* @vite-ignore */ rutaApp(`${RUTA_LECTOR}tesseract.js`)));
 
+  alProgresar(0.1, 'arrancando el trabajador');
   const worker = await conTope(createWorker('spa', 1, {
       workerPath: rutaApp(`${RUTA_LECTOR}worker.js`),
       // Se apunta al fichero exacto y no a la carpeta: así el lector no busca
@@ -137,6 +139,7 @@ async function arrancar(alProgresar) {
     preserve_interword_spaces: '1',
   });
 
+  alProgresar(1, 'listo');
   motorLector = worker;
   return worker;
 }
@@ -184,6 +187,13 @@ export async function soltarLector() {
  * diagnóstico. Esto dice cuál de las cinco piezas falta y con qué respuesta
  * del servidor, que es lo único con lo que se puede arreglar algo.
  */
+/** 67 KB no es "0.0 MB". */
+function tamano(bytes) {
+  if (!bytes) return 'encontrado';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1048576).toFixed(1)} MB`;
+}
+
 export async function diagnosticarLector() {
   const FICHEROS = [
     'tesseract.js',
@@ -204,7 +214,7 @@ export async function diagnosticarLector() {
         fichero: f,
         ok: r.ok,
         detalle: r.ok
-          ? `${bytes ? (bytes / 1048576).toFixed(1) + ' MB' : 'encontrado'}${tipo.includes('text/html') ? ' · OJO: el servidor devuelve una página, no el fichero' : ''}`
+          ? `${tamano(bytes)}${tipo.includes('text/html') ? ' · OJO: el servidor devuelve una página, no el fichero' : ''}`
           : `no está (${r.status})`,
       });
     } catch (err) {
