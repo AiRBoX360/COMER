@@ -4,15 +4,27 @@
  * Todo lo que se repita en más de una pantalla vive aquí. Cuando lleguen los
  * módulos de resultado y despensa, ya estará construido.
  */
+import { NIVELES as NIVELES_MOTOR } from './motor.js';
 
 /** Los cinco niveles. El texto va siempre con el color, nunca el color solo. */
-export const NIVELES = [
-  { clave: 'rojo',          desde: 0,  hasta: 29,  texto: 'Consumo ocasional' },
-  { clave: 'naranja',       desde: 30, hasta: 49,  texto: 'Con moderación' },
-  { clave: 'amarillo',      desde: 50, hasta: 69,  texto: 'Aceptable, hay mejores' },
-  { clave: 'verde-claro',   desde: 70, hasta: 84,  texto: 'Buena elección habitual' },
-  { clave: 'verde-parchis', desde: 85, hasta: 100, texto: 'Especialmente favorable' },
-];
+/**
+ * Los cinco niveles, tomados del motor.
+ *
+ * Antes estaban escritos a mano aquí, y se desviaron: la interfaz decía
+ * "verde-claro" con guion y el motor "verde_claro" con guion bajo. Los
+ * productos verdes no encajaban en ningún bloque de la Despensa, así que se
+ * guardaban bien y desaparecían de la vista. Los rojos y naranjas sí se veían,
+ * porque ahí los dos nombres coincidían por casualidad, y eso hizo el fallo
+ * mucho más difícil de ver.
+ *
+ * Ahora hay una sola fuente. Duplicar una lista es duplicar un error futuro.
+ */
+export const NIVELES = NIVELES_MOTOR.map((n, i) => ({
+  clave: n.clave,
+  desde: n.desde,
+  hasta: i + 1 < NIVELES_MOTOR.length ? NIVELES_MOTOR[i + 1].desde - 1 : 100,
+  texto: n.etiqueta,
+}));
 
 /** Devuelve el nivel que corresponde a una nota de 0 a 100. */
 export function nivelDeNota(nota) {

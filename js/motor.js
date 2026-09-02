@@ -6291,6 +6291,7 @@ export {
   ETIQUETAS_SEMAFORO,
   FUENTES,
   MINIMO_PARA_TENDENCIA,
+  NIVELES,
   RECORTE_COMPLETO,
   RepositorioIndexedDB,
   RepositorioMemoria,

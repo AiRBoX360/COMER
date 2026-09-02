@@ -24,6 +24,15 @@ const TOMAS = [
  *  a medias un análisis sin terminar solo ensuciaría la Despensa. */
 const capturas = new Map();
 
+/**
+ * El último código consultado.
+ *
+ * Se guarda fuera de la pantalla porque al cargar un producto la pantalla se
+ * repinta, la casilla se vaciaba y volvía a verse el texto de ejemplo. Parecía
+ * que el escáner había leído mal cuando en realidad había acertado.
+ */
+let ultimoCodigo = '';
+
 const ICONO_CAMARA = `<svg viewBox="0 0 24 24" aria-hidden="true" class="toma__icono">
   <path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
 
@@ -152,7 +161,9 @@ export function analizar() {
       <label class="campo__nombre" for="codigoBarras">O tecléalo</label>
       <div class="campo__entrada">
         <input id="codigoBarras" type="text" inputmode="numeric"
-               placeholder="8480000123456" autocomplete="off">
+               value="${esc(ultimoCodigo)}"
+               placeholder="los 13 dígitos de debajo del código"
+               autocomplete="off">
       </div>
     </div>
     <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
@@ -418,6 +429,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     capturas.clear();
     leido.tabla = null;
     leido.ingredientes = null;
+    ultimoCodigo = '';
     repintar();
   });
 
@@ -425,6 +437,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
 
   /** Busca y carga un producto por su código, venga de la cámara o tecleado. */
   async function buscarYCargar(codigo) {
+    ultimoCodigo = String(codigo ?? '').replace(/\D/g, '');
     estadoCodigo.textContent = 'Consultando…';
     const r = await buscarPorCodigo(codigo);
 
@@ -452,7 +465,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     leido.tabla = { nutrientes: p.nutrientes, avisos: p.avisos, base: 'por_100' };
 
     estadoCodigo.textContent =
-      `Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
+      `Código ${p.codigo} · Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
       (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
     repintar();
   }
@@ -482,6 +495,10 @@ export function analizarActivo(raiz, { repintar, irA }) {
     if (caja) caja.value = r.codigo;
     estadoCodigo.textContent = `Código leído: ${r.codigo}. Consultando…`;
     await buscarYCargar(r.codigo);
+    // El código leído se queda a la vista: así se puede comprobar contra el
+    // envase, que es lo primero que hace cualquiera cuando algo no cuadra.
+    const cajaDespues = raiz.querySelector('#codigoBarras');
+    if (cajaDespues) cajaDespues.value = r.codigo;
   });
 
   raiz.querySelector('#btnCancelarEscaner')?.addEventListener('click', () => {
