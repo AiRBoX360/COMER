@@ -4745,7 +4745,7 @@ async function importar(repo, copia, opts = {}) {
 }
 function nombreFichero(fecha = /* @__PURE__ */ new Date()) {
   const p = (n) => String(n).padStart(2, "0");
-  return `comer-copia-${fecha.getFullYear()}${p(fecha.getMonth() + 1)}${p(fecha.getDate())}-${p(fecha.getHours())}${p(fecha.getMinutes())}.json`;
+  return `catario-copia-${fecha.getFullYear()}${p(fecha.getMonth() + 1)}${p(fecha.getDate())}-${p(fecha.getHours())}${p(fecha.getMinutes())}.json`;
 }
 function aBase64(datos) {
   const bytes = new Uint8Array(datos);
@@ -5566,6 +5566,169 @@ var FUNCIONES_DECLARADAS2 = [
   "aromas",
   "agente de tratamiento de la harina"
 ];
+var FAMILIAS = [
+  {
+    patron: /\bharina (integral )?de\b/,
+    categoria: "harina",
+    singular: "cereal",
+    cabeza: "harina",
+    queEs: 'Es una harina: un grano o semilla molido. Si pone "integral" conserva el salvado; si no, se le ha quitado.'
+  },
+  {
+    patron: /\bs[eé]mola de\b/,
+    categoria: "sémola",
+    singular: "cereal",
+    cabeza: "semola",
+    queEs: "Es una sémola: molienda gruesa de un grano."
+  },
+  {
+    patron: /\baceite (refinado |virgen )?de\b/,
+    categoria: "aceite vegetal",
+    singular: "aceite",
+    cabeza: "aceite",
+    queEs: "Es un aceite vegetal, extraído de una semilla o un fruto."
+  },
+  {
+    patron: /\bgrasa (vegetal )?de\b/,
+    categoria: "grasa vegetal",
+    singular: "grasa",
+    cabeza: "grasa",
+    queEs: "Es una grasa vegetal, normalmente la fracción sólida de un aceite."
+  },
+  {
+    patron: /\balmid[oó]n (modificado )?de\b/,
+    categoria: "almidón",
+    singular: "almidón",
+    cabeza: "almidon",
+    transforma: true,
+    queEs: "Es un almidón: el hidrato de carbono aislado de un cereal o un tubérculo, sin fibra ni micronutrientes."
+  },
+  {
+    patron: /\bf[eé]cula de\b/,
+    categoria: "almidón",
+    singular: "almidón",
+    cabeza: "fecula",
+    transforma: true,
+    queEs: "Es una fécula: almidón extraído de un tubérculo."
+  },
+  {
+    patron: /\bprote[ií]na(s)? (aislada |hidrolizada |texturizada )?de\b/,
+    categoria: "proteína aislada",
+    singular: "aislado proteico",
+    cabeza: "proteina",
+    transforma: true,
+    queEs: "Es una proteína extraída de un alimento y añadida aparte, fuera de su matriz original. Su presencia indica un producto formulado."
+  },
+  {
+    patron: /\bfibra (vegetal |soluble )?de\b/,
+    categoria: "fibra añadida",
+    singular: "tipo de fibra",
+    cabeza: "fibra",
+    transforma: true,
+    queEs: "Es fibra extraída de una planta y añadida aparte. Suma en la tabla, pero no equivale a la fibra que viene dentro de un alimento entero."
+  },
+  {
+    patron: /\bextracto de\b/,
+    categoria: "extracto",
+    singular: "extracto",
+    cabeza: "extracto",
+    transforma: true,
+    queEs: "Es un extracto: los compuestos de una planta concentrados y separados del resto."
+  },
+  {
+    patron: /\bconcentrado de\b/,
+    categoria: "concentrado",
+    singular: "concentrado",
+    cabeza: "concentrado",
+    transforma: true,
+    queEs: "Es un concentrado: se le ha quitado el agua, así que todo lo demás queda más concentrado, incluidos sus azúcares."
+  },
+  {
+    patron: /\bpur[eé] de\b/,
+    categoria: "puré",
+    singular: "puré",
+    cabeza: "pure",
+    queEs: "Es un puré: el alimento triturado, conservando casi todo lo que tenía."
+  },
+  {
+    patron: /\bzumo de\b/,
+    categoria: "zumo",
+    singular: "zumo",
+    cabeza: "zumo",
+    transforma: true,
+    queEs: "Es un zumo. Al exprimir se pierde la fibra y el azúcar de la fruta pasa a contar como azúcar libre."
+  },
+  {
+    patron: /\b(caldo|fondo) de\b/,
+    categoria: "caldo",
+    singular: "caldo",
+    cabeza: "caldo",
+    queEs: "Es un caldo. Suele aportar bastante sal."
+  },
+  {
+    patron: /\bvinagre de\b/,
+    categoria: "vinagre",
+    singular: "vinagre",
+    cabeza: "vinagre",
+    queEs: "Es un vinagre, producto de una fermentación acética."
+  },
+  {
+    patron: /\bcarne de\b/,
+    categoria: "carne",
+    singular: "tipo de carne",
+    cabeza: "carne",
+    queEs: "Es carne de un animal."
+  },
+  {
+    patron: /\b(leche|bebida) de\b/,
+    categoria: "lácteo o bebida vegetal",
+    singular: "producto",
+    cabeza: "bebida",
+    queEs: "Es leche o una bebida vegetal hecha triturando algo con agua."
+  },
+  {
+    patron: /\b(sal|sales) de\b/,
+    categoria: "sal mineral",
+    singular: "compuesto",
+    cabeza: "sal",
+    queEs: "Es una sal mineral."
+  },
+  {
+    patron: /\b(citrato|lactato|fosfato|carbonato|sulfato|cloruro|gluconato|malato|tartrato|acetato) (de|d[ei])\b/,
+    categoria: "sal mineral",
+    singular: "compuesto",
+    cabeza: "",
+    queEs: "Es una sal mineral, normalmente usada como corrector de acidez, estabilizante o para enriquecer el producto en un mineral."
+  },
+  {
+    patron: /\b(vitamina|vitaminas)\b/,
+    categoria: "vitamina",
+    singular: "compuesto",
+    cabeza: "vitamina",
+    queEs: "Es una vitamina añadida. Las etiquetas suelen enriquecer productos con ellas."
+  },
+  {
+    patron: /\b\w+ en polvo\b/,
+    categoria: "deshidratado",
+    singular: "producto",
+    cabeza: "",
+    queEs: "Es un alimento deshidratado y molido. Conserva casi todo menos el agua."
+  },
+  {
+    patron: /\bpolvo de hornear|gasificante\b/,
+    categoria: "gasificante",
+    singular: "gasificante",
+    cabeza: "",
+    queEs: "Hace subir la masa sin fermentación."
+  },
+  {
+    patron: /\b\w+ tostad[oa]s?\b/,
+    categoria: "tostado",
+    singular: "producto",
+    cabeza: "",
+    queEs: "Es un alimento tostado. El tostado desarrolla sabor y color, y a alta temperatura puede generar acrilamida."
+  }
+];
 function explicarIngrediente(texto, porcentaje, profundidad = 0) {
   const t = normalizarTexto(texto);
   if (profundidad === 0 && t.includes(" ")) {
@@ -5626,20 +5789,24 @@ function explicarIngrediente(texto, porcentaje, profundidad = 0) {
       };
     }
   }
+  const familiaPrevia = FAMILIAS.find((f) => f.patron.test(t));
   const candidatas = INGREDIENTES_COMUNES.filter((f) => casa(t, f.patron));
   if (candidatas.length > 0) {
     const f = [...candidatas].sort((a, b) => b.patron.length - a.patron.length || t.indexOf(a.patron) - t.indexOf(b.patron))[0];
-    return {
-      ...base,
-      titulo: f.titulo,
-      categoria: f.categoria,
-      veredicto: veredictoDe(f.valoracion),
-      valoracion: f.valoracion,
-      queEs: f.queEs,
-      porQue: f.porQue,
-      evidencia: f.evidencia,
-      fuentes: fuentesDe(f.valoracion <= -2 ? ["oms-azucar", "nova"] : ["nova", "ue-1169"])
-    };
+    const esDerivado = familiaPrevia?.transforma === true && familiaPrevia.cabeza !== "" && !f.patron.includes(familiaPrevia.cabeza);
+    if (!esDerivado) {
+      return {
+        ...base,
+        titulo: f.titulo,
+        categoria: f.categoria,
+        veredicto: veredictoDe(f.valoracion),
+        valoracion: f.valoracion,
+        queEs: f.queEs,
+        porQue: f.porQue,
+        evidencia: f.evidencia,
+        fuentes: fuentesDe(f.valoracion <= -2 ? ["oms-azucar", "nova"] : ["nova", "ue-1169"])
+      };
+    }
   }
   const grasas = GRASAS.filter((g) => g.prefijo ? t.includes(g.patron) : casa(t, g.patron));
   if (grasas.length > 0) {
@@ -5683,6 +5850,20 @@ function explicarIngrediente(texto, porcentaje, profundidad = 0) {
       porQue: "No es tóxica por sí misma, pero su presencia delata una formulación industrial. El grado de ultraprocesado se asocia a peores resultados de salud incluso ajustando por la composición nutricional.",
       evidencia: "alta",
       fuentes: fuentesDe(["nova"])
+    };
+  }
+  const familia = familiaPrevia;
+  if (familia) {
+    return {
+      ...base,
+      titulo: texto.trim(),
+      categoria: familia.categoria,
+      veredicto: "sin_ficha",
+      valoracion: 0,
+      queEs: familia.queEs,
+      porQue: `No tenemos ficha de este ${familia.singular} en concreto, así que no cuenta ni a favor ni en contra de la nota. Si quieres que la tenga, cópialo y mándalo.`,
+      evidencia: "baja",
+      fuentes: []
     };
   }
   return {
@@ -6282,6 +6463,81 @@ function sugerirVigilancia(productos) {
     };
   }).sort((a, b) => b.veces - a.veces).slice(0, 5);
 }
+
+// src/nucleo/deducir.ts
+var FACTORES_KCAL = {
+  grasas_g: 9,
+  hidratos_g: 4,
+  // los hidratos ya excluyen fibra y polialcoholes
+  proteinas_g: 4,
+  fibra_g: 2,
+  polialcoholes_g: 2.4
+};
+function deducciones(n) {
+  const out = [];
+  const val = (c) => {
+    const d = n[c];
+    return hay(d) ? d.valor : null;
+  };
+  if (!hay(n.sal_g) && hay(n.sodio_mg)) {
+    out.push({
+      campo: "sal_g",
+      valor: Math.round(val("sodio_mg") / 1e3 * 2.5 * 1e3) / 1e3,
+      comoSeObtuvo: "La sal sale del sodio: sal = sodio × 2,5. La equivalencia está en el propio reglamento europeo.",
+      apartirDe: ["sodio_mg"]
+    });
+  }
+  if (!hay(n.sodio_mg) && hay(n.sal_g)) {
+    out.push({
+      campo: "sodio_mg",
+      valor: Math.round(val("sal_g") / 2.5 * 1e3),
+      comoSeObtuvo: "El sodio sale de la sal: sodio = sal ÷ 2,5.",
+      apartirDe: ["sal_g"]
+    });
+  }
+  if (!hay(n.energia_kcal) && hay(n.energia_kj)) {
+    out.push({
+      campo: "energia_kcal",
+      valor: Math.round(val("energia_kj") / 4.184),
+      comoSeObtuvo: "Las kilocalorías salen de los kilojulios: un kilojulio son 0,239 kilocalorías.",
+      apartirDe: ["energia_kj"]
+    });
+  }
+  const grasas = val("grasas_g");
+  const hidratos = val("hidratos_g");
+  const proteinas = val("proteinas_g");
+  if (!hay(n.energia_kcal) && !hay(n.energia_kj) && grasas !== null && hidratos !== null && proteinas !== null) {
+    const fibra = val("fibra_g") ?? 0;
+    const polialcoholes = val("polialcoholes_g") ?? 0;
+    const kcal = grasas * FACTORES_KCAL.grasas_g + hidratos * FACTORES_KCAL.hidratos_g + proteinas * FACTORES_KCAL.proteinas_g + fibra * FACTORES_KCAL.fibra_g + polialcoholes * FACTORES_KCAL.polialcoholes_g;
+    const usados = ["grasas_g", "hidratos_g", "proteinas_g"];
+    if (val("fibra_g") !== null) usados.push("fibra_g");
+    if (val("polialcoholes_g") !== null) usados.push("polialcoholes_g");
+    out.push({
+      campo: "energia_kcal",
+      valor: Math.round(kcal),
+      comoSeObtuvo: "La energía sale de los macronutrientes con los factores del Reglamento europeo 1169/2011: 9 kcal por gramo de grasa, 4 por hidratos y proteínas, 2 por fibra. Es la misma cuenta que hace el fabricante para imprimirla.",
+      apartirDe: usados
+    });
+  }
+  return out;
+}
+function aplicarDeducciones(n, cuales) {
+  const salida = { ...n };
+  for (const d of deducciones(n)) {
+    if (cuales && !cuales.includes(d.campo)) continue;
+    salida[d.campo] = calculado(d.valor, d.comoSeObtuvo);
+  }
+  return salida;
+}
+var NO_DEDUCIBLES = {
+  azucares_g: "Los azúcares no se pueden deducir de ningún otro dato. Míralos en el envase.",
+  saturadas_g: "Las grasas saturadas no se deducen de la grasa total: la proporción cambia con cada aceite.",
+  fibra_g: "La fibra no se deduce de nada. Además es un campo opcional: muchas etiquetas no la declaran.",
+  grasas_g: "La grasa total no se deduce de la saturada.",
+  hidratos_g: "Los hidratos no se deducen con fiabilidad de los demás campos.",
+  proteinas_g: "Las proteínas no se deducen de ningún otro dato."
+};
 export {
   ADITIVOS,
   ALERGENOS,
@@ -6292,6 +6548,7 @@ export {
   FUENTES,
   MINIMO_PARA_TENDENCIA,
   NIVELES,
+  NO_DEDUCIBLES,
   RECORTE_COMPLETO,
   RepositorioIndexedDB,
   RepositorioMemoria,
@@ -6302,6 +6559,7 @@ export {
   analizarIngredientesTexto,
   analizarProducto,
   analizarTabla,
+  aplicarDeducciones,
   binarizarSauvola,
   buscar,
   buscarAditivo,
@@ -6311,6 +6569,7 @@ export {
   comparar,
   contarSustancias,
   crearImagen,
+  deducciones,
   desactualizados,
   desconocido,
   estirarContraste,

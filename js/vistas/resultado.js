@@ -1,4 +1,4 @@
-import { banda, marcador, esc, vacio } from '../ui.js';
+import { banda, marcador, esc, vacio, nivelDeNota } from '../ui.js';
 import { enCurso, reiniciar } from '../estado.js';
 import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe } from '../motor.js';
 import { vigilanciaActiva } from './tendencia.js';
@@ -71,6 +71,63 @@ function bloqueAlternativa(v) {
     </ul>`;
 }
 
+/**
+ * De qué se compone la nota.
+ *
+ * El motor ya calculaba estas cuatro notas por separado y la pantalla no las
+ * enseñaba. Sin el desglose, un 36 no dice dónde está el problema: puede ser
+ * la composición, el procesamiento o los aditivos, y son cosas muy distintas.
+ * Con él, se ve que unas galletas suspenden por azúcar y no por aditivos.
+ *
+ * Se muestra también el peso aplicado, que no siempre es el nominal: cuando un
+ * componente no se puede calcular, su peso se reparte entre los demás en vez
+ * de contar como cero. Esconder ese reparto sería esconder por qué la nota
+ * puede moverse sin que cambien los datos que se ven.
+ */
+function desglose(v) {
+  if (!v.componentes?.length) return '';
+  return `
+    <h2 class="subtitulo">De qué se compone</h2>
+    <p class="texto" style="font-size:0.92rem">Cada parte con su nota y con lo que pesa en el total.</p>
+    ${v.componentes.map((c) => {
+      const pct = Math.round(c.pesoAplicado * 100);
+      const nominal = Math.round((c.pesoOriginal ?? c.pesoAplicado) * 100);
+      const sinCalcular = c.nota === null;
+      return `
+        <div class="parte${sinCalcular ? ' parte--sin' : ''}">
+          <div class="parte__cab">
+            <span class="parte__nombre">${esc(c.nombre)}</span>
+            <span class="parte__nota cifra">${sinCalcular ? '—' : c.nota}<small>/100</small></span>
+          </div>
+          <div class="parte__barra">
+            <i style="width:${sinCalcular ? 0 : c.nota}%" data-nivel="${nivelDeNota(c.nota ?? 0).clave}"></i>
+          </div>
+          <p class="parte__peso cifra">
+            ${sinCalcular
+              ? 'no se ha podido calcular · su peso se ha repartido entre las demás'
+              : `pesa el ${pct} % de la nota${pct !== nominal ? ` · normalmente pesa el ${nominal} %, ha subido porque otra parte no se pudo calcular` : ''}`}
+          </p>
+        </div>`;
+    }).join('')}`;
+}
+
+/**
+ * Los topes que se le han aplicado.
+ *
+ * Es la explicación más directa que existe de por qué una nota no sube: hay
+ * cosas que descalifican por sí solas, y compensarlas con lo bueno sería
+ * justamente el error que los topes existen para evitar.
+ */
+function topes(v) {
+  if (!v.vetos?.length) return '';
+  return `
+    <h2 class="subtitulo">Por qué no sube más</h2>
+    <p class="texto" style="font-size:0.92rem">Hay cosas que ponen un techo a la nota por buenas que sean las demás. Es a propósito: no queremos que la fibra compense las grasas trans.</p>
+    <ul class="incidencias">
+      ${v.vetos.map((t) => `<li class="incidencia incidencia--error">${esc(t)}</li>`).join('')}
+    </ul>`;
+}
+
 function bloqueVigilancia(v) {
   const avisos = revisarVigilancia(v, enCurso.ingredientes, vigilanciaActiva())
     .filter((a) => a.salta);
@@ -134,6 +191,9 @@ export function resultado() {
 
     <h2 class="subtitulo">¿Por qué esta nota?</h2>
     <p class="texto">${esc(v.porQue)}</p>
+
+    ${desglose(v)}
+    ${topes(v)}
 
     ${bloque('Lo que conviene limitar', 'Ordenado de más a menos relevante.', v.limitar, 'malo')}
     ${bloque('Lo mejor del producto', 'Ordenado de más a menos relevante.', v.favorables, 'bueno')}

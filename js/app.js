@@ -24,7 +24,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '0.30.0';
+export const VERSION = '1.2.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -89,7 +89,7 @@ function irA(clave, conservarScroll = false) {
     p.setAttribute('aria-selected', String(p.dataset.vista === marcada));
   }
 
-  document.title = `${vista.titulo} · Comer después de usar`;
+  document.title = `${vista.titulo} · Catario`;
   window.scrollTo({ top: y });
   // Sin animación de scroll: en móvil molesta más de lo que aporta.
 }

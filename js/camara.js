@@ -20,6 +20,38 @@ import { evaluarCalidad, prepararParaLectura, recorteRelativo, hayRecorte, RECOR
  * propio iPhone. Recortar fuera sale mejor que recortar aquí dentro: el editor
  * de Fotos es mejor que cualquier cosa que se pueda montar en una página web.
  */
+/**
+ * Pide un fichero al usuario.
+ *
+ * Tres cosas que Safari exige y que es fácil olvidar:
+ *   · El campo tiene que estar DENTRO del documento antes de pulsarlo. Si no,
+ *     el aviso de "he elegido un fichero" no llega nunca.
+ *   · Al cancelar no dispara ningún evento: se detecta cuando la ventana
+ *     recupera el foco sin que haya llegado nada.
+ *   · Un filtro de tipo demasiado estrecho puede impedir seleccionar el
+ *     fichero en la app Archivos, aunque esté ahí delante.
+ */
+export function pedirFichero({ accept = '', capture = '' } = {}) {
+  return new Promise((resuelve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (accept) input.accept = accept;
+    if (capture) input.capture = capture;
+    input.style.display = 'none';
+
+    let resuelto = false;
+    const acabar = (v) => { if (!resuelto) { resuelto = true; input.remove(); resuelve(v); } };
+
+    input.addEventListener('change', () => acabar(input.files?.[0] ?? null));
+    window.addEventListener('focus', () => setTimeout(() => {
+      if (!input.files?.length) acabar(null);
+    }, 1500), { once: true });
+
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
 export function pedirFoto({ camara = true } = {}) {
   return new Promise((resuelve) => {
     const input = document.createElement('input');

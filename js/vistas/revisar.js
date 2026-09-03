@@ -14,7 +14,8 @@
 
 import { esc } from '../ui.js';
 import { CAMPOS, CATEGORIAS, corregir, enCurso, resumenEnCurso } from '../estado.js';
-import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista } from '../motor.js';
+import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista,
+         deducciones, NO_DEDUCIBLES } from '../motor.js';
 
 /** Cifra con coma decimal, que es como se escribe en español. */
 const conComa = (v) => (v === null || v === undefined ? '' : String(v).replace('.', ','));
@@ -71,6 +72,7 @@ function fila(campo, incidencias) {
   const valor = d ? conComa(d.valor) : '';
   const inc = incidencias.find((i) => i.campos.includes(campo.clave));
   const corregido = d?.estado === 'corregido';
+  const esCalculado = d?.estado === 'calculado';
   const flojo = typeof d?.confianzaOCR === 'number' && d.confianzaOCR <= 0.5;
   const falta = campo.obligatorio && !d;
 
@@ -80,9 +82,11 @@ function fila(campo, incidencias) {
     inc?.gravedad === 'error' ? 'campo--error' : inc ? 'campo--aviso' : '',
     falta ? 'campo--falta' : '',
     corregido ? 'campo--corregido' : '',
+    esCalculado ? 'campo--calculado' : '',
   ].filter(Boolean).join(' ');
 
   const marca = corregido ? '<em class="apunte apunte--ok">corregido</em>'
+    : esCalculado ? '<em class="apunte apunte--calc">calculado, no leído</em>'
     : falta ? '<em class="apunte">falta</em>'
     : flojo ? '<em class="apunte">lectura dudosa</em>' : '';
 
@@ -90,6 +94,20 @@ function fila(campo, incidencias) {
     ? `<button class="propuesta" data-aplicar="${campo.clave}" data-valor="${inc.correccion.valorPropuesto}">
          Poner ${conComa(inc.correccion.valorPropuesto)} ${esc(campo.unidad)}
        </button>` : '';
+
+  // Si el campo falta pero se puede CALCULAR a partir de otros, se ofrece.
+  // Calcular no es inventar: la energía sale de los macronutrientes con los
+  // factores del reglamento europeo, que es la misma cuenta que hace el
+  // fabricante para imprimirla en el envase.
+  const ded = falta ? deducciones(enCurso.nutrientes).find((x) => x.campo === campo.clave) : null;
+  const calculable = ded
+    ? `<button class="propuesta propuesta--calc" data-aplicar="${campo.clave}" data-valor="${ded.valor}">
+         Calcularlo: ${conComa(ded.valor)} ${esc(campo.unidad)}
+       </button>
+       <p class="campo__aviso">${esc(ded.comoSeObtuvo)}</p>`
+    : falta && NO_DEDUCIBLES[campo.clave]
+      ? `<p class="campo__aviso">${esc(NO_DEDUCIBLES[campo.clave])}</p>`
+      : '';
 
   return `
     <div class="${clases}">
@@ -103,6 +121,7 @@ function fila(campo, incidencias) {
         <span class="campo__unidad">${esc(campo.unidad)}</span>
       </div>
       ${propuesta}
+      ${calculable}
       ${inc ? `<p class="campo__aviso">${esc(inc.mensaje)}</p>` : ''}
     </div>`;
 }

@@ -3,6 +3,7 @@ import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
          descargarCopia, restaurarCopia, almacenDuradero,
          simularRecalculoTodo, aplicarRecalculo } from '../almacen.js';
 import { enCurso } from '../estado.js';
+import { pedirFichero } from '../camara.js';
 
 /**
  * La Despensa.
@@ -216,23 +217,28 @@ export async function despensaActivo(raiz, { repintar }) {
     }
   });
 
-  raiz.querySelector('#btnImportar')?.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.json';
-    input.addEventListener('change', async () => {
-      const f = input.files?.[0];
-      if (!f) return;
-      estado.textContent = 'Restaurando…';
+  raiz.querySelector('#btnImportar')?.addEventListener('click', async () => {
+    // Sin filtro de tipo: la app Archivos del iPhone puede negarse a mostrar
+    // el fichero de copia si se le pide solo ".json", y entonces parece que no
+    // está cuando sí está.
+    estado.textContent = 'Elige el fichero de copia…';
+    const f = await pedirFichero();
+    if (!f) { estado.textContent = 'No se ha elegido ningún fichero.'; return; }
+
+    estado.textContent = `Leyendo "${f.name}"…`;
+    try {
       const r = await restaurarCopia(f);
       if (!r.ok) { estado.textContent = r.errores.join(' '); return; }
       cache = await listar({ orden: 'fecha_desc' });
+      pendientes = await simularRecalculoTodo();
       estado.textContent = `Restaurados ${r.productosImportados} producto(s)` +
         (r.productosOmitidos ? `, ${r.productosOmitidos} ya estaban` : '') + '.' +
         (r.avisos.length ? ' ' + r.avisos.join(' ') : '');
       repintar();
-    });
-    input.click();
+    } catch (err) {
+      // Nada de quedarse esperando: si algo revienta, se dice.
+      estado.textContent = `No se ha podido restaurar. ${err.message}`;
+    }
   });
 }
 

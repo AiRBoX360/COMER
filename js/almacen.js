@@ -134,9 +134,16 @@ export async function descargarCopia({ incluirFotos = true } = {}) {
 export async function restaurarCopia(fichero, modo = 'fusionar') {
   let datos;
   try {
-    datos = JSON.parse(await fichero.text());
-  } catch {
-    return { ok: false, errores: ['El fichero no es una copia válida: no se ha podido leer.'] };
+    const texto = await fichero.text();
+    if (!texto.trim()) {
+      return { ok: false, errores: ['El fichero está vacío.'] };
+    }
+    datos = JSON.parse(texto);
+  } catch (err) {
+    return {
+      ok: false,
+      errores: [`"${fichero.name ?? 'el fichero'}" no es una copia de esta app. ${err.message}`],
+    };
   }
   const errores = validarCopia(datos);
   if (errores.length) return { ok: false, errores };

@@ -209,6 +209,24 @@ export function analizar() {
   `;
 }
 
+/**
+ * Lleva la vista a lo que se acaba de entender.
+ *
+ * Sin esto, al pulsar un botón la pantalla se quedaba donde estaba y el
+ * resultado aparecía abajo del todo, fuera de la vista. Daba la impresión de
+ * que no había encontrado nada cuando en realidad sí.
+ *
+ * Se espera un instante porque la pantalla se repinta antes: buscar el destino
+ * demasiado pronto encuentra el elemento viejo, que ya no está en el documento.
+ */
+function irAlResumen() {
+  setTimeout(() => {
+    const destino = document.querySelector('#resumenLectura');
+    if (!destino || !destino.innerHTML.trim()) return;
+    destino.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, 60);
+}
+
 export function analizarActivo(raiz, { repintar, irA }) {
   const zona = raiz.querySelector('#tomas');
   if (!zona) return;
@@ -403,8 +421,9 @@ export function analizarActivo(raiz, { repintar, irA }) {
         if (!r.ok) { estado.textContent = r.motivo; return; }
         interpretar(clave, r.texto);
       }
-      estado.textContent = 'Listo. Revisa abajo lo que ha entendido.';
+      estado.textContent = 'Listo. Revisa lo que ha entendido.';
       pintarResumen();
+      irAlResumen();
     } catch (err) {
       // Nada de quedarse en silencio: si esto revienta, se dice qué reventó.
       estado.textContent = `Algo ha fallado al leer las fotos: ${err.message}. Pulsa "Comprobar el lector de fotos" para ver qué falta.`;
@@ -421,6 +440,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     if (i) interpretar('ingredientes', i);
     estado.textContent = 'Texto interpretado.';
     pintarResumen();
+    irAlResumen();
   });
 
   raiz.querySelector('#btnEmpezarDeNuevo')?.addEventListener('click', () => {

@@ -110,24 +110,24 @@ button{touch-action:manipulation}
   border-bottom:1px solid var(--linea);
 }
 .cabecera__marca{display:flex; align-items:center; gap:var(--e3)}
-.marca__tramos{display:flex; flex-direction:column; gap:2px; width:1.55rem}
-.marca__tramos i{height:0.2rem; border-radius:2px; width:58%; opacity:.45}
-.marca__tramos i:nth-child(1){background:var(--rojo)}
-.marca__tramos i:nth-child(2){background:var(--naranja)}
-.marca__tramos i:nth-child(3){background:var(--amarillo)}
-.marca__tramos i:nth-child(4){background:var(--verde-claro)}
-.marca__tramos i:nth-child(5){background:var(--verde-parchis)}
-.marca__tramos i.es-actual{width:100%; opacity:1}
+/* El monograma: la C de Catario con la barra del veredicto saliendo por la
+   boca. Sigue la regla de toda la app: gris salvo el veredicto. */
+.marca__signo{display:block; width:2.1rem; height:2.1rem; flex:none}
+.marca__signo svg{width:100%; height:100%; display:block}
+.marca__signo path{fill:#444C5B}
+.marca__barra{fill:var(--verde-claro)}
+/* El nombre respira un poco más que antes: una sola palabra aguanta mejor el
+   espaciado abierto que tres, y así se sostiene junto al monograma. */
 .marca__nombre{
-  font-family:var(--display); font-weight:800; font-size:1.3rem;
-  letter-spacing:-.02em; line-height:1;
+  font-family:var(--display); font-weight:800; font-size:1.42rem;
+  letter-spacing:-.015em; line-height:0.95;
 }
 /* La coletilla es la instrucción de la etiqueta: va en voz baja. */
 .marca__nombre em{
   display:block; font-style:normal;
-  font-family:var(--datos); font-weight:400; font-size:0.62rem;
-  letter-spacing:.11em; text-transform:uppercase;
-  color:var(--ceniza-tenue); margin-top:2px;
+  font-family:var(--datos); font-weight:400; font-size:0.6rem;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ceniza-tenue); margin-top:4px;
 }
 .cabecera__version{font-family:var(--datos); font-size:0.72rem; color:var(--ceniza-tenue)}
 
@@ -1007,3 +1007,32 @@ button{touch-action:manipulation}
 /* En el diagnóstico, los detalles largos no deben ir en mayúsculas ni cortarse. */
 .diagnostico b{max-width:58%; text-align:right; overflow-wrap:anywhere}
 .diagnostico b.no{text-transform:none; letter-spacing:.01em}
+
+/* --- De qué se compone la nota -------------------------------------------- */
+.parte{
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.parte__cab{display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3)}
+.parte__nombre{font-family:var(--display); font-weight:600; font-size:1.02rem}
+.parte__nota{font-size:1.25rem; font-weight:600; color:var(--hueso)}
+.parte__nota small{font-size:0.72rem; color:var(--ceniza-tenue); font-weight:400}
+.parte__barra{
+  height:0.5rem; margin:var(--e2) 0;
+  background:var(--carbon-alto); border-radius:var(--radio-s); overflow:hidden;
+}
+.parte__barra i{display:block; height:100%; border-radius:var(--radio-s)}
+.parte__barra i[data-nivel="rojo"]{background:var(--rojo)}
+.parte__barra i[data-nivel="naranja"]{background:var(--naranja)}
+.parte__barra i[data-nivel="amarillo"]{background:var(--amarillo)}
+.parte__barra i[data-nivel="verde_claro"]{background:var(--verde-claro)}
+.parte__barra i[data-nivel="verde_parchis"]{background:var(--verde-parchis)}
+.parte__peso{margin:0; font-size:0.76rem; color:var(--ceniza-tenue); line-height:1.4}
+.parte--sin{border-style:dashed}
+.parte--sin .parte__nota{color:var(--ceniza-tenue)}
+/* Un valor calculado no puede parecer uno leído del envase. */
+.campo--calculado .campo__entrada input{border-color:var(--amarillo); border-style:dashed}
+.apunte--calc{color:var(--amarillo)}
+.propuesta--calc{color:var(--amarillo); border-color:var(--amarillo)}
+.propuesta--calc:active{background:var(--amarillo); color:var(--tinta)}

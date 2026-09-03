@@ -1,7 +1,7 @@
 {
-  "name": "Comer después de usar",
-  "short_name": "Comer",
-  "description": "Fotografía la etiqueta de un producto y descubre qué conviene limitar y qué merece la pena.",
+  "name": "Catario · Usar antes de comer",
+  "short_name": "Catario",
+  "description": "Lee la etiqueta de un producto y te dice qué conviene limitar y qué merece la pena, con sus fuentes. Todo se queda en tu teléfono.",
   "lang": "es",
   "dir": "ltr",
   "start_url": "./",
