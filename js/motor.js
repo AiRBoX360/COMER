@@ -367,7 +367,13 @@ function fuentesDeAditivo(codigo, riesgo, funcion) {
   if (codigo === "E466" || funcion === "emulgente") f.push("emulgentes-2021");
   return f;
 }
-function buscarAditivo(codigo) {
+function normalizarCodigoE(codigo) {
+  const m = String(codigo).trim().match(/^e\s?-?\s?(\d{3,4})\s?([a-z]?)$/i);
+  if (!m) return String(codigo).trim();
+  return `E${m[1]}${(m[2] ?? "").toLowerCase()}`;
+}
+function buscarAditivo(codigoCrudo) {
+  const codigo = normalizarCodigoE(codigoCrudo);
   const exacto = ADITIVOS.get(codigo) ?? ADITIVOS.get(codigo.replace(/[a-z]$/, ""));
   if (exacto) return exacto;
   const n = parseInt(codigo.replace(/[^0-9]/g, ""), 10);
@@ -919,1385 +925,6 @@ var OTRAS_VIGILADAS = [
   { patron: "jarabe de glucosa y fructosa", etiqueta: "Jarabe de glucosa y fructosa", severidad: 62, motivo: "Fructosa libre en dosis altas: se metaboliza en el hígado y se asocia a hígado graso no alcohólico." }
 ];
 
-// src/nucleo/ingredientes.ts
-function tienePalabra(texto, patron) {
-  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|\\s)${p}(\\s|$)`).test(texto);
-}
-function tienePrefijo(texto, patron) {
-  return texto.includes(patron);
-}
-var RE_CODIGO_E = /\be\s?-?\s?(\d{3,4}\s?[a-z]?)\b/gi;
-var FUNCIONES_DECLARADAS = /* @__PURE__ */ new Set([
-  "colorante",
-  "edulcorante",
-  "emulgente",
-  "estabilizante",
-  "espesante",
-  "potenciador del sabor",
-  "antiaglomerante",
-  "gasificante",
-  "corrector de acidez",
-  "humectante"
-]);
-var ESTRUCTURALES = /* @__PURE__ */ new Set([...FUNCIONES_DECLARADAS]);
-function analizarIngredientes(crudos) {
-  const lista = [];
-  const aditivos = [];
-  const fuentesAzucar = /* @__PURE__ */ new Set();
-  const marcadoresUPF = /* @__PURE__ */ new Set();
-  const marcadoresNoAditivo = /* @__PURE__ */ new Set();
-  const grasas = [];
-  const reales = [];
-  let azucarEnPrimeras = false;
-  let refinadoPrimero = false;
-  let salPresente = false;
-  crudos.forEach((crudo, i) => {
-    const t = normalizarTexto(crudo.texto);
-    const roles = /* @__PURE__ */ new Set();
-    let codigoE;
-    let nombreAditivo;
-    let riesgoAditivo;
-    RE_CODIGO_E.lastIndex = 0;
-    let m;
-    while ((m = RE_CODIGO_E.exec(t)) !== null) {
-      const cod = "E" + m[1].replace(/\s/g, "");
-      const ad = buscarAditivo(cod);
-      if (ad) {
-        aditivos.push({ aditivo: ad, posicion: i });
-        roles.add("aditivo");
-        codigoE = ad.codigo;
-        nombreAditivo = ad.nombre;
-        riesgoAditivo = ad.riesgo;
-        if (ad.cosmetico) marcadoresUPF.add(ad.nombre);
-      }
-    }
-    if (!codigoE) {
-      for (const [alias, cod] of Object.entries(ALIAS_ADITIVOS)) {
-        if (tienePalabra(t, alias)) {
-          const ad = ADITIVOS.get(cod);
-          if (ad && !aditivos.some((a) => a.aditivo.codigo === cod && a.posicion === i)) {
-            aditivos.push({ aditivo: ad, posicion: i });
-            roles.add("aditivo");
-            codigoE = ad.codigo;
-            nombreAditivo = ad.nombre;
-            riesgoAditivo = ad.riesgo;
-            if (ad.cosmetico) marcadoresUPF.add(ad.nombre);
-          }
-          break;
-        }
-      }
-    }
-    let mejorAzucar = "";
-    for (const az of AZUCARES_ANADIDOS) {
-      if (tienePalabra(t, az) && az.length > mejorAzucar.length) mejorAzucar = az;
-    }
-    if (mejorAzucar) {
-      roles.add("azucar_anadido");
-      fuentesAzucar.add(mejorAzucar);
-      if (i < 3) azucarEnPrimeras = true;
-    }
-    const candidatasGrasa = GRASAS.filter((g) => g.prefijo ? tienePrefijo(t, g.patron) : tienePalabra(t, g.patron));
-    if (candidatasGrasa.length > 0) {
-      const mejor = candidatasGrasa.reduce((a, b) => b.patron.length > a.patron.length ? b : a);
-      grasas.push({ perfil: mejor, posicion: i });
-      roles.add("grasa");
-    }
-    for (const mk of MARCADORES_UPF) {
-      if (!tienePrefijo(t, mk.patron)) continue;
-      if (codigoE && FUNCIONES_DECLARADAS.has(mk.patron)) continue;
-      marcadoresUPF.add(mk.etiqueta);
-      if (!ESTRUCTURALES.has(mk.patron)) marcadoresNoAditivo.add(mk.etiqueta);
-      roles.add("marcador_ultraprocesado");
-    }
-    for (const r of INGREDIENTES_REALES) {
-      if (tienePalabra(t, r.patron)) {
-        if (!reales.some((x) => x.etiqueta === r.etiqueta)) {
-          reales.push({ etiqueta: r.etiqueta, peso: r.peso, motivo: r.motivo, posicion: i, porcentaje: crudo.porcentaje });
-        }
-        roles.add(r.patron === "integral" ? "integral" : "fruta_verdura_legumbre");
-      }
-    }
-    for (const ref of REFINADOS) {
-      if (tienePalabra(t, ref) && !roles.has("integral")) {
-        roles.add("harina_refinada");
-        if (i === 0) refinadoPrimero = true;
-      }
-    }
-    for (const s of SALES) {
-      if (tienePalabra(t, s)) {
-        roles.add("sal");
-        salPresente = true;
-      }
-    }
-    if (roles.size === 0) roles.add("otro");
-    lista.push({
-      texto: crudo.texto,
-      textoNormalizado: t,
-      posicion: i,
-      porcentaje: crudo.porcentaje,
-      roles: [...roles],
-      codigoE,
-      nombreAditivo,
-      riesgoAditivo
-    });
-  });
-  const alergenos = [];
-  for (const al of ALERGENOS) {
-    for (const ic of lista) {
-      if (!al.patrones.some((pat) => tienePalabra(ic.textoNormalizado, pat))) continue;
-      const esTraza = PATRONES_TRAZAS.some((t) => ic.textoNormalizado.includes(t));
-      if (!alergenos.some((x) => x.clave === al.clave)) {
-        alergenos.push({
-          clave: al.clave,
-          nombre: al.nombre,
-          nota: al.nota,
-          esTraza,
-          encontradoEn: ic.texto
-        });
-      }
-      break;
-    }
-  }
-  const aditivosSinFicha = [...new Set(
-    aditivos.filter((a) => a.aditivo.fichado === false).map((a) => a.aditivo.codigo)
-  )];
-  return {
-    lista,
-    marcadoresNoAditivo: [...marcadoresNoAditivo],
-    alergenos,
-    aditivosSinFicha,
-    aditivos,
-    fuentesAzucar: [...fuentesAzucar],
-    azucarEnPrimeras,
-    grasas,
-    marcadoresUPF: [...marcadoresUPF],
-    reales,
-    refinadoPrimero,
-    salPresente,
-    total: crudos.length
-  };
-}
-
-// src/config/pesos.ts
-var VERSION_ALGORITMO = "1.15.0";
-var PESOS = {
-  nutriScore: 0.36,
-  nova: 0.28,
-  aditivos: 0.24,
-  ingredientes: 0.12
-};
-var NOTA_LETRA = { A: 100, B: 82, C: 58, D: 32, E: 12 };
-var NOTA_NOVA = { 1: 100, 2: 84, 3: 66, 4: 22 };
-var CASTIGO_ADITIVO = { 0: 0, 1: 4, 2: 13, 3: 26 };
-var UMBRALES = {
-  azucarSolido: 22.5,
-  // g por 100 g
-  azucarBebida: 11.25,
-  // g por 100 ml
-  saturadas: 5,
-  // g por 100 g
-  sal: 1.5,
-  // g por 100 g
-  ratioSaturadasGrasa: 33,
-  // % sobre grasa total, solo para aceites y cremas
-  densidadCalorica: 350
-  // kcal por 100 g a partir de las cuales penaliza
-};
-var LIMITES_DIARIOS = {
-  salOMS: 5,
-  // g al día
-  azucarLibreOMS: 25
-  // g al día
-};
-var VETOS = {
-  trans: 18,
-  aditivoNivel3: 40,
-  salAlta: { desde: 2.5, tope: 42 },
-  bebidaAzucarada: { desde: 8, tope: 28 },
-  azucarMuyAlto: { desde: 45, tope: 24 },
-  azucarAlto: { desde: 30, tope: 30 },
-  ultraprocesado: 64,
-  /** Ultraprocesado solo por un aditivo inocuo en una lista corta de comida real. */
-  ultraprocesadoAlLimite: 80,
-  ultraprocesadoAzucarado: { desde: 15, tope: 48 }
-};
-var SUELOS = {
-  minimamenteProcesado: 74,
-  grasaBuena: 88
-};
-var EXPONENTE_DOSIS = 0.7;
-var NIVELES = [
-  { clave: "rojo", desde: 0, etiqueta: "Consumo ocasional" },
-  { clave: "naranja", desde: 30, etiqueta: "Con moderación" },
-  { clave: "amarillo", desde: 50, etiqueta: "Aceptable, hay mejores" },
-  { clave: "verde_claro", desde: 70, etiqueta: "Buena elección habitual" },
-  { clave: "verde_parchis", desde: 85, etiqueta: "Especialmente favorable" }
-];
-var CAMPOS_OBLIGATORIOS = [
-  "energia",
-  "grasas_g",
-  "saturadas_g",
-  "hidratos_g",
-  "azucares_g",
-  "proteinas_g",
-  "sal"
-];
-
-// src/nucleo/nova.ts
-var EXPLICACION = {
-  1: "Alimento sin procesar o mínimamente procesado. Es comida, sin más.",
-  2: "Ingrediente culinario procesado (aceite, sal, azúcar). Se usa para cocinar, no se come solo.",
-  3: "Alimento procesado: comida real a la que se ha añadido sal, azúcar o aceite para conservarla o hacerla más sabrosa.",
-  4: "Ultraprocesado. Formulación industrial con sustancias que no existen en una cocina doméstica. El grupo NOVA 4 se asocia de forma consistente con mayor riesgo cardiovascular, obesidad y mortalidad total, incluso ajustando por su composición nutricional."
-};
-function clasificarNova(ing) {
-  if (ing.total === 0) {
-    return {
-      grupo: null,
-      marcadores: [],
-      explicacion: "No se puede determinar el grado de procesamiento sin la lista de ingredientes."
-    };
-  }
-  const marcadores2 = [...ing.marcadoresUPF];
-  if (marcadores2.length > 0) {
-    const soloAditivosInocuos = ing.marcadoresNoAditivo.length === 0 && ing.aditivos.length > 0 && ing.aditivos.every((a) => a.aditivo.riesgo === 0);
-    const alLimite = soloAditivosInocuos && ing.total <= 6 && ing.fuentesAzucar.length === 0 && ing.reales.length > 0;
-    return {
-      grupo: 4,
-      alLimite,
-      marcadores: marcadores2,
-      explicacion: alLimite ? "Ultraprocesado por definición, pero al límite: lo clasifica ahí un solo aditivo sin riesgo conocido, en una lista corta de comida reconocible. No es lo mismo que un refresco o unas galletas rellenas, y la nota lo tiene en cuenta." : EXPLICACION[4]
-    };
-  }
-  const hayAzucar = ing.fuentesAzucar.length > 0;
-  const hayGrasaAnadida = ing.grasas.length > 0;
-  const haySal = ing.salPresente;
-  const hayRefinado = ing.lista.some((i) => i.roles.includes("harina_refinada"));
-  if (ing.total <= 2) {
-    if ((hayGrasaAnadida || hayAzucar || haySal) && ing.reales.length === 0) {
-      return { grupo: 2, marcadores: [], explicacion: EXPLICACION[2] };
-    }
-    return { grupo: 1, marcadores: [], explicacion: EXPLICACION[1] };
-  }
-  if (hayAzucar || haySal || hayGrasaAnadida || hayRefinado) {
-    return { grupo: 3, marcadores: [], explicacion: EXPLICACION[3] };
-  }
-  return { grupo: 1, marcadores: [], explicacion: EXPLICACION[1] };
-}
-function notaNova(grupo, alLimite = false) {
-  if (grupo === null) return null;
-  if (grupo === 4 && alLimite) return NOTA_NOVA[3];
-  return NOTA_NOVA[grupo];
-}
-
-// src/nucleo/normalizar.ts
-function leido(valor, textoOriginal) {
-  return { valor, estado: "leido", textoOriginal };
-}
-function desconocido() {
-  return { valor: null, estado: "desconocido" };
-}
-function calculado(valor, de) {
-  return { valor, estado: "calculado", textoOriginal: `deducido de ${de}` };
-}
-function hay(d) {
-  return Boolean(d) && d.estado !== "desconocido" && typeof d.valor === "number";
-}
-function aDato(x) {
-  if (x === null || x === void 0) return desconocido();
-  if (typeof x === "number") {
-    return Number.isFinite(x) ? leido(x) : desconocido();
-  }
-  if (typeof x === "object" && "estado" in x) return x;
-  return desconocido();
-}
-function normalizarNutrientes(e) {
-  const n = {
-    energia_kcal: aDato(e.energia_kcal),
-    energia_kj: aDato(e.energia_kj),
-    grasas_g: aDato(e.grasas_g),
-    saturadas_g: aDato(e.saturadas_g),
-    monoinsaturadas_g: aDato(e.monoinsaturadas_g),
-    poliinsaturadas_g: aDato(e.poliinsaturadas_g),
-    trans_g: aDato(e.trans_g),
-    hidratos_g: aDato(e.hidratos_g),
-    azucares_g: aDato(e.azucares_g),
-    polialcoholes_g: aDato(e.polialcoholes_g),
-    fibra_g: aDato(e.fibra_g),
-    proteinas_g: aDato(e.proteinas_g),
-    sal_g: aDato(e.sal_g),
-    sodio_mg: aDato(e.sodio_mg),
-    fvl_porcentaje: aDato(e.fvl_porcentaje)
-  };
-  if (!hay(n.energia_kj) && hay(n.energia_kcal)) {
-    n.energia_kj = calculado(n.energia_kcal.valor * 4.184, "kcal");
-  }
-  if (!hay(n.energia_kcal) && hay(n.energia_kj)) {
-    n.energia_kcal = calculado(n.energia_kj.valor / 4.184, "kJ");
-  }
-  if (!hay(n.sal_g) && hay(n.sodio_mg)) {
-    n.sal_g = calculado(n.sodio_mg.valor * 2.5 / 1e3, "sodio");
-  }
-  return n;
-}
-function camposQueFaltan(n) {
-  const nombres = {
-    energia: "Energía",
-    grasas_g: "Grasas",
-    saturadas_g: "Grasas saturadas",
-    hidratos_g: "Hidratos de carbono",
-    azucares_g: "Azúcares",
-    proteinas_g: "Proteínas",
-    sal: "Sal"
-  };
-  const faltan = [];
-  for (const campo of CAMPOS_OBLIGATORIOS) {
-    if (campo === "energia") {
-      if (!hay(n.energia_kcal) && !hay(n.energia_kj)) faltan.push(nombres.energia);
-    } else if (campo === "sal") {
-      if (!hay(n.sal_g)) faltan.push(nombres.sal);
-    } else if (!hay(n[campo])) {
-      faltan.push(nombres[campo]);
-    }
-  }
-  return faltan;
-}
-function voluntariosQueFaltan(n) {
-  const faltan = [];
-  if (!hay(n.fibra_g)) faltan.push("Fibra");
-  if (!hay(n.fvl_porcentaje)) faltan.push("Porcentaje de fruta, verdura y legumbre");
-  return faltan;
-}
-
-// src/nucleo/nutriscore.ts
-var ENERGIA_GENERAL = [335, 670, 1005, 1340, 1675, 2010, 2345, 2680, 3015, 3350];
-var ENERGIA_BEBIDA = [30, 90, 150, 210, 240, 270, 300, 330, 360, 390];
-var ENERGIA_GRASA = [120, 240, 360, 480, 600, 720, 840, 960, 1080, 1200];
-var AZUCAR_GENERAL = [3.4, 6.8, 10, 14, 17, 20, 24, 27, 31, 34, 37, 41, 44, 48, 51];
-var AZUCAR_BEBIDA = [0.5, 2, 3.5, 5, 6, 7, 8, 9, 10, 11];
-var SATURADAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-var RATIO_SATURADAS = [10, 16, 22, 28, 34, 40, 46, 52, 58, 64];
-var SAL = [
-  0.2,
-  0.4,
-  0.6,
-  0.8,
-  1,
-  1.2,
-  1.4,
-  1.6,
-  1.8,
-  2,
-  2.2,
-  2.4,
-  2.6,
-  2.8,
-  3,
-  3.2,
-  3.4,
-  3.6,
-  3.8,
-  4
-];
-var FIBRA = [3, 4.1, 5.2, 6.3, 7.4];
-var PROTEINA = [2.4, 4.8, 7.2, 9.6, 12, 14, 17];
-var PROTEINA_BEBIDA = [1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3];
-function puntos(valor, umbrales) {
-  let n = 0;
-  for (const u of umbrales) if (valor > u) n++;
-  return n;
-}
-function puntosFVL(pct, esBebida) {
-  if (esBebida) {
-    if (pct > 80) return 6;
-    if (pct > 60) return 4;
-    if (pct > 40) return 2;
-    return 0;
-  }
-  if (pct > 80) return 5;
-  if (pct > 60) return 2;
-  if (pct > 40) return 1;
-  return 0;
-}
-var VACIO = {
-  letra: null,
-  completo: false,
-  puntosNegativos: 0,
-  puntosPositivos: 0,
-  puntuacion: null,
-  detalle: {},
-  faltan: []
-};
-function calcularNutriScore(n, opts) {
-  const faltan = camposQueFaltan(n);
-  if (faltan.length > 0) {
-    return { ...VACIO, faltan };
-  }
-  const cat = opts.categoria;
-  const esBebida = cat === "bebida";
-  const esGrasa = cat === "grasa_anadida";
-  const kj = n.energia_kj.valor;
-  const grasas = n.grasas_g.valor;
-  const sat = n.saturadas_g.valor;
-  const azucar = n.azucares_g.valor;
-  const sal = n.sal_g.valor;
-  const proteina = n.proteinas_g.valor;
-  const fibra = hay(n.fibra_g) ? n.fibra_g.valor : 0;
-  const fvl = hay(n.fvl_porcentaje) ? n.fvl_porcentaje.valor : 0;
-  let pEnergia;
-  let pSaturadas;
-  if (esGrasa) {
-    pEnergia = puntos(sat * 37, ENERGIA_GRASA);
-    pSaturadas = puntos(grasas > 0 ? sat / grasas * 100 : 0, RATIO_SATURADAS);
-  } else {
-    pEnergia = puntos(kj, esBebida ? ENERGIA_BEBIDA : ENERGIA_GENERAL);
-    pSaturadas = puntos(sat, SATURADAS);
-  }
-  const pAzucar = puntos(azucar, esBebida ? AZUCAR_BEBIDA : AZUCAR_GENERAL);
-  const pSal = puntos(sal, SAL);
-  const pEdulcorante = esBebida && opts.contieneEdulcorante ? 4 : 0;
-  const N = pEnergia + pAzucar + pSaturadas + pSal + pEdulcorante;
-  const pFibra = puntos(fibra, FIBRA);
-  let pProteina = puntos(proteina, esBebida ? PROTEINA_BEBIDA : PROTEINA);
-  if (cat === "carne_roja") pProteina = Math.min(pProteina, 2);
-  const pFVL = puntosFVL(fvl, esBebida);
-  const P = pFibra + pProteina + pFVL;
-  let puntuacion;
-  if (cat === "queso" || cat === "bebida" || esGrasa) {
-    puntuacion = N - P;
-  } else {
-    puntuacion = N < 11 ? N - P : N - pFVL - pFibra;
-  }
-  let letra;
-  if (esBebida) {
-    if (opts.esAgua) letra = "A";
-    else if (puntuacion <= 2) letra = "B";
-    else if (puntuacion <= 6) letra = "C";
-    else if (puntuacion <= 9) letra = "D";
-    else letra = "E";
-  } else if (esGrasa) {
-    if (puntuacion < -5) letra = "A";
-    else if (puntuacion < 3) letra = "B";
-    else if (puntuacion < 11) letra = "C";
-    else if (puntuacion < 19) letra = "D";
-    else letra = "E";
-  } else {
-    if (puntuacion < 1) letra = "A";
-    else if (puntuacion < 3) letra = "B";
-    else if (puntuacion < 11) letra = "C";
-    else if (puntuacion < 19) letra = "D";
-    else letra = "E";
-  }
-  return {
-    letra,
-    completo: true,
-    puntosNegativos: N,
-    puntosPositivos: P,
-    puntuacion,
-    faltan: [],
-    detalle: {
-      energia: pEnergia,
-      azucares: pAzucar,
-      saturadas: pSaturadas,
-      sal: pSal,
-      edulcorante: pEdulcorante,
-      fibra: pFibra,
-      proteinas: pProteina,
-      fvl: pFVL
-    }
-  };
-}
-function notaDesdeLetra(letra) {
-  return letra ? NOTA_LETRA[letra] : null;
-}
-
-// src/nucleo/limitar.ts
-function porUmbral(valor, umbral, base, tope = 96) {
-  if (valor <= 0 || umbral <= 0) return 0;
-  return Math.min(tope, base * Math.pow(valor / umbral, EXPONENTE_DOSIS));
-}
-var r1 = (x) => Math.round(x * 10) / 10;
-function construirLimitar(n, ing, nova, categoria) {
-  const out = [];
-  const esBebida = categoria === "bebida";
-  const unidad = esBebida ? "100 ml" : "100 g";
-  const hayIngredientes = ing.total > 0;
-  const hidrogenada = ing.grasas.find((g) => g.perfil.patron.includes("hidrogenad"));
-  if (hidrogenada) {
-    out.push({
-      id: "trans_ingrediente",
-      nombre: hidrogenada.perfil.etiqueta,
-      categoria: "grasa",
-      peso: 96,
-      origen: "ingredientes",
-      dato: `posición ${hidrogenada.posicion + 1} de la lista`,
-      motivo: hidrogenada.perfil.motivo,
-      evidencia: "alta"
-    });
-  } else if (hay(n.trans_g) && n.trans_g.valor > 0.2) {
-    out.push({
-      id: "trans_declaradas",
-      nombre: "Grasas trans",
-      categoria: "grasa",
-      peso: Math.min(96, 70 + n.trans_g.valor * 12),
-      origen: "tabla",
-      dato: `${r1(n.trans_g.valor)} g / ${unidad}`,
-      motivo: "Suben el colesterol LDL y bajan el HDL a la vez. La OMS no establece ningún nivel seguro de ingesta.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.azucares_g) && n.azucares_g.valor > 0.5) {
-    const azucar = n.azucares_g.valor;
-    const hayAnadido = ing.fuentesAzucar.length > 0;
-    const umbral = esBebida ? UMBRALES.azucarBebida : UMBRALES.azucarSolido;
-    let peso = porUmbral(azucar, umbral, 62);
-    if (!hayIngredientes) peso *= 0.7;
-    else if (!hayAnadido) peso *= 0.32;
-    if (ing.azucarEnPrimeras) peso *= 1.12;
-    if (esBebida) peso *= 1.25;
-    peso = Math.min(97, peso);
-    if (peso >= 4) {
-      out.push({
-        // El identificador distingue los tres casos a propósito. Si los tres
-        // compartieran uno, el recuento del historial los fusionaría y acabaría
-        // diciendo que un yogur natural lleva azúcar añadido.
-        id: !hayIngredientes ? "azucares" : hayAnadido ? "azucares_anadidos" : "azucares_intrinsecos",
-        nombre: !hayIngredientes ? "Azúcares" : hayAnadido ? "Azúcares añadidos" : "Azúcares intrínsecos",
-        categoria: "nutriente",
-        peso,
-        origen: hayIngredientes ? "ambos" : "tabla",
-        dato: `${r1(azucar)} g / ${unidad}`,
-        motivo: !hayIngredientes ? "Sin la lista de ingredientes no se puede distinguir el azúcar añadido del propio del alimento. La valoración es provisional." : hayAnadido ? `Azúcar libre añadido${ing.azucarEnPrimeras ? ", y además figura entre los tres primeros ingredientes, así que es de lo que más pesa en el producto" : ""}. La OMS recomienda no pasar de 25 g al día.` : "Azúcar propio del alimento, dentro de su matriz natural. Preocupa mucho menos que el añadido, pero sigue contando en el total diario.",
-        evidencia: "alta"
-      });
-    }
-  }
-  if (ing.fuentesAzucar.length >= 2) {
-    out.push({
-      id: "azucar_fragmentado",
-      nombre: "Azúcar repartido en varias fuentes",
-      categoria: "ingrediente",
-      peso: Math.min(74, 42 + ing.fuentesAzucar.length * 8),
-      origen: "ingredientes",
-      dato: `${ing.fuentesAzucar.length} formas distintas: ${ing.fuentesAzucar.join(", ")}`,
-      motivo: "Los ingredientes se declaran por orden de peso. Dividir el azúcar en varias formas químicas hace que ninguna suba a los primeros puestos, aunque sumadas sean el ingrediente principal. Es legal y es deliberado.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.saturadas_g) && n.saturadas_g.valor > 0.3) {
-    const sat = n.saturadas_g.valor;
-    if (categoria === "grasa_anadida" && hay(n.grasas_g) && n.grasas_g.valor > 0) {
-      const ratio = sat / n.grasas_g.valor * 100;
-      const peso = porUmbral(ratio, UMBRALES.ratioSaturadasGrasa, 52);
-      if (peso >= 5) {
-        out.push({
-          id: "saturadas_ratio",
-          nombre: "Proporción de grasa saturada",
-          categoria: "nutriente",
-          peso,
-          origen: "tabla",
-          dato: `${Math.round(ratio)} % de la grasa total (${r1(sat)} g / ${unidad})`,
-          motivo: "En una grasa lo relevante es el reparto entre saturada e insaturada. Por debajo del 20 % el perfil es favorable; por encima del 50 % es el de una grasa sólida.",
-          evidencia: "alta"
-        });
-      }
-    } else {
-      const peso = porUmbral(sat, UMBRALES.saturadas, 55);
-      if (peso >= 5) {
-        out.push({
-          id: "saturadas",
-          nombre: "Grasas saturadas",
-          categoria: "nutriente",
-          peso,
-          origen: "tabla",
-          dato: `${r1(sat)} g / ${unidad}`,
-          motivo: "Elevan el colesterol LDL. Las guías recomiendan mantenerlas por debajo del 10 % de las calorías diarias, unos 22 g.",
-          evidencia: "alta"
-        });
-      }
-    }
-  }
-  if (hay(n.sal_g) && n.sal_g.valor > 0.1) {
-    const sal = n.sal_g.valor;
-    const peso = porUmbral(sal, UMBRALES.sal, 58);
-    if (peso >= 5) {
-      out.push({
-        id: "sal",
-        nombre: "Sal",
-        categoria: "sal",
-        peso,
-        origen: "tabla",
-        dato: `${r1(sal)} g / ${unidad} (${Math.round(sal / 5 * 100)} % del límite diario OMS)`,
-        motivo: "Principal factor dietético modificable de la hipertensión. La OMS fija el límite en 5 g al día y la media española lo dobla.",
-        evidencia: "alta"
-      });
-    }
-  }
-  const vistos = /* @__PURE__ */ new Set();
-  for (const { aditivo } of ing.aditivos) {
-    if (aditivo.riesgo === 0 || vistos.has(aditivo.codigo)) continue;
-    vistos.add(aditivo.codigo);
-    const base = { 1: 26, 2: 58, 3: 88 }[aditivo.riesgo];
-    const ajuste = aditivo.evidencia === "alta" ? 4 : aditivo.evidencia === "baja" ? -4 : 0;
-    out.push({
-      id: `aditivo_${aditivo.codigo}`,
-      nombre: `${aditivo.codigo} · ${aditivo.nombre}`,
-      categoria: "aditivo",
-      peso: Math.min(94, base + ajuste),
-      origen: "ingredientes",
-      dato: aditivo.funcion,
-      motivo: aditivo.motivo,
-      evidencia: aditivo.evidencia
-    });
-  }
-  if (vistos.size >= 5) {
-    out.push({
-      id: "coctel_aditivos",
-      nombre: "Acumulación de aditivos",
-      categoria: "procesado",
-      peso: Math.min(72, 38 + vistos.size * 5),
-      origen: "ingredientes",
-      dato: `${vistos.size} aditivos con algún grado de riesgo`,
-      motivo: "Cada aditivo se evalúa por separado, nunca en combinación. El efecto conjunto de mezclas es un hueco reconocido de la evaluación toxicológica actual.",
-      evidencia: "media"
-    });
-  }
-  for (const { perfil, posicion } of ing.grasas) {
-    if (perfil.valor >= 0 || perfil.patron.includes("hidrogenad")) continue;
-    const base = { [-1]: 34, [-2]: 62, [-3]: 90 }[perfil.valor] ?? 30;
-    out.push({
-      id: `grasa_${perfil.patron.replace(/\s/g, "_")}`,
-      nombre: perfil.etiqueta,
-      categoria: "grasa",
-      peso: base + (posicion < 3 ? 6 : 0),
-      origen: "ingredientes",
-      dato: `posición ${posicion + 1} de la lista`,
-      motivo: perfil.motivo,
-      evidencia: "media"
-    });
-  }
-  if (nova.grupo === 4) {
-    out.push({
-      id: "ultraprocesado",
-      nombre: "Ultraprocesado (NOVA 4)",
-      categoria: "procesado",
-      peso: Math.min(88, 52 + nova.marcadores.length * 4),
-      origen: "ingredientes",
-      dato: `${nova.marcadores.length} marcador(es): ${nova.marcadores.slice(0, 6).join(", ")}`,
-      motivo: nova.explicacion,
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.energia_kcal) && categoria !== "grasa_anadida") {
-    const kcal = n.energia_kcal.valor;
-    if (kcal > UMBRALES.densidadCalorica) {
-      out.push({
-        id: "densidad_calorica",
-        nombre: "Densidad calórica alta",
-        categoria: "nutriente",
-        peso: Math.min(66, (kcal - UMBRALES.densidadCalorica) / 3.5),
-        origen: "tabla",
-        dato: `${Math.round(kcal)} kcal / ${unidad}`,
-        motivo: "Mucha energía en poco volumen. Facilita comer de más antes de que aparezca la señal de saciedad.",
-        evidencia: "media"
-      });
-    }
-  }
-  if (ing.refinadoPrimero) {
-    out.push({
-      id: "refinado_primero",
-      nombre: "Harina refinada como ingrediente principal",
-      categoria: "ingrediente",
-      peso: 42,
-      origen: "ingredientes",
-      dato: "primer ingrediente de la lista",
-      motivo: "Sin salvado ni germen: pierde la mayor parte de la fibra, el magnesio y las vitaminas del grupo B, y sube el índice glucémico.",
-      evidencia: "alta"
-    });
-  }
-  if (ing.total >= 15) {
-    out.push({
-      id: "lista_larga",
-      nombre: "Lista de ingredientes muy larga",
-      categoria: "procesado",
-      peso: Math.min(58, 26 + (ing.total - 15) * 2),
-      origen: "ingredientes",
-      dato: `${ing.total} ingredientes`,
-      motivo: "El número de ingredientes es uno de los predictores más simples y fiables del grado de procesamiento industrial.",
-      evidencia: "media"
-    });
-  }
-  for (const vig of OTRAS_VIGILADAS) {
-    if (out.some((x) => x.nombre === vig.etiqueta)) continue;
-    const encontrado = ing.lista.find((i) => i.textoNormalizado.includes(vig.patron));
-    if (encontrado) {
-      out.push({
-        id: `vigilada_${vig.patron.replace(/\s/g, "_")}`,
-        nombre: vig.etiqueta,
-        categoria: "ingrediente",
-        peso: vig.severidad,
-        origen: "ingredientes",
-        dato: `posición ${encontrado.posicion + 1} de la lista`,
-        motivo: vig.motivo,
-        evidencia: "media"
-      });
-    }
-  }
-  return out.map((p) => ({ ...p, peso: Math.round(Math.max(0, Math.min(100, p.peso))) })).sort((a, b) => b.peso - a.peso);
-}
-
-// src/nucleo/favorables.ts
-function porUmbral2(valor, umbral, base, exp = 0.75, tope = 95) {
-  if (valor <= 0 || umbral <= 0) return 0;
-  return Math.min(tope, base * Math.pow(valor / umbral, exp));
-}
-var r12 = (x) => Math.round(x * 10) / 10;
-function construirFavorables(n, ing, categoria, micros = [], esUltraprocesado = false) {
-  const out = [];
-  const unidad = categoria === "bebida" ? "100 ml" : "100 g";
-  const hayIngredientes = ing.total > 0;
-  if (hay(n.fibra_g) && n.fibra_g.valor >= 1.5) {
-    const fibra = n.fibra_g.valor;
-    out.push({
-      id: "fibra",
-      nombre: fibra >= 6 ? "Alto contenido en fibra" : "Fibra",
-      categoria: "nutriente",
-      peso: porUmbral2(fibra, 3, 34),
-      origen: "tabla",
-      dato: `${r12(fibra)} g / ${unidad}`,
-      motivo: fibra >= 6 ? 'Supera el umbral legal de "alto contenido en fibra" (6 g/100 g). Alimenta la microbiota, ralentiza la absorción de glucosa y aumenta la saciedad.' : "Ralentiza la absorción de azúcares, mejora el tránsito y alimenta a las bacterias del colon. La ingesta recomendada es de 25-30 g al día y casi nadie llega.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.proteinas_g) && n.proteinas_g.valor >= 3) {
-    const prot = n.proteinas_g.valor;
-    const kcal = hay(n.energia_kcal) ? n.energia_kcal.valor : 0;
-    const pctEnergia = kcal > 0 ? prot * 4 / kcal * 100 : 0;
-    out.push({
-      id: "proteina",
-      nombre: pctEnergia >= 20 ? "Alto contenido en proteínas" : "Proteínas",
-      categoria: "nutriente",
-      peso: porUmbral2(prot, 6, 34),
-      origen: "tabla",
-      dato: `${r12(prot)} g / ${unidad}${pctEnergia > 0 ? ` (${Math.round(pctEnergia)} % de la energía)` : ""}`,
-      motivo: "Mantiene la masa muscular, es el macronutriente más saciante y el que tiene mayor gasto térmico en la digestión.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.fvl_porcentaje) && n.fvl_porcentaje.valor >= 40) {
-    const fvl = n.fvl_porcentaje.valor;
-    out.push({
-      id: "fvl",
-      nombre: "Alto porcentaje de fruta, verdura o legumbre",
-      categoria: "ingrediente",
-      peso: Math.min(95, fvl),
-      origen: "ambos",
-      dato: `${Math.round(fvl)} % del producto`,
-      motivo: "La base de cualquier patrón alimentario asociado a menor mortalidad. Aporta fibra, potasio y fitoquímicos en su matriz original.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.monoinsaturadas_g) && n.monoinsaturadas_g.valor >= 3) {
-    const mono = n.monoinsaturadas_g.valor;
-    out.push({
-      id: "monoinsaturadas",
-      nombre: "Grasas monoinsaturadas",
-      categoria: "nutriente",
-      peso: porUmbral2(mono, 10, 40),
-      origen: "tabla",
-      dato: `${r12(mono)} g / ${unidad}`,
-      motivo: "El ácido oleico mejora el perfil lipídico cuando sustituye a la grasa saturada. Es el eje de la dieta mediterránea.",
-      evidencia: "alta"
-    });
-  }
-  if (hay(n.poliinsaturadas_g) && n.poliinsaturadas_g.valor >= 2) {
-    const poli = n.poliinsaturadas_g.valor;
-    out.push({
-      id: "poliinsaturadas",
-      nombre: "Grasas poliinsaturadas",
-      categoria: "nutriente",
-      peso: porUmbral2(poli, 8, 32),
-      origen: "tabla",
-      dato: `${r12(poli)} g / ${unidad}`,
-      motivo: "Incluyen los ácidos grasos esenciales que el cuerpo no sabe fabricar. Su valor depende del equilibrio entre omega-6 y omega-3.",
-      evidencia: "media"
-    });
-  }
-  for (const real of ing.reales) {
-    let peso = real.peso * 17;
-    if (real.posicion < 3) peso += 16;
-    if (real.porcentaje) peso += Math.min(20, real.porcentaje / 5);
-    out.push({
-      id: `real_${real.etiqueta.toLowerCase().replace(/\s/g, "_")}`,
-      nombre: real.etiqueta,
-      categoria: "ingrediente",
-      peso: Math.min(94, peso),
-      origen: "ingredientes",
-      dato: real.porcentaje ? `${real.porcentaje} %, posición ${real.posicion + 1}` : `posición ${real.posicion + 1} de la lista`,
-      motivo: real.motivo,
-      evidencia: "alta"
-    });
-  }
-  for (const micro of micros) {
-    const ref = VRN[micro.clave];
-    if (!ref) continue;
-    let cantidad = micro.cantidad;
-    if (micro.unidad === "g") cantidad *= 1e3;
-    if (micro.unidad === "ug" && ref.unidad === "mg") cantidad /= 1e3;
-    if (micro.unidad === "mg" && ref.unidad === "ug") cantidad *= 1e3;
-    const pct = cantidad / ref.cantidad * 100;
-    if (pct < 15) continue;
-    const factor = esUltraprocesado ? 0.5 : 1;
-    out.push({
-      id: `micro_${micro.clave}`,
-      nombre: ref.nombre + (esUltraprocesado ? " (añadido)" : ""),
-      categoria: "micronutriente",
-      peso: Math.min(88, pct * 1.1) * factor,
-      origen: "tabla",
-      dato: `${Math.round(pct)} % del VRN por ${unidad}`,
-      motivo: esUltraprocesado ? "Vitamina o mineral añadido en fábrica. Cuenta, pero no convierte un ultraprocesado en un alimento nutritivo: fuera de su matriz natural se absorbe peor." : pct >= 30 ? 'Supera el 30 % del valor de referencia: legalmente es un "alto contenido en".' : 'Supera el 15 % del valor de referencia: legalmente es "fuente de".',
-      evidencia: "alta"
-    });
-  }
-  if (hayIngredientes) {
-    const conRiesgo = new Set(ing.aditivos.filter((a) => a.aditivo.riesgo > 0).map((a) => a.aditivo.codigo));
-    if (ing.aditivos.length === 0) {
-      out.push({
-        id: "sin_aditivos",
-        nombre: "Sin aditivos",
-        categoria: "ausencia",
-        peso: 74,
-        origen: "ingredientes",
-        dato: "ningún aditivo declarado",
-        motivo: "Ni colorantes, ni conservantes, ni emulgentes. Comida que se sostiene sola.",
-        evidencia: "alta"
-      });
-    } else if (conRiesgo.size === 0) {
-      out.push({
-        id: "aditivos_inocuos",
-        nombre: "Aditivos sin riesgo conocido",
-        categoria: "ausencia",
-        peso: 48,
-        origen: "ingredientes",
-        dato: `${ing.aditivos.length} aditivo(s), todos de riesgo 0`,
-        motivo: "Lleva aditivos, pero todos son sustancias sin señales de daño a dosis alimentarias.",
-        evidencia: "media"
-      });
-    }
-    if (ing.fuentesAzucar.length === 0 && hay(n.azucares_g) && n.azucares_g.valor < 5) {
-      out.push({
-        id: "sin_azucar_anadido",
-        nombre: "Sin azúcares añadidos",
-        categoria: "ausencia",
-        peso: 70,
-        origen: "ambos",
-        dato: `${r12(n.azucares_g.valor)} g / ${unidad}, todos intrínsecos`,
-        motivo: "El azúcar libre es el nutriente con recomendación de reducción más clara y unánime de todas las guías alimentarias.",
-        evidencia: "alta"
-      });
-    }
-    if (ing.total <= 5) {
-      out.push({
-        id: "lista_corta",
-        nombre: "Lista de ingredientes corta",
-        categoria: "ausencia",
-        peso: 40 + (6 - ing.total) * 6,
-        origen: "ingredientes",
-        dato: `${ing.total} ingrediente(s)`,
-        motivo: "Cuanto más corta es la lista, más cerca está el producto de ser comida y menos de ser una formulación.",
-        evidencia: "media"
-      });
-    }
-  }
-  if (hay(n.sal_g)) {
-    const sal = n.sal_g.valor;
-    if (sal === 0) {
-      out.push({
-        id: "sin_sal",
-        nombre: "Sin sal añadida",
-        categoria: "ausencia",
-        peso: 62,
-        origen: "tabla",
-        dato: "0 g",
-        motivo: "Nada que sumar al límite diario de 5 g de la OMS.",
-        evidencia: "alta"
-      });
-    } else if (sal < 0.3) {
-      out.push({
-        id: "bajo_en_sal",
-        nombre: "Bajo en sal",
-        categoria: "ausencia",
-        peso: 56,
-        origen: "tabla",
-        dato: `${r12(sal)} g / ${unidad}`,
-        motivo: 'Por debajo de 0,3 g/100 g la UE permite declararlo "bajo contenido en sal".',
-        evidencia: "alta"
-      });
-    }
-  }
-  return out.map((b) => ({ ...b, peso: Math.round(Math.max(0, Math.min(100, b.peso))) })).sort((a, b) => b.peso - a.peso);
-}
-
-// src/nucleo/puntuacion.ts
-var ETIQUETAS_SEMAFORO = {
-  rojo: "Consumo ocasional",
-  naranja: "Con moderación",
-  amarillo: "Aceptable, hay mejores",
-  verde_claro: "Buena elección habitual",
-  verde_parchis: "Especialmente favorable"
-};
-var COLORES_SEMAFORO = {
-  rojo: "#D93B34",
-  naranja: "#E4771D",
-  amarillo: "#E8B617",
-  verde_claro: "#78B341",
-  verde_parchis: "#17A05A"
-};
-function semaforoDesde(p) {
-  let out = "rojo";
-  for (const n of NIVELES) if (p >= n.desde) out = n.clave;
-  return out;
-}
-function calcularPuntuacion(n, ing, nova, ns, categoria) {
-  const hayIngredientes = ing.total > 0;
-  const unicos = /* @__PURE__ */ new Map();
-  for (const { aditivo } of ing.aditivos) unicos.set(aditivo.codigo, aditivo.riesgo);
-  let castigo = 0;
-  for (const riesgo of unicos.values()) castigo += CASTIGO_ADITIVO[riesgo];
-  const notaAditivos = hayIngredientes ? Math.max(0, 100 - castigo) : null;
-  let notaIngredientes = null;
-  if (hayIngredientes) {
-    let v2 = 55;
-    v2 += Math.min(45, ing.reales.reduce((s, r) => s + r.peso * 5, 0));
-    if (ing.azucarEnPrimeras) v2 -= 18;
-    if (ing.fuentesAzucar.length >= 2) v2 -= 12;
-    if (ing.refinadoPrimero) v2 -= 12;
-    for (const g of ing.grasas) v2 += g.perfil.valor < 0 ? g.perfil.valor * 6 : g.perfil.valor * 4;
-    notaIngredientes = Math.max(0, Math.min(100, v2));
-  }
-  const brutos = [
-    { clave: "nutriScore", nombre: "Composición nutricional", nota: notaDesdeLetra(ns.letra), peso: PESOS.nutriScore },
-    { clave: "nova", nombre: "Grado de procesamiento", nota: notaNova(nova.grupo, nova.alLimite), peso: PESOS.nova },
-    { clave: "aditivos", nombre: "Aditivos", nota: notaAditivos, peso: PESOS.aditivos },
-    { clave: "ingredientes", nombre: "Calidad de la lista", nota: notaIngredientes, peso: PESOS.ingredientes }
-  ];
-  const usables = brutos.filter((c) => c.nota !== null);
-  const pesoDisponible = usables.reduce((s, c) => s + c.peso, 0);
-  const componentes = brutos.map((c) => ({
-    clave: c.clave,
-    nombre: c.nombre,
-    nota: c.nota,
-    pesoOriginal: c.peso,
-    pesoAplicado: c.nota === null || pesoDisponible === 0 ? 0 : c.peso / pesoDisponible
-  }));
-  if (usables.length === 0 || pesoDisponible === 0) {
-    return { puntuacion: null, semaforo: null, vetos: [], componentes };
-  }
-  let puntuacion = componentes.reduce((s, c) => s + (c.nota ?? 0) * c.pesoAplicado, 0);
-  if (!ns.completo) {
-    const faltan = ns.faltan.length;
-    if (faltan >= 5) {
-      return {
-        puntuacion: null,
-        semaforo: null,
-        componentes,
-        vetos: [`Falta casi toda la tabla nutricional (${ns.faltan.join(", ")}). Con los ingredientes solos no se puede poner nota.`]
-      };
-    }
-    const techo = faltan <= 2 ? 68 : 55;
-    if (puntuacion > techo) puntuacion = techo;
-  }
-  const vetos = [];
-  if (!ns.completo) {
-    vetos.push(
-      `Falta${ns.faltan.length === 1 ? "" : "n"} ${ns.faltan.length} dato(s) obligatorio(s) de la tabla (${ns.faltan.join(", ")}), así que no se puede afirmar que el producto sea mejor de lo que marca este tope.`
-    );
-  }
-  const tope = (limite, razon) => {
-    if (puntuacion > limite) puntuacion = limite;
-    vetos.push(razon);
-  };
-  const trans = hay(n.trans_g) && n.trans_g.valor > 0.5;
-  if (ing.grasas.some((g) => g.perfil.patron.includes("hidrogenad")) || trans) {
-    tope(VETOS.trans, "Contiene grasas trans industriales: la OMS no reconoce ninguna dosis segura.");
-  }
-  if ([...unicos.values()].some((r) => r === 3)) {
-    tope(VETOS.aditivoNivel3, 'Contiene al menos un aditivo de la categoría "evitar".');
-  }
-  if (hay(n.sal_g) && n.sal_g.valor > VETOS.salAlta.desde) {
-    tope(VETOS.salAlta.tope, `Aporta ${n.sal_g.valor.toFixed(1)} g de sal por 100 g: la mitad del límite diario en una sola toma.`);
-  }
-  if (ing.fuentesAzucar.length > 0 && hay(n.azucares_g)) {
-    const az = n.azucares_g.valor;
-    const esBebida = categoria === "bebida";
-    if (esBebida && az > VETOS.bebidaAzucarada.desde) {
-      tope(VETOS.bebidaAzucarada.tope, "Bebida azucarada: el azúcar líquido no sacia y se absorbe de golpe.");
-    } else if (!esBebida && az > VETOS.azucarMuyAlto.desde) {
-      tope(VETOS.azucarMuyAlto.tope, `Casi la mitad del producto es azúcar añadido (${az} g / 100 g).`);
-    } else if (!esBebida && az > VETOS.azucarAlto.desde) {
-      tope(VETOS.azucarAlto.tope, "Más de 30 g de azúcar añadido por 100 g.");
-    }
-  }
-  if (nova.grupo === 4) {
-    tope(
-      nova.alLimite ? VETOS.ultraprocesadoAlLimite : VETOS.ultraprocesado,
-      nova.alLimite ? "Ultraprocesado al límite: lo clasifica ahí un solo aditivo inocuo, así que el tope es más alto, pero no llega a verde parchís." : "Ultraprocesado: ningún NOVA 4 entra en la categoría verde parchís."
-    );
-    if (ing.fuentesAzucar.length > 0 && hay(n.azucares_g) && n.azucares_g.valor > VETOS.ultraprocesadoAzucarado.desde) {
-      tope(
-        VETOS.ultraprocesadoAzucarado.tope,
-        `Ultraprocesado con ${n.azucares_g.valor} g de azúcar añadido por 100 g: ni la fibra ni la proteína lo compensan.`
-      );
-    }
-  }
-  if (categoria === "grasa_anadida" && nova.grupo !== null && nova.grupo <= 2 && hay(n.grasas_g) && n.grasas_g.valor > 0 && hay(n.saturadas_g) && hay(n.monoinsaturadas_g)) {
-    const ratioSat = n.saturadas_g.valor / n.grasas_g.valor;
-    if (ratioSat < 0.22 && n.monoinsaturadas_g.valor >= 50 && unicos.size === 0 && puntuacion < SUELOS.grasaBuena) {
-      puntuacion = SUELOS.grasaBuena;
-      vetos.push("Grasa mínimamente procesada con perfil de ácidos grasos favorable: se le aplica una nota mínima alta.");
-    }
-  }
-  if (nova.grupo === 1 && unicos.size === 0 && hay(n.sal_g) && n.sal_g.valor < 0.3 && hay(n.azucares_g) && n.azucares_g.valor < 12 && puntuacion < SUELOS.minimamenteProcesado) {
-    puntuacion = SUELOS.minimamenteProcesado;
-    vetos.push("Alimento mínimamente procesado sin aditivos: se le aplica una nota mínima.");
-  }
-  puntuacion = Math.round(Math.max(0, Math.min(100, puntuacion)));
-  return { puntuacion, semaforo: semaforoDesde(puntuacion), vetos, componentes };
-}
-
-// src/nucleo/validador.ts
-var NOMBRE = {
-  energia_kcal: "energía",
-  energia_kj: "energía en kJ",
-  grasas_g: "grasas",
-  saturadas_g: "grasas saturadas",
-  monoinsaturadas_g: "monoinsaturadas",
-  poliinsaturadas_g: "poliinsaturadas",
-  trans_g: "grasas trans",
-  hidratos_g: "hidratos de carbono",
-  azucares_g: "azúcares",
-  polialcoholes_g: "polialcoholes",
-  fibra_g: "fibra",
-  proteinas_g: "proteínas",
-  sal_g: "sal",
-  sodio_mg: "sodio",
-  fvl_porcentaje: "porcentaje de fruta y verdura"
-};
-var EN_GRAMOS = [
-  "grasas_g",
-  "saturadas_g",
-  "monoinsaturadas_g",
-  "poliinsaturadas_g",
-  "trans_g",
-  "hidratos_g",
-  "azucares_g",
-  "polialcoholes_g",
-  "fibra_g",
-  "proteinas_g",
-  "sal_g"
-];
-var v = (d) => d.valor;
-var r13 = (x) => Math.round(x * 10) / 10;
-var r2 = (x) => Math.abs(x) < 10 ? Math.round(x * 100) / 100 : Math.round(x * 10) / 10;
-function proponerPara(campo, valor, enMiligramos) {
-  const texto = String(valor);
-  if (/9$/.test(texto)) {
-    const sinNueve = parseFloat(texto.slice(0, -1));
-    if (Number.isFinite(sinNueve) && sinNueve > 0 && sinNueve <= 100) {
-      return {
-        campo,
-        valorActual: valor,
-        valorPropuesto: sinNueve,
-        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
-      };
-    }
-  }
-  if (enMiligramos > 0 && enMiligramos <= 100) {
-    return {
-      campo,
-      valorActual: valor,
-      valorPropuesto: r2(enMiligramos),
-      motivo: "La cifra encaja si estaba en miligramos y se leyó como gramos."
-    };
-  }
-  return void 0;
-}
-var May = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-function validar(n, esProductoSalado = false) {
-  const inc = [];
-  for (const campo of Object.keys(n)) {
-    const d = n[campo];
-    if (hay(d) && v(d) < 0) {
-      inc.push({
-        codigo: "negativo",
-        gravedad: "error",
-        campos: [campo],
-        mensaje: `El valor de ${NOMBRE[campo] ?? campo} es negativo (${v(d)}). Eso no existe en una etiqueta.`
-      });
-    }
-  }
-  for (const campo of EN_GRAMOS) {
-    const d = n[campo];
-    if (!hay(d) || v(d) <= 100) continue;
-    const enMiligramos = v(d) / 1e3;
-    inc.push({
-      codigo: "mayor_que_cien",
-      gravedad: "error",
-      campos: [campo],
-      mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${v(d)} g por 100 g. Es imposible: no caben más de 100 gramos en 100 gramos.`,
-      correccion: proponerPara(campo, v(d), enMiligramos)
-    });
-  }
-  if (hay(n.azucares_g) && hay(n.hidratos_g) && v(n.azucares_g) > v(n.hidratos_g) + 0.15) {
-    inc.push({
-      codigo: "azucar_mayor_hidratos",
-      gravedad: "error",
-      campos: ["azucares_g", "hidratos_g"],
-      mensaje: `Los azúcares (${r13(v(n.azucares_g))} g) superan a los hidratos de carbono (${r13(v(n.hidratos_g))} g). En la etiqueta los azúcares van dentro de los hidratos, así que uno de los dos está mal leído.`
-    });
-  }
-  if (hay(n.saturadas_g) && hay(n.grasas_g) && v(n.saturadas_g) > v(n.grasas_g) + 0.15) {
-    inc.push({
-      codigo: "saturada_mayor_grasa",
-      gravedad: "error",
-      campos: ["saturadas_g", "grasas_g"],
-      mensaje: `La grasa saturada (${r13(v(n.saturadas_g))} g) supera a la grasa total (${r13(v(n.grasas_g))} g). Una es parte de la otra, así que hay un error de lectura.`
-    });
-  }
-  const suma = ["grasas_g", "hidratos_g", "proteinas_g", "fibra_g", "polialcoholes_g", "sal_g"].reduce((s, k) => s + (hay(n[k]) ? v(n[k]) : 0), 0);
-  if (suma > 100.5) {
-    inc.push({
-      codigo: "suma_mayor_cien",
-      gravedad: "error",
-      campos: ["grasas_g", "hidratos_g", "proteinas_g"],
-      mensaje: `Grasas, hidratos, proteínas, fibra y sal suman ${r13(suma)} g por cada 100 g de producto. Algún valor está mal leído.`
-    });
-  }
-  if (hay(n.energia_kcal)) {
-    const kcalCalc = (hay(n.grasas_g) ? v(n.grasas_g) * 9 : 0) + (hay(n.hidratos_g) ? v(n.hidratos_g) * 4 : 0) + (hay(n.proteinas_g) ? v(n.proteinas_g) * 4 : 0) + (hay(n.fibra_g) ? v(n.fibra_g) * 2 : 0) + (hay(n.polialcoholes_g) ? v(n.polialcoholes_g) * 2.4 : 0);
-    const declarada = v(n.energia_kcal);
-    if (kcalCalc >= 20) {
-      const desvio = Math.abs(declarada - kcalCalc) / kcalCalc;
-      if (desvio > 0.2) {
-        const pareceKj = Math.abs(declarada / 4.184 - kcalCalc) / kcalCalc < 0.2;
-        inc.push({
-          codigo: "energia_incoherente",
-          gravedad: pareceKj ? "error" : "aviso",
-          campos: ["energia_kcal"],
-          mensaje: pareceKj ? `La energía marca ${Math.round(declarada)} kcal, pero por sus nutrientes deberían ser unas ${Math.round(kcalCalc)} kcal. La cifra encaja si se leyó la columna de kilojulios.` : `La energía declarada (${Math.round(declarada)} kcal) se desvía un ${Math.round(desvio * 100)} % de la que sale de sus nutrientes (${Math.round(kcalCalc)} kcal). Merece un vistazo.`,
-          correccion: pareceKj ? {
-            campo: "energia_kcal",
-            valorActual: declarada,
-            valorPropuesto: Math.round(declarada / 4.184),
-            motivo: "Un kilojulio equivale a 0,239 kilocalorías. La cifra cuadra al convertirla."
-          } : void 0
-        });
-      }
-    } else if (declarada > 50 && suma < 5) {
-      inc.push({
-        codigo: "energia_sin_nutrientes",
-        gravedad: "error",
-        campos: ["energia_kcal"],
-        mensaje: `Marca ${Math.round(declarada)} kcal pero apenas hay nutrientes que las expliquen. Puede que se haya leído la columna "por ración" mezclada con la de "por 100 g".`
-      });
-    }
-  }
-  if (hay(n.sal_g) && hay(n.sodio_mg)) {
-    const salDesdeSodio = v(n.sodio_mg) * 2.5 / 1e3;
-    if (salDesdeSodio > 0.01) {
-      const desvio = Math.abs(v(n.sal_g) - salDesdeSodio) / salDesdeSodio;
-      if (desvio > 0.15) {
-        inc.push({
-          codigo: "sal_sodio_descuadran",
-          gravedad: "aviso",
-          campos: ["sal_g", "sodio_mg"],
-          mensaje: `La sal declarada (${r13(v(n.sal_g))} g) no cuadra con el sodio (${Math.round(v(n.sodio_mg))} mg, que equivalen a ${r13(salDesdeSodio)} g de sal). Confundir sodio con sal multiplica el error por 2,5.`,
-          correccion: {
-            campo: "sal_g",
-            valorActual: v(n.sal_g),
-            valorPropuesto: r2(salDesdeSodio),
-            motivo: "Sal igual a sodio por 2,5, según el Reglamento (UE) 1169/2011."
-          }
-        });
-      }
-    }
-  }
-  if (hay(n.sal_g) && !esProductoSalado && v(n.sal_g) > 6 && v(n.sal_g) <= 100) {
-    const grave = v(n.sal_g) > 12;
-    inc.push({
-      codigo: "sal_disparatada",
-      gravedad: grave ? "error" : "aviso",
-      campos: ["sal_g"],
-      mensaje: grave ? `${r13(v(n.sal_g))} g de sal por 100 g es una barbaridad para cualquier producto que no sea sal o un caldo concentrado.` : `${r13(v(n.sal_g))} g de sal por 100 g es muchísimo: son ${Math.round(v(n.sal_g) / 5 * 100)} % del límite diario de la OMS en cien gramos. Comprueba que la cifra sea esa.`,
-      correccion: {
-        campo: "sal_g",
-        valorActual: v(n.sal_g),
-        valorPropuesto: v(n.sal_g) > 100 ? r2(v(n.sal_g) / 1e3) : r2(v(n.sal_g) / 10),
-        motivo: "Suele venir de una coma decimal que se ha perdido al leer."
-      }
-    });
-  }
-  for (const campo of EN_GRAMOS) {
-    const d = n[campo];
-    if (!hay(d)) continue;
-    if (d.estado === "corregido") continue;
-    const bruto = (d.textoOriginal ?? String(d.valor).replace(".", ",")).trim();
-    if (/[a-zA-Z]/.test(bruto)) continue;
-    if (!/^\d+[.,]\d9$/.test(bruto.replace(/\s/g, ""))) continue;
-    const sinNueve = parseFloat(bruto.replace(",", ".").slice(0, -1));
-    if (!Number.isFinite(sinNueve)) continue;
-    inc.push({
-      codigo: "unidad_leida_como_nueve",
-      gravedad: "aviso",
-      campos: [campo],
-      mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${bruto} sin unidad. Cuando la "g" va pegada al número, los lectores la confunden con un nueve: puede que en el envase ponga ${r13(sinNueve)} g.`,
-      correccion: {
-        campo,
-        valorActual: v(d),
-        valorPropuesto: r2(sinNueve),
-        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
-      }
-    });
-  }
-  if (hay(n.saturadas_g) && !hay(n.grasas_g)) {
-    inc.push({
-      codigo: "saturada_sin_grasa",
-      gravedad: "aviso",
-      campos: ["grasas_g"],
-      mensaje: "Se ha leído la grasa saturada pero no la grasa total. En la etiqueta la saturada va justo debajo, así que probablemente se saltó una línea."
-    });
-  }
-  if (hay(n.azucares_g) && !hay(n.hidratos_g)) {
-    inc.push({
-      codigo: "azucar_sin_hidratos",
-      gravedad: "aviso",
-      campos: ["hidratos_g"],
-      mensaje: "Se han leído los azúcares pero no los hidratos de carbono. En la etiqueta los azúcares van justo debajo, así que probablemente se saltó una línea."
-    });
-  }
-  if (hay(n.fvl_porcentaje) && (v(n.fvl_porcentaje) < 0 || v(n.fvl_porcentaje) > 100)) {
-    inc.push({
-      codigo: "porcentaje_imposible",
-      gravedad: "error",
-      campos: ["fvl_porcentaje"],
-      mensaje: `El porcentaje de fruta y verdura marca ${v(n.fvl_porcentaje)} %, y un porcentaje va de 0 a 100.`
-    });
-  }
-  const errores = inc.filter((i) => i.gravedad === "error").length;
-  const avisos = inc.filter((i) => i.gravedad === "aviso").length;
-  const indiceCoherencia = Math.max(0, 1 - errores * 0.28 - avisos * 0.08);
-  return { incidencias: inc, errores, avisos, coherente: errores === 0, indiceCoherencia };
-}
-function menorQueMalLeido(valor, campo) {
-  const texto = String(valor);
-  if (!/^[23]\d*[.,]?\d*$/.test(texto)) return void 0;
-  const sinPrimera = parseFloat(texto.slice(1).replace(",", "."));
-  if (!Number.isFinite(sinPrimera) || sinPrimera >= 1 || sinPrimera <= 0) return void 0;
-  return {
-    campo,
-    valorActual: valor,
-    valorPropuesto: sinPrimera,
-    motivo: 'Muchas etiquetas ponen "menos de 0,5" con el símbolo «<», y el lector lo confunde con un 2. La cifra encaja si era «<' + sinPrimera.toString().replace(".", ",") + "»."
-  };
-}
-function validarContraIngredientes(n, ctx) {
-  const inc = [];
-  if (ctx.total === 0) return inc;
-  if (hay(n.azucares_g) && v(n.azucares_g) > 5 && !ctx.hayFuenteAzucar && !ctx.hayLacteo && !ctx.hayFruta) {
-    inc.push({
-      codigo: "azucar_sin_origen",
-      gravedad: "aviso",
-      campos: ["azucares_g"],
-      mensaje: `La tabla declara ${r13(v(n.azucares_g))} g de azúcares, pero en la lista de ingredientes no hay nada de donde puedan salir: ni azúcar añadido, ni fruta, ni lácteo. Una de las dos cifras está mal leída.`,
-      correccion: menorQueMalLeido(v(n.azucares_g), "azucares_g")
-    });
-  }
-  if (hay(n.grasas_g) && v(n.grasas_g) > 15 && !ctx.hayGrasaAnadida) {
-    inc.push({
-      codigo: "grasa_sin_origen",
-      gravedad: "aviso",
-      campos: ["grasas_g"],
-      mensaje: `La tabla declara ${r13(v(n.grasas_g))} g de grasa, pero en los ingredientes no aparece ningún aceite ni grasa. Comprueba la cifra.`
-    });
-  }
-  if (hay(n.sal_g) && v(n.sal_g) > 1.5 && !ctx.haySal) {
-    inc.push({
-      codigo: "sal_sin_origen",
-      gravedad: "aviso",
-      campos: ["sal_g"],
-      mensaje: `La tabla declara ${r13(v(n.sal_g))} g de sal, pero la sal no figura en la lista de ingredientes. Comprueba la cifra.`
-    });
-  }
-  return inc;
-}
-
-// src/nucleo/confianza.ts
-var PESOS_CONFIANZA = {
-  completitud: 0.45,
-  calidadLectura: 0.3,
-  coherencia: 0.25
-};
-var ETIQUETA = {
-  alta: "Análisis fiable",
-  media: "Análisis orientativo",
-  baja: "Confianza baja, conviene revisar los datos",
-  insuficiente: "Análisis incompleto"
-};
-function calcularConfianza(e) {
-  const { nutrientes: n } = e;
-  const faltan = camposQueFaltan(n);
-  const presentes = CAMPOS_OBLIGATORIOS.length - faltan.length;
-  const porTabla = presentes / CAMPOS_OBLIGATORIOS.length;
-  const completitud = 0.75 * porTabla + 0.25 * (e.hayIngredientes ? 1 : 0);
-  const valores = Object.values(n).filter(
-    (d) => d.estado === "leido" || d.estado === "corregido"
-  );
-  let calidadLectura = 1;
-  if (valores.length > 0) {
-    const suma = valores.reduce((s, d) => {
-      if (d.estado === "corregido") return s + 1;
-      return s + (typeof d.confianzaOCR === "number" ? d.confianzaOCR : 1);
-    }, 0);
-    calidadLectura = suma / valores.length;
-  }
-  const coherencia = Math.max(0, Math.min(1, e.indiceCoherencia));
-  const bruto = PESOS_CONFIANZA.completitud * completitud + PESOS_CONFIANZA.calidadLectura * calidadLectura + PESOS_CONFIANZA.coherencia * coherencia;
-  let valor = Math.round(bruto * 100);
-  let nivel;
-  if (faltan.length > 0) {
-    nivel = "insuficiente";
-    valor = Math.min(valor, 55);
-  } else if (e.huboErrores) {
-    nivel = "baja";
-    valor = Math.min(valor, 55);
-  } else if (valor >= 85) nivel = "alta";
-  else if (valor >= 60) nivel = "media";
-  else nivel = "baja";
-  const comoMejorarla = [];
-  if (faltan.length > 0) {
-    comoMejorarla.push(`Completa estos datos de la tabla: ${faltan.join(", ")}.`);
-  }
-  if (!e.hayIngredientes) {
-    comoMejorarla.push("Fotografía también la lista de ingredientes. Es lo que más sube la fiabilidad del análisis.");
-  }
-  if (e.huboErrores) {
-    comoMejorarla.push("Revisa los datos marcados en rojo: hay cifras que no cuadran entre sí.");
-  }
-  if (calidadLectura < 0.75 && faltan.length === 0) {
-    comoMejorarla.push("La foto se ha leído con dificultad. Repítela con más luz y el envase liso, o pega el texto copiado desde el iPhone.");
-  }
-  return {
-    valor: Math.max(0, Math.min(100, valor)),
-    nivel,
-    etiqueta: ETIQUETA[nivel],
-    completitud: Math.round(completitud * 100),
-    calidadLectura: Math.round(calidadLectura * 100),
-    coherencia: Math.round(coherencia * 100),
-    comoMejorarla
-  };
-}
-
 // src/datos/ingredientes-comunes.ts
 var FILAS2 = [
   // --- Cereales -----------------------------------------------------------
@@ -2620,6 +1247,42 @@ var FILAS2 = [
   ],
   // --- Carne y pescado ----------------------------------------------------
   [
+    "pavo",
+    "Pavo",
+    "carne blanca",
+    2,
+    "Carne de ave, magra y de sabor suave, entera o en fiambre.",
+    "Proteína magra de alto valor biológico y poca grasa saturada. Si va en un fiambre, lo que pesa en contra son la sal y los conservantes, no el pavo.",
+    "alta"
+  ],
+  [
+    "ternera",
+    "Ternera",
+    "carne roja",
+    0,
+    "Carne de vacuno joven, más tierna y magra que la de vaca adulta.",
+    "Proteína, hierro hemo y B12. La OMS clasifica la carne roja como probable carcinógeno en consumo elevado, así que conviene moderar la frecuencia.",
+    "alta"
+  ],
+  [
+    "bacalao fresco",
+    "Bacalao fresco",
+    "pescado blanco",
+    2,
+    "Pescado blanco magro sin salar, fresco o congelado.",
+    "Proteína de calidad con muy poca grasa y muy poco mercurio.",
+    "alta"
+  ],
+  [
+    "gamba",
+    "Gamba",
+    "marisco",
+    2,
+    "Crustáceo, fresco, congelado o cocido.",
+    "Proteína magra, yodo y selenio. Alérgeno de declaración obligatoria.",
+    "alta"
+  ],
+  [
     "pechuga de pavo",
     "Pechuga de pavo",
     "carne blanca",
@@ -2726,6 +1389,15 @@ var FILAS2 = [
     3,
     "Fruto seco de sabor dulce, muy usado en cremas de cacao.",
     "Monoinsaturados y vitamina E. En una crema de cacao, mira el porcentaje: suele ser mucho menor que el de azúcar.",
+    "alta"
+  ],
+  [
+    "nueces",
+    "Nueces",
+    "fruto seco",
+    3,
+    "Fruto seco de cáscara dura, en su forma plural, que es como se escribe en las etiquetas.",
+    "Casi la única fuente vegetal corriente de omega-3 de cadena corta en cantidad apreciable.",
     "alta"
   ],
   [
@@ -3868,6 +2540,1801 @@ var INGREDIENTES_COMUNES = FILAS2.map(
     evidencia
   })
 );
+
+// src/nucleo/ingredientes.ts
+var REALES = (() => {
+  const lista = [...INGREDIENTES_REALES];
+  const yaEstan = new Set(lista.map((r) => r.patron));
+  for (const f of INGREDIENTES_COMUNES) {
+    if (f.valoracion < 2 || yaEstan.has(f.patron)) continue;
+    lista.push({
+      patron: f.patron,
+      etiqueta: f.titulo,
+      peso: f.valoracion === 3 ? 3 : 2,
+      motivo: f.porQue
+    });
+  }
+  return lista.sort((a, b) => b.patron.length - a.patron.length);
+})();
+function tienePalabra(texto, patron) {
+  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|\\s)${p}(es|s)?(\\s|$)`).test(texto);
+}
+function tienePrefijo(texto, patron) {
+  return texto.includes(patron);
+}
+var RE_CODIGO_E = /\be\s?-?\s?(\d{3,4}\s?[a-z]?)\b/gi;
+var FUNCIONES_DECLARADAS = /* @__PURE__ */ new Set([
+  "colorante",
+  "edulcorante",
+  "emulgente",
+  "estabilizante",
+  "espesante",
+  "potenciador del sabor",
+  "antiaglomerante",
+  "gasificante",
+  "corrector de acidez",
+  "humectante"
+]);
+var ESTRUCTURALES = /* @__PURE__ */ new Set([...FUNCIONES_DECLARADAS]);
+function analizarIngredientes(crudos) {
+  const lista = [];
+  const aditivos = [];
+  const fuentesAzucar = /* @__PURE__ */ new Set();
+  const marcadoresUPF = /* @__PURE__ */ new Set();
+  const marcadoresNoAditivo = /* @__PURE__ */ new Set();
+  const grasas = [];
+  const reales = [];
+  let azucarEnPrimeras = false;
+  let refinadoPrimero = false;
+  let salPresente = false;
+  crudos.forEach((crudo, i) => {
+    const t = normalizarTexto(crudo.texto);
+    const roles = /* @__PURE__ */ new Set();
+    let codigoE;
+    let nombreAditivo;
+    let riesgoAditivo;
+    RE_CODIGO_E.lastIndex = 0;
+    let m;
+    while ((m = RE_CODIGO_E.exec(t)) !== null) {
+      const cod = "E" + m[1].replace(/\s/g, "");
+      const ad = buscarAditivo(cod);
+      if (ad) {
+        aditivos.push({ aditivo: ad, posicion: i });
+        roles.add("aditivo");
+        codigoE = ad.codigo;
+        nombreAditivo = ad.nombre;
+        riesgoAditivo = ad.riesgo;
+        if (ad.cosmetico) marcadoresUPF.add(ad.nombre);
+      }
+    }
+    if (!codigoE) {
+      for (const [alias, cod] of Object.entries(ALIAS_ADITIVOS)) {
+        if (tienePalabra(t, alias)) {
+          const ad = ADITIVOS.get(cod);
+          if (ad && !aditivos.some((a) => a.aditivo.codigo === cod && a.posicion === i)) {
+            aditivos.push({ aditivo: ad, posicion: i });
+            roles.add("aditivo");
+            codigoE = ad.codigo;
+            nombreAditivo = ad.nombre;
+            riesgoAditivo = ad.riesgo;
+            if (ad.cosmetico) marcadoresUPF.add(ad.nombre);
+          }
+          break;
+        }
+      }
+    }
+    let mejorAzucar = "";
+    for (const az of AZUCARES_ANADIDOS) {
+      if (tienePalabra(t, az) && az.length > mejorAzucar.length) mejorAzucar = az;
+    }
+    if (mejorAzucar) {
+      roles.add("azucar_anadido");
+      fuentesAzucar.add(mejorAzucar);
+      if (i < 3) azucarEnPrimeras = true;
+    }
+    const candidatasGrasa = GRASAS.filter((g) => g.prefijo ? tienePrefijo(t, g.patron) : tienePalabra(t, g.patron));
+    if (candidatasGrasa.length > 0) {
+      const mejor = candidatasGrasa.reduce((a, b) => b.patron.length > a.patron.length ? b : a);
+      grasas.push({ perfil: mejor, posicion: i });
+      roles.add("grasa");
+    }
+    for (const mk of MARCADORES_UPF) {
+      if (!tienePrefijo(t, mk.patron)) continue;
+      if (codigoE && FUNCIONES_DECLARADAS.has(mk.patron)) continue;
+      marcadoresUPF.add(mk.etiqueta);
+      if (!ESTRUCTURALES.has(mk.patron)) marcadoresNoAditivo.add(mk.etiqueta);
+      roles.add("marcador_ultraprocesado");
+    }
+    for (const r of REALES) {
+      if (!tienePalabra(t, r.patron)) continue;
+      if (!reales.some((x) => x.etiqueta === r.etiqueta)) {
+        reales.push({ etiqueta: r.etiqueta, peso: r.peso, motivo: r.motivo, posicion: i, porcentaje: crudo.porcentaje });
+      }
+      roles.add(/integral/.test(r.patron) ? "integral" : "fruta_verdura_legumbre");
+      break;
+    }
+    for (const ref of REFINADOS) {
+      if (tienePalabra(t, ref) && !roles.has("integral")) {
+        roles.add("harina_refinada");
+        if (i === 0) refinadoPrimero = true;
+      }
+    }
+    for (const s of SALES) {
+      if (tienePalabra(t, s)) {
+        roles.add("sal");
+        salPresente = true;
+      }
+    }
+    if (roles.size === 0) roles.add("otro");
+    lista.push({
+      texto: crudo.texto,
+      textoNormalizado: t,
+      posicion: i,
+      porcentaje: crudo.porcentaje,
+      roles: [...roles],
+      codigoE,
+      nombreAditivo,
+      riesgoAditivo
+    });
+  });
+  const alergenos = [];
+  for (const al of ALERGENOS) {
+    for (const ic of lista) {
+      if (!al.patrones.some((pat) => tienePalabra(ic.textoNormalizado, pat))) continue;
+      const esTraza = PATRONES_TRAZAS.some((t) => ic.textoNormalizado.includes(t));
+      if (!alergenos.some((x) => x.clave === al.clave)) {
+        alergenos.push({
+          clave: al.clave,
+          nombre: al.nombre,
+          nota: al.nota,
+          esTraza,
+          encontradoEn: ic.texto
+        });
+      }
+      break;
+    }
+  }
+  const aditivosSinFicha = [...new Set(
+    aditivos.filter((a) => a.aditivo.fichado === false).map((a) => a.aditivo.codigo)
+  )];
+  return {
+    lista,
+    marcadoresNoAditivo: [...marcadoresNoAditivo],
+    alergenos,
+    aditivosSinFicha,
+    aditivos,
+    fuentesAzucar: [...fuentesAzucar],
+    azucarEnPrimeras,
+    grasas,
+    marcadoresUPF: [...marcadoresUPF],
+    reales,
+    refinadoPrimero,
+    salPresente,
+    total: crudos.length
+  };
+}
+
+// src/config/pesos.ts
+var VERSION_ALGORITMO = "1.15.0";
+var PESOS = {
+  nutriScore: 0.36,
+  nova: 0.28,
+  aditivos: 0.24,
+  ingredientes: 0.12
+};
+var NOTA_LETRA = { A: 100, B: 82, C: 58, D: 32, E: 12 };
+var NOTA_NOVA = { 1: 100, 2: 84, 3: 66, 4: 22 };
+var CASTIGO_ADITIVO = { 0: 0, 1: 4, 2: 13, 3: 26 };
+var UMBRALES = {
+  azucarSolido: 22.5,
+  // g por 100 g
+  azucarBebida: 11.25,
+  // g por 100 ml
+  saturadas: 5,
+  // g por 100 g
+  sal: 1.5,
+  // g por 100 g
+  ratioSaturadasGrasa: 33,
+  // % sobre grasa total, solo para aceites y cremas
+  densidadCalorica: 350
+  // kcal por 100 g a partir de las cuales penaliza
+};
+var LIMITES_DIARIOS = {
+  salOMS: 5,
+  // g al día
+  azucarLibreOMS: 25
+  // g al día
+};
+var VETOS = {
+  trans: 18,
+  /**
+   * La grasa saturada no tenía ningún tope, y el Nutri-Score deja de
+   * penalizarla por encima de 10 g. El resultado: 5 g y 30 g daban la misma
+   * nota. Treinta gramos por 100 es un aceite de coco o una manteca.
+   */
+  saturadasMuyAltas: { desde: 15, tope: 46 },
+  saturadasExtremas: { desde: 25, tope: 34 },
+  /**
+   * El tope depende del tipo de daño, no solo de su nivel.
+   *
+   * Antes había un solo número: cualquier aditivo de nivel 3 topaba la nota en
+   * 40. Con eso, el nitrito sódico (precursor de nitrosaminas, la razón de que
+   * la carne procesada esté en el grupo 1 de la IARC) pesaba igual que un
+   * colorante con advertencia de hiperactividad. No es lo mismo.
+   */
+  aditivoNivel3: 40,
+  aditivoCancerigeno: 28,
+  aditivoEndocrino: 34,
+  /**
+   * La sal, en tres escalones.
+   *
+   * Con un solo tope, 3 g y 10 g por 100 g daban la misma nota: 42. Y no es lo
+   * mismo un fiambre salado que una salsa de soja. Cuando el Nutri-Score toca
+   * fondo en un nutriente, más cantidad de lo malo deja de contar, y los topes
+   * son lo único que puede seguir distinguiendo.
+   */
+  salAlta: { desde: 2.5, tope: 42 },
+  salMuyAlta: { desde: 5, tope: 30 },
+  salExtrema: { desde: 8, tope: 22 },
+  bebidaAzucarada: { desde: 8, tope: 28 },
+  azucarMuyAlto: { desde: 45, tope: 24 },
+  azucarExtremo: { desde: 60, tope: 18 },
+  azucarAlto: { desde: 30, tope: 30 },
+  ultraprocesado: 64,
+  /** Ultraprocesado solo por un aditivo inocuo en una lista corta de comida real. */
+  ultraprocesadoAlLimite: 80,
+  ultraprocesadoAzucarado: { desde: 15, tope: 48 }
+};
+var SUELOS = {
+  minimamenteProcesado: 74,
+  grasaBuena: 88
+};
+var EXPONENTE_DOSIS = 0.7;
+var NIVELES = [
+  { clave: "rojo", desde: 0, etiqueta: "Consumo ocasional" },
+  { clave: "naranja", desde: 30, etiqueta: "Con moderación" },
+  { clave: "amarillo", desde: 50, etiqueta: "Aceptable, hay mejores" },
+  { clave: "verde_claro", desde: 70, etiqueta: "Buena elección habitual" },
+  { clave: "verde_parchis", desde: 85, etiqueta: "Especialmente favorable" }
+];
+var CAMPOS_OBLIGATORIOS = [
+  "energia",
+  "grasas_g",
+  "saturadas_g",
+  "hidratos_g",
+  "azucares_g",
+  "proteinas_g",
+  "sal"
+];
+
+// src/nucleo/nova.ts
+var EXPLICACION = {
+  1: "Alimento sin procesar o mínimamente procesado. Es comida, sin más.",
+  2: "Ingrediente culinario procesado (aceite, sal, azúcar). Se usa para cocinar, no se come solo.",
+  3: "Alimento procesado: comida real a la que se ha añadido sal, azúcar o aceite para conservarla o hacerla más sabrosa.",
+  4: "Ultraprocesado. Formulación industrial con sustancias que no existen en una cocina doméstica. El grupo NOVA 4 se asocia de forma consistente con mayor riesgo cardiovascular, obesidad y mortalidad total, incluso ajustando por su composición nutricional."
+};
+function clasificarNova(ing) {
+  if (ing.total === 0) {
+    return {
+      grupo: null,
+      marcadores: [],
+      explicacion: "No se puede determinar el grado de procesamiento sin la lista de ingredientes."
+    };
+  }
+  const marcadores2 = [...ing.marcadoresUPF];
+  if (marcadores2.length > 0) {
+    const soloAditivosInocuos = ing.marcadoresNoAditivo.length === 0 && ing.aditivos.length > 0 && ing.aditivos.every((a) => a.aditivo.riesgo === 0);
+    const alLimite = soloAditivosInocuos && ing.total <= 6 && ing.fuentesAzucar.length === 0 && ing.reales.length > 0;
+    return {
+      grupo: 4,
+      alLimite,
+      marcadores: marcadores2,
+      explicacion: alLimite ? "Ultraprocesado por definición, pero al límite: lo clasifica ahí un solo aditivo sin riesgo conocido, en una lista corta de comida reconocible. No es lo mismo que un refresco o unas galletas rellenas, y la nota lo tiene en cuenta." : EXPLICACION[4]
+    };
+  }
+  const hayAzucar = ing.fuentesAzucar.length > 0;
+  const hayGrasaAnadida = ing.grasas.length > 0;
+  const haySal = ing.salPresente;
+  const hayRefinado = ing.lista.some((i) => i.roles.includes("harina_refinada"));
+  if (ing.total <= 2) {
+    if ((hayGrasaAnadida || hayAzucar || haySal) && ing.reales.length === 0) {
+      return { grupo: 2, marcadores: [], explicacion: EXPLICACION[2] };
+    }
+    return { grupo: 1, marcadores: [], explicacion: EXPLICACION[1] };
+  }
+  if (hayAzucar || haySal || hayGrasaAnadida || hayRefinado) {
+    return { grupo: 3, marcadores: [], explicacion: EXPLICACION[3] };
+  }
+  return { grupo: 1, marcadores: [], explicacion: EXPLICACION[1] };
+}
+function notaNova(grupo, alLimite = false) {
+  if (grupo === null) return null;
+  if (grupo === 4 && alLimite) return NOTA_NOVA[3];
+  return NOTA_NOVA[grupo];
+}
+
+// src/nucleo/normalizar.ts
+function leido(valor, textoOriginal) {
+  return { valor, estado: "leido", textoOriginal };
+}
+function desconocido() {
+  return { valor: null, estado: "desconocido" };
+}
+function calculado(valor, de) {
+  return { valor, estado: "calculado", textoOriginal: `deducido de ${de}` };
+}
+function hay(d) {
+  return Boolean(d) && d.estado !== "desconocido" && typeof d.valor === "number";
+}
+function aDato(x) {
+  if (x === null || x === void 0) return desconocido();
+  if (typeof x === "number") {
+    return Number.isFinite(x) ? leido(x) : desconocido();
+  }
+  if (typeof x === "object" && "estado" in x) return x;
+  return desconocido();
+}
+function normalizarNutrientes(e) {
+  const n = {
+    energia_kcal: aDato(e.energia_kcal),
+    energia_kj: aDato(e.energia_kj),
+    grasas_g: aDato(e.grasas_g),
+    saturadas_g: aDato(e.saturadas_g),
+    monoinsaturadas_g: aDato(e.monoinsaturadas_g),
+    poliinsaturadas_g: aDato(e.poliinsaturadas_g),
+    trans_g: aDato(e.trans_g),
+    hidratos_g: aDato(e.hidratos_g),
+    azucares_g: aDato(e.azucares_g),
+    polialcoholes_g: aDato(e.polialcoholes_g),
+    fibra_g: aDato(e.fibra_g),
+    proteinas_g: aDato(e.proteinas_g),
+    sal_g: aDato(e.sal_g),
+    sodio_mg: aDato(e.sodio_mg),
+    fvl_porcentaje: aDato(e.fvl_porcentaje)
+  };
+  if (!hay(n.energia_kj) && hay(n.energia_kcal)) {
+    n.energia_kj = calculado(n.energia_kcal.valor * 4.184, "kcal");
+  }
+  if (!hay(n.energia_kcal) && hay(n.energia_kj)) {
+    n.energia_kcal = calculado(n.energia_kj.valor / 4.184, "kJ");
+  }
+  if (!hay(n.sal_g) && hay(n.sodio_mg)) {
+    n.sal_g = calculado(n.sodio_mg.valor * 2.5 / 1e3, "sodio");
+  }
+  return n;
+}
+function camposQueFaltan(n) {
+  const nombres = {
+    energia: "Energía",
+    grasas_g: "Grasas",
+    saturadas_g: "Grasas saturadas",
+    hidratos_g: "Hidratos de carbono",
+    azucares_g: "Azúcares",
+    proteinas_g: "Proteínas",
+    sal: "Sal"
+  };
+  const faltan = [];
+  for (const campo of CAMPOS_OBLIGATORIOS) {
+    if (campo === "energia") {
+      if (!hay(n.energia_kcal) && !hay(n.energia_kj)) faltan.push(nombres.energia);
+    } else if (campo === "sal") {
+      if (!hay(n.sal_g)) faltan.push(nombres.sal);
+    } else if (!hay(n[campo])) {
+      faltan.push(nombres[campo]);
+    }
+  }
+  return faltan;
+}
+function voluntariosQueFaltan(n) {
+  const faltan = [];
+  if (!hay(n.fibra_g)) faltan.push("Fibra");
+  if (!hay(n.fvl_porcentaje)) faltan.push("Porcentaje de fruta, verdura y legumbre");
+  return faltan;
+}
+
+// src/nucleo/nutriscore.ts
+var ENERGIA_GENERAL = [335, 670, 1005, 1340, 1675, 2010, 2345, 2680, 3015, 3350];
+var ENERGIA_BEBIDA = [30, 90, 150, 210, 240, 270, 300, 330, 360, 390];
+var ENERGIA_GRASA = [120, 240, 360, 480, 600, 720, 840, 960, 1080, 1200];
+var AZUCAR_GENERAL = [3.4, 6.8, 10, 14, 17, 20, 24, 27, 31, 34, 37, 41, 44, 48, 51];
+var AZUCAR_BEBIDA = [0.5, 2, 3.5, 5, 6, 7, 8, 9, 10, 11];
+var SATURADAS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var RATIO_SATURADAS = [10, 16, 22, 28, 34, 40, 46, 52, 58, 64];
+var SAL = [
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  1,
+  1.2,
+  1.4,
+  1.6,
+  1.8,
+  2,
+  2.2,
+  2.4,
+  2.6,
+  2.8,
+  3,
+  3.2,
+  3.4,
+  3.6,
+  3.8,
+  4
+];
+var FIBRA = [3, 4.1, 5.2, 6.3, 7.4];
+var PROTEINA = [2.4, 4.8, 7.2, 9.6, 12, 14, 17];
+var PROTEINA_BEBIDA = [1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3];
+function puntos(valor, umbrales) {
+  let n = 0;
+  for (const u of umbrales) if (valor > u) n++;
+  return n;
+}
+function puntosFVL(pct, esBebida) {
+  if (esBebida) {
+    if (pct > 80) return 6;
+    if (pct > 60) return 4;
+    if (pct > 40) return 2;
+    return 0;
+  }
+  if (pct > 80) return 5;
+  if (pct > 60) return 2;
+  if (pct > 40) return 1;
+  return 0;
+}
+var VACIO = {
+  letra: null,
+  completo: false,
+  puntosNegativos: 0,
+  puntosPositivos: 0,
+  puntuacion: null,
+  detalle: {},
+  faltan: []
+};
+function calcularNutriScore(n, opts) {
+  const faltan = camposQueFaltan(n);
+  if (faltan.length > 0) {
+    return { ...VACIO, faltan };
+  }
+  const cat = opts.categoria;
+  const esBebida = cat === "bebida";
+  const esGrasa = cat === "grasa_anadida";
+  const kj = n.energia_kj.valor;
+  const grasas = n.grasas_g.valor;
+  const sat = n.saturadas_g.valor;
+  const azucar = n.azucares_g.valor;
+  const sal = n.sal_g.valor;
+  const proteina = n.proteinas_g.valor;
+  const fibra = hay(n.fibra_g) ? n.fibra_g.valor : 0;
+  const fvl = hay(n.fvl_porcentaje) ? n.fvl_porcentaje.valor : 0;
+  let pEnergia;
+  let pSaturadas;
+  if (esGrasa) {
+    pEnergia = puntos(sat * 37, ENERGIA_GRASA);
+    pSaturadas = puntos(grasas > 0 ? sat / grasas * 100 : 0, RATIO_SATURADAS);
+  } else {
+    pEnergia = puntos(kj, esBebida ? ENERGIA_BEBIDA : ENERGIA_GENERAL);
+    pSaturadas = puntos(sat, SATURADAS);
+  }
+  const pAzucar = puntos(azucar, esBebida ? AZUCAR_BEBIDA : AZUCAR_GENERAL);
+  const pSal = puntos(sal, SAL);
+  const pEdulcorante = esBebida && opts.contieneEdulcorante ? 4 : 0;
+  const N = pEnergia + pAzucar + pSaturadas + pSal + pEdulcorante;
+  const pFibra = puntos(fibra, FIBRA);
+  let pProteina = puntos(proteina, esBebida ? PROTEINA_BEBIDA : PROTEINA);
+  if (cat === "carne_roja") pProteina = Math.min(pProteina, 2);
+  const pFVL = puntosFVL(fvl, esBebida);
+  const P = pFibra + pProteina + pFVL;
+  let puntuacion;
+  if (cat === "queso" || cat === "bebida" || esGrasa) {
+    puntuacion = N - P;
+  } else {
+    puntuacion = N < 11 ? N - P : N - pFVL - pFibra;
+  }
+  let letra;
+  if (esBebida) {
+    if (opts.esAgua) letra = "A";
+    else if (puntuacion <= 2) letra = "B";
+    else if (puntuacion <= 6) letra = "C";
+    else if (puntuacion <= 9) letra = "D";
+    else letra = "E";
+  } else if (esGrasa) {
+    if (puntuacion < -5) letra = "A";
+    else if (puntuacion < 3) letra = "B";
+    else if (puntuacion < 11) letra = "C";
+    else if (puntuacion < 19) letra = "D";
+    else letra = "E";
+  } else {
+    if (puntuacion < 1) letra = "A";
+    else if (puntuacion < 3) letra = "B";
+    else if (puntuacion < 11) letra = "C";
+    else if (puntuacion < 19) letra = "D";
+    else letra = "E";
+  }
+  return {
+    letra,
+    completo: true,
+    puntosNegativos: N,
+    puntosPositivos: P,
+    puntuacion,
+    faltan: [],
+    detalle: {
+      energia: pEnergia,
+      azucares: pAzucar,
+      saturadas: pSaturadas,
+      sal: pSal,
+      edulcorante: pEdulcorante,
+      fibra: pFibra,
+      proteinas: pProteina,
+      fvl: pFVL
+    }
+  };
+}
+function notaDesdeLetra(letra) {
+  return letra ? NOTA_LETRA[letra] : null;
+}
+
+// src/nucleo/limitar.ts
+function porUmbral(valor, umbral, base, tope = 96) {
+  if (valor <= 0 || umbral <= 0) return 0;
+  return Math.min(tope, base * Math.pow(valor / umbral, EXPONENTE_DOSIS));
+}
+var r1 = (x) => Math.round(x * 10) / 10;
+function construirLimitar(n, ing, nova, categoria) {
+  const out = [];
+  const esBebida = categoria === "bebida";
+  const unidad = esBebida ? "100 ml" : "100 g";
+  const hayIngredientes = ing.total > 0;
+  const hidrogenada = ing.grasas.find((g) => g.perfil.patron.includes("hidrogenad"));
+  if (hidrogenada) {
+    out.push({
+      id: "trans_ingrediente",
+      nombre: hidrogenada.perfil.etiqueta,
+      categoria: "grasa",
+      peso: 96,
+      origen: "ingredientes",
+      dato: `posición ${hidrogenada.posicion + 1} de la lista`,
+      motivo: hidrogenada.perfil.motivo,
+      evidencia: "alta"
+    });
+  } else if (hay(n.trans_g) && n.trans_g.valor > 0.2) {
+    out.push({
+      id: "trans_declaradas",
+      nombre: "Grasas trans",
+      categoria: "grasa",
+      peso: Math.min(96, 70 + n.trans_g.valor * 12),
+      origen: "tabla",
+      dato: `${r1(n.trans_g.valor)} g / ${unidad}`,
+      motivo: "Suben el colesterol LDL y bajan el HDL a la vez. La OMS no establece ningún nivel seguro de ingesta.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.azucares_g) && n.azucares_g.valor > 0.5) {
+    const azucar = n.azucares_g.valor;
+    const hayAnadido = ing.fuentesAzucar.length > 0;
+    const umbral = esBebida ? UMBRALES.azucarBebida : UMBRALES.azucarSolido;
+    let peso = porUmbral(azucar, umbral, 62);
+    if (!hayIngredientes) peso *= 0.7;
+    else if (!hayAnadido) peso *= 0.32;
+    if (ing.azucarEnPrimeras) peso *= 1.12;
+    if (esBebida) peso *= 1.25;
+    peso = Math.min(97, peso);
+    if (peso >= 4) {
+      out.push({
+        // El identificador distingue los tres casos a propósito. Si los tres
+        // compartieran uno, el recuento del historial los fusionaría y acabaría
+        // diciendo que un yogur natural lleva azúcar añadido.
+        id: !hayIngredientes ? "azucares" : hayAnadido ? "azucares_anadidos" : "azucares_intrinsecos",
+        nombre: !hayIngredientes ? "Azúcares" : hayAnadido ? "Azúcares añadidos" : "Azúcares intrínsecos",
+        categoria: "nutriente",
+        peso,
+        origen: hayIngredientes ? "ambos" : "tabla",
+        dato: `${r1(azucar)} g / ${unidad}`,
+        motivo: !hayIngredientes ? "Sin la lista de ingredientes no se puede distinguir el azúcar añadido del propio del alimento. La valoración es provisional." : hayAnadido ? `Azúcar libre añadido${ing.azucarEnPrimeras ? ", y además figura entre los tres primeros ingredientes, así que es de lo que más pesa en el producto" : ""}. La OMS recomienda no pasar de 25 g al día.` : "Azúcar propio del alimento, dentro de su matriz natural. Preocupa mucho menos que el añadido, pero sigue contando en el total diario.",
+        evidencia: "alta"
+      });
+    }
+  }
+  if (ing.fuentesAzucar.length >= 2) {
+    out.push({
+      id: "azucar_fragmentado",
+      nombre: "Azúcar repartido en varias fuentes",
+      categoria: "ingrediente",
+      peso: Math.min(74, 42 + ing.fuentesAzucar.length * 8),
+      origen: "ingredientes",
+      dato: `${ing.fuentesAzucar.length} formas distintas: ${ing.fuentesAzucar.join(", ")}`,
+      motivo: "Los ingredientes se declaran por orden de peso. Dividir el azúcar en varias formas químicas hace que ninguna suba a los primeros puestos, aunque sumadas sean el ingrediente principal. Es legal y es deliberado.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.saturadas_g) && n.saturadas_g.valor > 0.3) {
+    const sat = n.saturadas_g.valor;
+    if (categoria === "grasa_anadida" && hay(n.grasas_g) && n.grasas_g.valor > 0) {
+      const ratio = sat / n.grasas_g.valor * 100;
+      const peso = porUmbral(ratio, UMBRALES.ratioSaturadasGrasa, 52);
+      if (peso >= 5) {
+        out.push({
+          id: "saturadas_ratio",
+          nombre: "Proporción de grasa saturada",
+          categoria: "nutriente",
+          peso,
+          origen: "tabla",
+          dato: `${Math.round(ratio)} % de la grasa total (${r1(sat)} g / ${unidad})`,
+          motivo: "En una grasa lo relevante es el reparto entre saturada e insaturada. Por debajo del 20 % el perfil es favorable; por encima del 50 % es el de una grasa sólida.",
+          evidencia: "alta"
+        });
+      }
+    } else {
+      const peso = porUmbral(sat, UMBRALES.saturadas, 55);
+      if (peso >= 5) {
+        out.push({
+          id: "saturadas",
+          nombre: "Grasas saturadas",
+          categoria: "nutriente",
+          peso,
+          origen: "tabla",
+          dato: `${r1(sat)} g / ${unidad}`,
+          motivo: "Elevan el colesterol LDL. Las guías recomiendan mantenerlas por debajo del 10 % de las calorías diarias, unos 22 g.",
+          evidencia: "alta"
+        });
+      }
+    }
+  }
+  if (hay(n.sal_g) && n.sal_g.valor > 0.1) {
+    const sal = n.sal_g.valor;
+    const peso = porUmbral(sal, UMBRALES.sal, 58);
+    if (peso >= 5) {
+      out.push({
+        id: "sal",
+        nombre: "Sal",
+        categoria: "sal",
+        peso,
+        origen: "tabla",
+        dato: `${r1(sal)} g / ${unidad} (${Math.round(sal / 5 * 100)} % del límite diario OMS)`,
+        motivo: "Principal factor dietético modificable de la hipertensión. La OMS fija el límite en 5 g al día y la media española lo dobla.",
+        evidencia: "alta"
+      });
+    }
+  }
+  const vistos = /* @__PURE__ */ new Set();
+  for (const { aditivo } of ing.aditivos) {
+    if (aditivo.riesgo === 0 || vistos.has(aditivo.codigo)) continue;
+    vistos.add(aditivo.codigo);
+    const base = { 1: 26, 2: 58, 3: 88 }[aditivo.riesgo];
+    const ajuste = aditivo.evidencia === "alta" ? 4 : aditivo.evidencia === "baja" ? -4 : 0;
+    out.push({
+      id: `aditivo_${aditivo.codigo}`,
+      nombre: `${aditivo.codigo} · ${aditivo.nombre}`,
+      categoria: "aditivo",
+      peso: Math.min(94, base + ajuste),
+      origen: "ingredientes",
+      dato: aditivo.funcion,
+      motivo: aditivo.motivo,
+      evidencia: aditivo.evidencia
+    });
+  }
+  if (vistos.size >= 5) {
+    out.push({
+      id: "coctel_aditivos",
+      nombre: "Acumulación de aditivos",
+      categoria: "procesado",
+      peso: Math.min(72, 38 + vistos.size * 5),
+      origen: "ingredientes",
+      dato: `${vistos.size} aditivos con algún grado de riesgo`,
+      motivo: "Cada aditivo se evalúa por separado, nunca en combinación. El efecto conjunto de mezclas es un hueco reconocido de la evaluación toxicológica actual.",
+      evidencia: "media"
+    });
+  }
+  for (const { perfil, posicion } of ing.grasas) {
+    if (perfil.valor >= 0 || perfil.patron.includes("hidrogenad")) continue;
+    const base = { [-1]: 34, [-2]: 62, [-3]: 90 }[perfil.valor] ?? 30;
+    out.push({
+      id: `grasa_${perfil.patron.replace(/\s/g, "_")}`,
+      nombre: perfil.etiqueta,
+      categoria: "grasa",
+      peso: base + (posicion < 3 ? 6 : 0),
+      origen: "ingredientes",
+      dato: `posición ${posicion + 1} de la lista`,
+      motivo: perfil.motivo,
+      evidencia: "media"
+    });
+  }
+  if (nova.grupo === 4) {
+    out.push({
+      id: "ultraprocesado",
+      nombre: "Ultraprocesado (NOVA 4)",
+      categoria: "procesado",
+      peso: Math.min(88, 52 + nova.marcadores.length * 4),
+      origen: "ingredientes",
+      dato: `${nova.marcadores.length} marcador(es): ${nova.marcadores.slice(0, 6).join(", ")}`,
+      motivo: nova.explicacion,
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.energia_kcal) && categoria !== "grasa_anadida") {
+    const kcal = n.energia_kcal.valor;
+    if (kcal > UMBRALES.densidadCalorica) {
+      out.push({
+        id: "densidad_calorica",
+        nombre: "Densidad calórica alta",
+        categoria: "nutriente",
+        peso: Math.min(66, (kcal - UMBRALES.densidadCalorica) / 3.5),
+        origen: "tabla",
+        dato: `${Math.round(kcal)} kcal / ${unidad}`,
+        motivo: "Mucha energía en poco volumen. Facilita comer de más antes de que aparezca la señal de saciedad.",
+        evidencia: "media"
+      });
+    }
+  }
+  if (ing.refinadoPrimero) {
+    out.push({
+      id: "refinado_primero",
+      nombre: "Harina refinada como ingrediente principal",
+      categoria: "ingrediente",
+      peso: 42,
+      origen: "ingredientes",
+      dato: "primer ingrediente de la lista",
+      motivo: "Sin salvado ni germen: pierde la mayor parte de la fibra, el magnesio y las vitaminas del grupo B, y sube el índice glucémico.",
+      evidencia: "alta"
+    });
+  }
+  if (ing.total >= 15) {
+    out.push({
+      id: "lista_larga",
+      nombre: "Lista de ingredientes muy larga",
+      categoria: "procesado",
+      peso: Math.min(58, 26 + (ing.total - 15) * 2),
+      origen: "ingredientes",
+      dato: `${ing.total} ingredientes`,
+      motivo: "El número de ingredientes es uno de los predictores más simples y fiables del grado de procesamiento industrial.",
+      evidencia: "media"
+    });
+  }
+  for (const vig of OTRAS_VIGILADAS) {
+    if (out.some((x) => x.nombre === vig.etiqueta)) continue;
+    const encontrado = ing.lista.find((i) => i.textoNormalizado.includes(vig.patron));
+    if (encontrado) {
+      out.push({
+        id: `vigilada_${vig.patron.replace(/\s/g, "_")}`,
+        nombre: vig.etiqueta,
+        categoria: "ingrediente",
+        peso: vig.severidad,
+        origen: "ingredientes",
+        dato: `posición ${encontrado.posicion + 1} de la lista`,
+        motivo: vig.motivo,
+        evidencia: "media"
+      });
+    }
+  }
+  return out.map((p) => ({ ...p, peso: Math.round(Math.max(0, Math.min(100, p.peso))) })).sort((a, b) => b.peso - a.peso);
+}
+
+// src/nucleo/favorables.ts
+function porUmbral2(valor, umbral, base, exp = 0.75, tope = 95) {
+  if (valor <= 0 || umbral <= 0) return 0;
+  return Math.min(tope, base * Math.pow(valor / umbral, exp));
+}
+var r12 = (x) => Math.round(x * 10) / 10;
+function construirFavorables(n, ing, categoria, micros = [], esUltraprocesado = false) {
+  const out = [];
+  const unidad = categoria === "bebida" ? "100 ml" : "100 g";
+  const hayIngredientes = ing.total > 0;
+  if (hay(n.fibra_g) && n.fibra_g.valor >= 1.5) {
+    const fibra = n.fibra_g.valor;
+    out.push({
+      id: "fibra",
+      nombre: fibra >= 6 ? "Alto contenido en fibra" : "Fibra",
+      categoria: "nutriente",
+      peso: porUmbral2(fibra, 3, 34),
+      origen: "tabla",
+      dato: `${r12(fibra)} g / ${unidad}`,
+      motivo: fibra >= 6 ? 'Supera el umbral legal de "alto contenido en fibra" (6 g/100 g). Alimenta la microbiota, ralentiza la absorción de glucosa y aumenta la saciedad.' : "Ralentiza la absorción de azúcares, mejora el tránsito y alimenta a las bacterias del colon. La ingesta recomendada es de 25-30 g al día y casi nadie llega.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.proteinas_g) && n.proteinas_g.valor >= 3) {
+    const prot = n.proteinas_g.valor;
+    const kcal = hay(n.energia_kcal) ? n.energia_kcal.valor : 0;
+    const pctEnergia = kcal > 0 ? prot * 4 / kcal * 100 : 0;
+    out.push({
+      id: "proteina",
+      nombre: pctEnergia >= 20 ? "Alto contenido en proteínas" : "Proteínas",
+      categoria: "nutriente",
+      peso: porUmbral2(prot, 6, 34),
+      origen: "tabla",
+      dato: `${r12(prot)} g / ${unidad}${pctEnergia > 0 ? ` (${Math.round(pctEnergia)} % de la energía)` : ""}`,
+      motivo: "Mantiene la masa muscular, es el macronutriente más saciante y el que tiene mayor gasto térmico en la digestión.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.fvl_porcentaje) && n.fvl_porcentaje.valor >= 40) {
+    const fvl = n.fvl_porcentaje.valor;
+    out.push({
+      id: "fvl",
+      nombre: "Alto porcentaje de fruta, verdura o legumbre",
+      categoria: "ingrediente",
+      peso: Math.min(95, fvl),
+      origen: "ambos",
+      dato: `${Math.round(fvl)} % del producto`,
+      motivo: "La base de cualquier patrón alimentario asociado a menor mortalidad. Aporta fibra, potasio y fitoquímicos en su matriz original.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.monoinsaturadas_g) && n.monoinsaturadas_g.valor >= 3) {
+    const mono = n.monoinsaturadas_g.valor;
+    out.push({
+      id: "monoinsaturadas",
+      nombre: "Grasas monoinsaturadas",
+      categoria: "nutriente",
+      peso: porUmbral2(mono, 10, 40),
+      origen: "tabla",
+      dato: `${r12(mono)} g / ${unidad}`,
+      motivo: "El ácido oleico mejora el perfil lipídico cuando sustituye a la grasa saturada. Es el eje de la dieta mediterránea.",
+      evidencia: "alta"
+    });
+  }
+  if (hay(n.poliinsaturadas_g) && n.poliinsaturadas_g.valor >= 2) {
+    const poli = n.poliinsaturadas_g.valor;
+    out.push({
+      id: "poliinsaturadas",
+      nombre: "Grasas poliinsaturadas",
+      categoria: "nutriente",
+      peso: porUmbral2(poli, 8, 32),
+      origen: "tabla",
+      dato: `${r12(poli)} g / ${unidad}`,
+      motivo: "Incluyen los ácidos grasos esenciales que el cuerpo no sabe fabricar. Su valor depende del equilibrio entre omega-6 y omega-3.",
+      evidencia: "media"
+    });
+  }
+  for (const real of ing.reales) {
+    let peso = real.peso * 17;
+    if (real.posicion < 3) peso += 16;
+    if (real.porcentaje) peso += Math.min(20, real.porcentaje / 5);
+    out.push({
+      id: `real_${real.etiqueta.toLowerCase().replace(/\s/g, "_")}`,
+      nombre: real.etiqueta,
+      categoria: "ingrediente",
+      peso: Math.min(94, peso),
+      origen: "ingredientes",
+      dato: real.porcentaje ? `${real.porcentaje} %, posición ${real.posicion + 1}` : `posición ${real.posicion + 1} de la lista`,
+      motivo: real.motivo,
+      evidencia: "alta"
+    });
+  }
+  for (const micro of micros) {
+    const ref = VRN[micro.clave];
+    if (!ref) continue;
+    let cantidad = micro.cantidad;
+    if (micro.unidad === "g") cantidad *= 1e3;
+    if (micro.unidad === "ug" && ref.unidad === "mg") cantidad /= 1e3;
+    if (micro.unidad === "mg" && ref.unidad === "ug") cantidad *= 1e3;
+    const pct = cantidad / ref.cantidad * 100;
+    if (pct < 15) continue;
+    const factor = esUltraprocesado ? 0.5 : 1;
+    out.push({
+      id: `micro_${micro.clave}`,
+      nombre: ref.nombre + (esUltraprocesado ? " (añadido)" : ""),
+      categoria: "micronutriente",
+      peso: Math.min(88, pct * 1.1) * factor,
+      origen: "tabla",
+      dato: `${Math.round(pct)} % del VRN por ${unidad}`,
+      motivo: esUltraprocesado ? "Vitamina o mineral añadido en fábrica. Cuenta, pero no convierte un ultraprocesado en un alimento nutritivo: fuera de su matriz natural se absorbe peor." : pct >= 30 ? 'Supera el 30 % del valor de referencia: legalmente es un "alto contenido en".' : 'Supera el 15 % del valor de referencia: legalmente es "fuente de".',
+      evidencia: "alta"
+    });
+  }
+  if (hayIngredientes) {
+    const conRiesgo = new Set(ing.aditivos.filter((a) => a.aditivo.riesgo > 0).map((a) => a.aditivo.codigo));
+    if (ing.aditivos.length === 0) {
+      out.push({
+        id: "sin_aditivos",
+        nombre: "Sin aditivos",
+        categoria: "ausencia",
+        peso: 74,
+        origen: "ingredientes",
+        dato: "ningún aditivo declarado",
+        motivo: "Ni colorantes, ni conservantes, ni emulgentes. Comida que se sostiene sola.",
+        evidencia: "alta"
+      });
+    } else if (conRiesgo.size === 0) {
+      out.push({
+        id: "aditivos_inocuos",
+        nombre: "Aditivos sin riesgo conocido",
+        categoria: "ausencia",
+        peso: 48,
+        origen: "ingredientes",
+        dato: `${ing.aditivos.length} aditivo(s), todos de riesgo 0`,
+        motivo: "Lleva aditivos, pero todos son sustancias sin señales de daño a dosis alimentarias.",
+        evidencia: "media"
+      });
+    }
+    if (ing.fuentesAzucar.length === 0 && hay(n.azucares_g) && n.azucares_g.valor < 5) {
+      out.push({
+        id: "sin_azucar_anadido",
+        nombre: "Sin azúcares añadidos",
+        categoria: "ausencia",
+        peso: 70,
+        origen: "ambos",
+        dato: `${r12(n.azucares_g.valor)} g / ${unidad}, todos intrínsecos`,
+        motivo: "El azúcar libre es el nutriente con recomendación de reducción más clara y unánime de todas las guías alimentarias.",
+        evidencia: "alta"
+      });
+    }
+    if (ing.total <= 5) {
+      out.push({
+        id: "lista_corta",
+        nombre: "Lista de ingredientes corta",
+        categoria: "ausencia",
+        peso: 40 + (6 - ing.total) * 6,
+        origen: "ingredientes",
+        dato: `${ing.total} ingrediente(s)`,
+        motivo: "Cuanto más corta es la lista, más cerca está el producto de ser comida y menos de ser una formulación.",
+        evidencia: "media"
+      });
+    }
+  }
+  if (hay(n.sal_g)) {
+    const sal = n.sal_g.valor;
+    if (sal === 0) {
+      out.push({
+        id: "sin_sal",
+        nombre: "Sin sal añadida",
+        categoria: "ausencia",
+        peso: 62,
+        origen: "tabla",
+        dato: "0 g",
+        motivo: "Nada que sumar al límite diario de 5 g de la OMS.",
+        evidencia: "alta"
+      });
+    } else if (sal < 0.3) {
+      out.push({
+        id: "bajo_en_sal",
+        nombre: "Bajo en sal",
+        categoria: "ausencia",
+        peso: 56,
+        origen: "tabla",
+        dato: `${r12(sal)} g / ${unidad}`,
+        motivo: 'Por debajo de 0,3 g/100 g la UE permite declararlo "bajo contenido en sal".',
+        evidencia: "alta"
+      });
+    }
+  }
+  return out.map((b) => ({ ...b, peso: Math.round(Math.max(0, Math.min(100, b.peso))) })).sort((a, b) => b.peso - a.peso);
+}
+
+// src/datos/danos.ts
+var PESO_DANO = {
+  cancerigeno: 1.6,
+  endocrino: 1.35,
+  cardiovascular: 1.3,
+  renal: 1.2,
+  neuroconductual: 1.15,
+  metabolico: 1,
+  digestivo: 0.7,
+  alergico: 0.85,
+  sobreconsumo: 0.6,
+  // Los dos últimos no modulan nada: no se castiga ni se perdona por
+  // desconocimiento. Pero dicen cosas distintas y no se confunden.
+  no_resuelto: 1,
+  sin_especificar: 1
+};
+var EXPLICA_DANO = {
+  cancerigeno: "Vinculado al cáncer por la IARC o por una sospecha de daño al material genético que no se ha podido descartar.",
+  endocrino: "Puede interferir con el sistema hormonal o con la reproducción.",
+  cardiovascular: "Afecta a la tensión arterial, al perfil de grasas en sangre o al riesgo cardíaco.",
+  renal: "Supone una carga para el riñón o altera el metabolismo de los minerales.",
+  neuroconductual: "Afecta a la atención, al comportamiento o al sueño. En la UE, algunos llevan advertencia obligatoria en la etiqueta.",
+  metabolico: "Afecta a la glucemia, a la microbiota intestinal o al peso.",
+  digestivo: "Provoca molestias intestinales: gases, efecto laxante o mala tolerancia.",
+  alergico: "Puede provocar reacciones de sensibilidad en personas susceptibles.",
+  sobreconsumo: "No daña por sí mismo: hace el producto más apetecible y empuja a comer más de la cuenta.",
+  no_resuelto: "Revisado: hay una preocupación abierta, pero los organismos no han podido establecer de qué tipo. Se cuenta sin agravar ni suavizar.",
+  sin_especificar: "Todavía no se ha revisado por tipo de daño. No cuenta ni a favor ni en contra por ese motivo."
+};
+var DANO_POR_CODIGO = {
+  // --- Nitritos y nitratos: precursores de nitrosaminas ---
+  E249: "cancerigeno",
+  E250: "cancerigeno",
+  E251: "cancerigeno",
+  E252: "cancerigeno",
+  // --- Otros con vínculo oncológico o genotóxico ---
+  E171: "cancerigeno",
+  // dióxido de titanio, prohibido en la UE desde 2022
+  E320: "cancerigeno",
+  // BHA, IARC grupo 2B
+  E321: "cancerigeno",
+  // BHT, sospecha en la misma familia
+  E239: "cancerigeno",
+  // libera formaldehído
+  E123: "cancerigeno",
+  E121: "cancerigeno",
+  E230: "cancerigeno",
+  E951: "cancerigeno",
+  // aspartamo, IARC grupo 2B desde 2023
+  E173: "cancerigeno",
+  // aluminio
+  E180: "cancerigeno",
+  // --- Los seis colorantes azoicos con advertencia legal ---
+  E102: "neuroconductual",
+  E104: "neuroconductual",
+  E110: "neuroconductual",
+  E122: "neuroconductual",
+  E124: "neuroconductual",
+  E129: "neuroconductual",
+  E127: "neuroconductual",
+  E131: "neuroconductual",
+  E132: "neuroconductual",
+  E133: "neuroconductual",
+  E142: "neuroconductual",
+  E151: "neuroconductual",
+  E155: "neuroconductual",
+  // --- Toxicidad reproductiva ---
+  E284: "endocrino",
+  E285: "endocrino",
+  // --- Fosfatos: carga renal y riesgo cardiovascular ---
+  E338: "renal",
+  E339: "renal",
+  E340: "renal",
+  E341: "renal",
+  E450: "renal",
+  E451: "renal",
+  E452: "renal",
+  // --- Sulfitos: reacciones de sensibilidad, sobre todo en asmáticos ---
+  E220: "alergico",
+  E221: "alergico",
+  E222: "alergico",
+  E223: "alergico",
+  E224: "alergico",
+  E225: "alergico",
+  E226: "alergico",
+  E227: "alergico",
+  E228: "alergico",
+  // --- Benzoatos: sensibilidad, y con vitamina C pueden formar benceno ---
+  E210: "alergico",
+  E211: "alergico",
+  E212: "alergico",
+  E213: "alergico",
+  E214: "alergico",
+  E215: "alergico",
+  E218: "alergico",
+  E219: "alergico",
+  // --- Potenciadores del sabor: empujan a comer más ---
+  E620: "sobreconsumo",
+  E621: "sobreconsumo",
+  E622: "sobreconsumo",
+  E623: "sobreconsumo",
+  E624: "sobreconsumo",
+  E625: "sobreconsumo",
+  E626: "sobreconsumo",
+  E627: "sobreconsumo",
+  E628: "sobreconsumo",
+  E630: "sobreconsumo",
+  E631: "sobreconsumo",
+  E632: "sobreconsumo",
+  E634: "sobreconsumo",
+  E635: "sobreconsumo",
+  // --- Edulcorantes intensos: efecto sobre microbiota y percepción del dulce ---
+  E950: "metabolico",
+  E952: "metabolico",
+  E954: "metabolico",
+  E955: "metabolico",
+  E961: "metabolico",
+  E962: "metabolico",
+  E969: "metabolico",
+  // --- Polialcoholes: efecto laxante ---
+  E420: "digestivo",
+  E421: "digestivo",
+  E953: "digestivo",
+  E965: "digestivo",
+  E966: "digestivo",
+  E967: "digestivo",
+  E968: "digestivo",
+  // --- Espesantes con efecto intestinal ---
+  E407: "digestivo",
+  E407a: "digestivo",
+  E425: "digestivo",
+  E466: "digestivo",
+  // --- Caramelos con amoniaco ---
+  E150c: "cancerigeno",
+  E150d: "cancerigeno",
+  // --- Otros revisados ---
+  E385: "metabolico",
+  // EDTA, quela minerales
+  E512: "digestivo",
+  E541: "renal",
+  // fosfato de aluminio y sodio
+  E520: "renal",
+  E554: "renal",
+  E555: "renal",
+  E310: "alergico",
+  E311: "alergico",
+  E312: "alergico",
+  E319: "alergico",
+  E161g: "no_resuelto",
+  E231: "alergico",
+  E232: "alergico",
+  E1452: "metabolico",
+  E481b: "metabolico",
+  E483: "metabolico",
+  // --- Emulgentes de síntesis -------------------------------------------
+  // Los estudios sobre emulgentes y microbiota (polisorbatos, ésteres) apuntan
+  // a alteración de la barrera intestinal en modelos animales. Es un efecto
+  // metabólico y digestivo, no oncológico.
+  E432: "metabolico",
+  E433: "metabolico",
+  E434: "metabolico",
+  E435: "metabolico",
+  E436: "metabolico",
+  E471: "metabolico",
+  E472a: "metabolico",
+  E472b: "metabolico",
+  E472c: "metabolico",
+  E472d: "metabolico",
+  E472e: "metabolico",
+  E472f: "metabolico",
+  E470a: "metabolico",
+  E470b: "metabolico",
+  E475: "metabolico",
+  E476: "metabolico",
+  E477: "metabolico",
+  E481: "metabolico",
+  E482: "metabolico",
+  E491: "metabolico",
+  E492: "metabolico",
+  E493: "metabolico",
+  E494: "metabolico",
+  E495: "metabolico",
+  E431: "metabolico",
+  E442: "metabolico",
+  E473: "metabolico",
+  E474: "metabolico",
+  // --- Espesantes y almidones modificados --------------------------------
+  // Efecto sobre el tránsito y la tolerancia intestinal. Los almidones
+  // modificados además son hidratos de absorción rápida sin fibra.
+  E405: "digestivo",
+  E461: "digestivo",
+  E463: "digestivo",
+  E464: "digestivo",
+  E465: "digestivo",
+  E468: "digestivo",
+  E469: "digestivo",
+  E1200: "digestivo",
+  E1201: "digestivo",
+  E1202: "digestivo",
+  E1400: "metabolico",
+  E1404: "metabolico",
+  E1410: "metabolico",
+  E1412: "metabolico",
+  E1413: "metabolico",
+  E1414: "metabolico",
+  E1420: "metabolico",
+  E1422: "metabolico",
+  E1440: "metabolico",
+  E1442: "metabolico",
+  E1450: "metabolico",
+  E1451: "metabolico",
+  E1505: "digestivo",
+  E1518: "digestivo",
+  E1520: "digestivo",
+  // --- Colorantes -------------------------------------------------------
+  // Los de origen natural no comparten la advertencia de los azoicos. El
+  // carmín (E120) es alérgeno reconocido. Los metálicos preocupan por
+  // acumulación.
+  E120: "alergico",
+  E150a: "no_resuelto",
+  E150b: "no_resuelto",
+  E150: "no_resuelto",
+  E141: "no_resuelto",
+  E153: "no_resuelto",
+  E160b: "alergico",
+  E160e: "no_resuelto",
+  E172: "no_resuelto",
+  E174: "no_resuelto",
+  E175: "no_resuelto",
+  // --- Conservantes ------------------------------------------------------
+  // Sorbatos y propionatos: buena tolerancia general, con reacciones de
+  // sensibilidad descritas en personas susceptibles.
+  E200: "alergico",
+  E201: "alergico",
+  E202: "alergico",
+  E203: "alergico",
+  E235: "alergico",
+  E242: "alergico",
+  E280: "digestivo",
+  E281: "digestivo",
+  E282: "digestivo",
+  E283: "digestivo",
+  // --- Antiaglomerantes con aluminio o silicio ---------------------------
+  // Los de aluminio preocupan por acumulación; los de silicio, por la
+  // exposición a nanopartículas que la EFSA ha señalado como no resuelta.
+  E535: "no_resuelto",
+  E536: "no_resuelto",
+  E550: "no_resuelto",
+  E551: "no_resuelto",
+  E552: "no_resuelto",
+  E553a: "no_resuelto",
+  E553b: "no_resuelto",
+  E559: "sin_especificar",
+  // --- Fosfatos y estabilizantes minerales que faltaban ------------------
+  E353: "renal",
+  E444: "metabolico",
+  E445: "metabolico",
+  E459: "digestivo",
+  // --- Edulcorantes que faltaban -----------------------------------------
+  E959: "metabolico",
+  E960: "metabolico",
+  E964: "digestivo",
+  // --- Recubrimientos ----------------------------------------------------
+  E900: "no_resuelto",
+  E903: "no_resuelto",
+  E904: "no_resuelto",
+  E905: "no_resuelto",
+  E914: "no_resuelto",
+  // --- Otros revisados ---------------------------------------------------
+  E315: "alergico",
+  E316: "alergico",
+  E355: "digestivo",
+  E380: "renal",
+  E517: "renal",
+  E920: "no_resuelto",
+  E927b: "no_resuelto",
+  E943a: "no_resuelto",
+  E944: "no_resuelto",
+  E999: "digestivo"
+};
+function danoDe(codigo) {
+  return DANO_POR_CODIGO[normalizarCodigoE(codigo)] ?? "sin_especificar";
+}
+
+// src/nucleo/puntuacion.ts
+var ETIQUETAS_SEMAFORO = {
+  rojo: "Consumo ocasional",
+  naranja: "Con moderación",
+  amarillo: "Aceptable, hay mejores",
+  verde_claro: "Buena elección habitual",
+  verde_parchis: "Especialmente favorable"
+};
+var COLORES_SEMAFORO = {
+  rojo: "#D93B34",
+  naranja: "#E4771D",
+  amarillo: "#E8B617",
+  verde_claro: "#78B341",
+  verde_parchis: "#17A05A"
+};
+function semaforoDesde(p) {
+  let out = "rojo";
+  for (const n of NIVELES) if (p >= n.desde) out = n.clave;
+  return out;
+}
+function calcularPuntuacion(n, ing, nova, ns, categoria) {
+  const hayIngredientes = ing.total > 0;
+  const unicos = /* @__PURE__ */ new Map();
+  for (const { aditivo } of ing.aditivos) unicos.set(aditivo.codigo, aditivo.riesgo);
+  let castigo = 0;
+  for (const [codigo, riesgo] of unicos) {
+    castigo += CASTIGO_ADITIVO[riesgo] * PESO_DANO[danoDe(codigo)];
+  }
+  const notaAditivos = hayIngredientes ? Math.max(0, 100 - castigo) : null;
+  let notaIngredientes = null;
+  if (hayIngredientes) {
+    let v2 = 55;
+    v2 += Math.min(45, ing.reales.reduce((s, r) => s + r.peso * 5, 0));
+    const realDeclarado = ing.reales.reduce((s, r) => s + (r.porcentaje ?? 0), 0);
+    if (realDeclarado > 0) {
+      if (realDeclarado >= 70) v2 += 14;
+      else if (realDeclarado >= 50) v2 += 8;
+      else if (realDeclarado >= 30) v2 += 3;
+      else if (realDeclarado < 15) v2 -= 14;
+      else v2 -= 6;
+    }
+    if (ing.azucarEnPrimeras) v2 -= 18;
+    if (ing.fuentesAzucar.length >= 2) v2 -= 12;
+    if (ing.refinadoPrimero) v2 -= 12;
+    for (const g of ing.grasas) v2 += g.perfil.valor < 0 ? g.perfil.valor * 6 : g.perfil.valor * 4;
+    notaIngredientes = Math.max(0, Math.min(100, v2));
+  }
+  const brutos = [
+    { clave: "nutriScore", nombre: "Composición nutricional", nota: notaDesdeLetra(ns.letra), peso: PESOS.nutriScore },
+    { clave: "nova", nombre: "Grado de procesamiento", nota: notaNova(nova.grupo, nova.alLimite), peso: PESOS.nova },
+    { clave: "aditivos", nombre: "Aditivos", nota: notaAditivos, peso: PESOS.aditivos },
+    { clave: "ingredientes", nombre: "Calidad de la lista", nota: notaIngredientes, peso: PESOS.ingredientes }
+  ];
+  const usables = brutos.filter((c) => c.nota !== null);
+  const pesoDisponible = usables.reduce((s, c) => s + c.peso, 0);
+  const componentes = brutos.map((c) => ({
+    clave: c.clave,
+    nombre: c.nombre,
+    nota: c.nota,
+    pesoOriginal: c.peso,
+    pesoAplicado: c.nota === null || pesoDisponible === 0 ? 0 : c.peso / pesoDisponible
+  }));
+  if (usables.length === 0 || pesoDisponible === 0) {
+    return { puntuacion: null, semaforo: null, vetos: [], componentes };
+  }
+  let puntuacion = componentes.reduce((s, c) => s + (c.nota ?? 0) * c.pesoAplicado, 0);
+  if (!ns.completo) {
+    const faltan = ns.faltan.length;
+    if (faltan >= 5) {
+      return {
+        puntuacion: null,
+        semaforo: null,
+        componentes,
+        vetos: [`Falta casi toda la tabla nutricional (${ns.faltan.join(", ")}). Con los ingredientes solos no se puede poner nota.`]
+      };
+    }
+    const techo = faltan <= 2 ? 68 : 55;
+    if (puntuacion > techo) puntuacion = techo;
+  }
+  const vetos = [];
+  let topeMasBajo = 100;
+  if (!ns.completo) {
+    vetos.push(
+      `Falta${ns.faltan.length === 1 ? "" : "n"} ${ns.faltan.length} dato(s) obligatorio(s) de la tabla (${ns.faltan.join(", ")}), así que no se puede afirmar que el producto sea mejor de lo que marca este tope.`
+    );
+  }
+  const tope = (limite, razon) => {
+    topeMasBajo = Math.min(topeMasBajo, limite);
+    if (puntuacion > limite) puntuacion = limite;
+    vetos.push(razon);
+  };
+  const trans = hay(n.trans_g) && n.trans_g.valor > 0.5;
+  if (ing.grasas.some((g) => g.perfil.patron.includes("hidrogenad")) || trans) {
+    tope(VETOS.trans, "Contiene grasas trans industriales: la OMS no reconoce ninguna dosis segura.");
+  }
+  if ([...unicos.values()].some((r) => r === 3)) {
+    const graves = ing.aditivos.filter((a) => a.aditivo.riesgo === 3);
+    const tipos = graves.map((a) => danoDe(a.aditivo.codigo));
+    if (tipos.includes("cancerigeno")) {
+      const cual = graves.find((a) => danoDe(a.aditivo.codigo) === "cancerigeno");
+      tope(
+        VETOS.aditivoCancerigeno,
+        `Contiene ${cual.aditivo.codigo}, vinculado al cáncer o a daño genético que no se ha podido descartar.`
+      );
+    } else if (tipos.includes("endocrino")) {
+      tope(
+        VETOS.aditivoEndocrino,
+        "Contiene un aditivo con sospecha de efecto sobre el sistema hormonal o la reproducción."
+      );
+    } else {
+      tope(VETOS.aditivoNivel3, 'Contiene al menos un aditivo de la categoría "evitar".');
+    }
+  }
+  if (hay(n.sal_g) && n.sal_g.valor > VETOS.salExtrema.desde) {
+    tope(VETOS.salExtrema.tope, `Aporta ${n.sal_g.valor.toFixed(1)} g de sal por 100 g: más del doble del límite diario de la OMS en cien gramos.`);
+  } else if (hay(n.sal_g) && n.sal_g.valor > VETOS.salMuyAlta.desde) {
+    tope(VETOS.salMuyAlta.tope, `Aporta ${n.sal_g.valor.toFixed(1)} g de sal por 100 g: el límite diario entero en cien gramos.`);
+  } else if (hay(n.sal_g) && n.sal_g.valor > VETOS.salAlta.desde) {
+    tope(VETOS.salAlta.tope, `Aporta ${n.sal_g.valor.toFixed(1)} g de sal por 100 g: la mitad del límite diario en una sola toma.`);
+  }
+  if (ing.fuentesAzucar.length > 0 && hay(n.azucares_g)) {
+    const az = n.azucares_g.valor;
+    const esBebida = categoria === "bebida";
+    if (esBebida && az > VETOS.bebidaAzucarada.desde) {
+      tope(VETOS.bebidaAzucarada.tope, "Bebida azucarada: el azúcar líquido no sacia y se absorbe de golpe.");
+    } else if (!esBebida && az > VETOS.azucarMuyAlto.desde) {
+      tope(VETOS.azucarMuyAlto.tope, `Casi la mitad del producto es azúcar añadido (${az} g / 100 g).`);
+    } else if (!esBebida && az > VETOS.azucarAlto.desde) {
+      tope(VETOS.azucarAlto.tope, "Más de 30 g de azúcar añadido por 100 g.");
+    }
+  }
+  const textoIng = ing.lista.map((x) => x.textoNormalizado).join(" | ");
+  const grasaDeCacao = /\bcacao\b/.test(textoIng) && !/\b(palma|palmiste|coco|hidrogenad)\b/.test(textoIng);
+  const umbralSat = grasaDeCacao ? { muyAltas: 32, extremas: 45 } : { muyAltas: VETOS.saturadasMuyAltas.desde, extremas: VETOS.saturadasExtremas.desde };
+  if (hay(n.saturadas_g) && n.saturadas_g.valor > umbralSat.extremas) {
+    tope(
+      VETOS.saturadasExtremas.tope,
+      `Aporta ${n.saturadas_g.valor.toFixed(1)} g de grasa saturada por 100 g.`
+    );
+  } else if (hay(n.saturadas_g) && n.saturadas_g.valor > umbralSat.muyAltas) {
+    tope(
+      VETOS.saturadasMuyAltas.tope,
+      `Aporta ${n.saturadas_g.valor.toFixed(1)} g de grasa saturada por 100 g.`
+    );
+  }
+  if (nova.grupo === 4) {
+    tope(
+      nova.alLimite ? VETOS.ultraprocesadoAlLimite : VETOS.ultraprocesado,
+      nova.alLimite ? "Ultraprocesado al límite: lo clasifica ahí un solo aditivo inocuo, así que el tope es más alto, pero no llega a verde parchís." : "Ultraprocesado: ningún NOVA 4 entra en la categoría verde parchís."
+    );
+    if (ing.fuentesAzucar.length > 0 && hay(n.azucares_g) && n.azucares_g.valor > VETOS.ultraprocesadoAzucarado.desde) {
+      tope(
+        VETOS.ultraprocesadoAzucarado.tope,
+        `Ultraprocesado con ${n.azucares_g.valor} g de azúcar añadido por 100 g: ni la fibra ni la proteína lo compensan.`
+      );
+    }
+  }
+  if (categoria === "grasa_anadida" && nova.grupo !== null && nova.grupo <= 2 && hay(n.grasas_g) && n.grasas_g.valor > 0 && hay(n.saturadas_g) && hay(n.monoinsaturadas_g)) {
+    const ratioSat = n.saturadas_g.valor / n.grasas_g.valor;
+    if (ratioSat < 0.22 && n.monoinsaturadas_g.valor >= 50 && unicos.size === 0 && puntuacion < SUELOS.grasaBuena) {
+      puntuacion = Math.min(SUELOS.grasaBuena, topeMasBajo);
+      vetos.push("Grasa mínimamente procesada con perfil de ácidos grasos favorable: se le aplica una nota mínima alta.");
+    }
+  }
+  if (nova.grupo === 1 && unicos.size === 0 && hay(n.sal_g) && n.sal_g.valor < 0.3 && hay(n.azucares_g) && n.azucares_g.valor < 12 && puntuacion < SUELOS.minimamenteProcesado) {
+    puntuacion = Math.min(SUELOS.minimamenteProcesado, topeMasBajo);
+    vetos.push("Alimento mínimamente procesado sin aditivos: se le aplica una nota mínima.");
+  }
+  puntuacion = Math.round(Math.max(0, Math.min(100, puntuacion)));
+  return { puntuacion, semaforo: semaforoDesde(puntuacion), vetos, componentes };
+}
+
+// src/nucleo/validador.ts
+var NOMBRE = {
+  energia_kcal: "energía",
+  energia_kj: "energía en kJ",
+  grasas_g: "grasas",
+  saturadas_g: "grasas saturadas",
+  monoinsaturadas_g: "monoinsaturadas",
+  poliinsaturadas_g: "poliinsaturadas",
+  trans_g: "grasas trans",
+  hidratos_g: "hidratos de carbono",
+  azucares_g: "azúcares",
+  polialcoholes_g: "polialcoholes",
+  fibra_g: "fibra",
+  proteinas_g: "proteínas",
+  sal_g: "sal",
+  sodio_mg: "sodio",
+  fvl_porcentaje: "porcentaje de fruta y verdura"
+};
+var EN_GRAMOS = [
+  "grasas_g",
+  "saturadas_g",
+  "monoinsaturadas_g",
+  "poliinsaturadas_g",
+  "trans_g",
+  "hidratos_g",
+  "azucares_g",
+  "polialcoholes_g",
+  "fibra_g",
+  "proteinas_g",
+  "sal_g"
+];
+var v = (d) => d.valor;
+var r13 = (x) => Math.round(x * 10) / 10;
+var r2 = (x) => Math.abs(x) < 10 ? Math.round(x * 100) / 100 : Math.round(x * 10) / 10;
+function proponerPara(campo, valor, enMiligramos) {
+  const texto = String(valor);
+  if (/9$/.test(texto)) {
+    const sinNueve = parseFloat(texto.slice(0, -1));
+    if (Number.isFinite(sinNueve) && sinNueve > 0 && sinNueve <= 100) {
+      return {
+        campo,
+        valorActual: valor,
+        valorPropuesto: sinNueve,
+        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
+      };
+    }
+  }
+  if (enMiligramos > 0 && enMiligramos <= 100) {
+    return {
+      campo,
+      valorActual: valor,
+      valorPropuesto: r2(enMiligramos),
+      motivo: "La cifra encaja si estaba en miligramos y se leyó como gramos."
+    };
+  }
+  return void 0;
+}
+var May = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+function validar(n, esProductoSalado = false) {
+  const inc = [];
+  for (const campo of Object.keys(n)) {
+    const d = n[campo];
+    if (hay(d) && v(d) < 0) {
+      inc.push({
+        codigo: "negativo",
+        gravedad: "error",
+        campos: [campo],
+        mensaje: `El valor de ${NOMBRE[campo] ?? campo} es negativo (${v(d)}). Eso no existe en una etiqueta.`
+      });
+    }
+  }
+  for (const campo of EN_GRAMOS) {
+    const d = n[campo];
+    if (!hay(d) || v(d) <= 100) continue;
+    const enMiligramos = v(d) / 1e3;
+    inc.push({
+      codigo: "mayor_que_cien",
+      gravedad: "error",
+      campos: [campo],
+      mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${v(d)} g por 100 g. Es imposible: no caben más de 100 gramos en 100 gramos.`,
+      correccion: proponerPara(campo, v(d), enMiligramos)
+    });
+  }
+  if (hay(n.azucares_g) && hay(n.hidratos_g) && v(n.azucares_g) > v(n.hidratos_g) + 0.15) {
+    inc.push({
+      codigo: "azucar_mayor_hidratos",
+      gravedad: "error",
+      campos: ["azucares_g", "hidratos_g"],
+      mensaje: `Los azúcares (${r13(v(n.azucares_g))} g) superan a los hidratos de carbono (${r13(v(n.hidratos_g))} g). En la etiqueta los azúcares van dentro de los hidratos, así que uno de los dos está mal leído.`
+    });
+  }
+  if (hay(n.saturadas_g) && hay(n.grasas_g) && v(n.saturadas_g) > v(n.grasas_g) + 0.15) {
+    inc.push({
+      codigo: "saturada_mayor_grasa",
+      gravedad: "error",
+      campos: ["saturadas_g", "grasas_g"],
+      mensaje: `La grasa saturada (${r13(v(n.saturadas_g))} g) supera a la grasa total (${r13(v(n.grasas_g))} g). Una es parte de la otra, así que hay un error de lectura.`
+    });
+  }
+  const suma = ["grasas_g", "hidratos_g", "proteinas_g", "fibra_g", "polialcoholes_g", "sal_g"].reduce((s, k) => s + (hay(n[k]) ? v(n[k]) : 0), 0);
+  if (suma > 100.5) {
+    inc.push({
+      codigo: "suma_mayor_cien",
+      gravedad: "error",
+      campos: ["grasas_g", "hidratos_g", "proteinas_g"],
+      mensaje: `Grasas, hidratos, proteínas, fibra y sal suman ${r13(suma)} g por cada 100 g de producto. Algún valor está mal leído.`
+    });
+  }
+  if (hay(n.energia_kcal)) {
+    const kcalCalc = (hay(n.grasas_g) ? v(n.grasas_g) * 9 : 0) + (hay(n.hidratos_g) ? v(n.hidratos_g) * 4 : 0) + (hay(n.proteinas_g) ? v(n.proteinas_g) * 4 : 0) + (hay(n.fibra_g) ? v(n.fibra_g) * 2 : 0) + (hay(n.polialcoholes_g) ? v(n.polialcoholes_g) * 2.4 : 0);
+    const declarada = v(n.energia_kcal);
+    if (kcalCalc >= 20) {
+      const desvio = Math.abs(declarada - kcalCalc) / kcalCalc;
+      if (desvio > 0.2) {
+        const pareceKj = Math.abs(declarada / 4.184 - kcalCalc) / kcalCalc < 0.2;
+        inc.push({
+          codigo: "energia_incoherente",
+          gravedad: pareceKj ? "error" : "aviso",
+          campos: ["energia_kcal"],
+          mensaje: pareceKj ? `La energía marca ${Math.round(declarada)} kcal, pero por sus nutrientes deberían ser unas ${Math.round(kcalCalc)} kcal. La cifra encaja si se leyó la columna de kilojulios.` : `La energía declarada (${Math.round(declarada)} kcal) se desvía un ${Math.round(desvio * 100)} % de la que sale de sus nutrientes (${Math.round(kcalCalc)} kcal). Merece un vistazo.`,
+          correccion: pareceKj ? {
+            campo: "energia_kcal",
+            valorActual: declarada,
+            valorPropuesto: Math.round(declarada / 4.184),
+            motivo: "Un kilojulio equivale a 0,239 kilocalorías. La cifra cuadra al convertirla."
+          } : void 0
+        });
+      }
+    } else if (declarada > 50 && suma < 5) {
+      inc.push({
+        codigo: "energia_sin_nutrientes",
+        gravedad: "error",
+        campos: ["energia_kcal"],
+        mensaje: `Marca ${Math.round(declarada)} kcal pero apenas hay nutrientes que las expliquen. Puede que se haya leído la columna "por ración" mezclada con la de "por 100 g".`
+      });
+    }
+  }
+  if (hay(n.sal_g) && hay(n.sodio_mg)) {
+    const salDesdeSodio = v(n.sodio_mg) * 2.5 / 1e3;
+    if (salDesdeSodio > 0.01) {
+      const desvio = Math.abs(v(n.sal_g) - salDesdeSodio) / salDesdeSodio;
+      if (desvio > 0.15) {
+        inc.push({
+          codigo: "sal_sodio_descuadran",
+          gravedad: "aviso",
+          campos: ["sal_g", "sodio_mg"],
+          mensaje: `La sal declarada (${r13(v(n.sal_g))} g) no cuadra con el sodio (${Math.round(v(n.sodio_mg))} mg, que equivalen a ${r13(salDesdeSodio)} g de sal). Confundir sodio con sal multiplica el error por 2,5.`,
+          correccion: {
+            campo: "sal_g",
+            valorActual: v(n.sal_g),
+            valorPropuesto: r2(salDesdeSodio),
+            motivo: "Sal igual a sodio por 2,5, según el Reglamento (UE) 1169/2011."
+          }
+        });
+      }
+    }
+  }
+  if (hay(n.sal_g) && !esProductoSalado && v(n.sal_g) > 6 && v(n.sal_g) <= 100) {
+    const grave = v(n.sal_g) > 12;
+    inc.push({
+      codigo: "sal_disparatada",
+      gravedad: grave ? "error" : "aviso",
+      campos: ["sal_g"],
+      mensaje: grave ? `${r13(v(n.sal_g))} g de sal por 100 g es una barbaridad para cualquier producto que no sea sal o un caldo concentrado.` : `${r13(v(n.sal_g))} g de sal por 100 g es muchísimo: son ${Math.round(v(n.sal_g) / 5 * 100)} % del límite diario de la OMS en cien gramos. Comprueba que la cifra sea esa.`,
+      correccion: {
+        campo: "sal_g",
+        valorActual: v(n.sal_g),
+        valorPropuesto: v(n.sal_g) > 100 ? r2(v(n.sal_g) / 1e3) : r2(v(n.sal_g) / 10),
+        motivo: "Suele venir de una coma decimal que se ha perdido al leer."
+      }
+    });
+  }
+  for (const campo of EN_GRAMOS) {
+    const d = n[campo];
+    if (!hay(d)) continue;
+    if (d.estado === "corregido") continue;
+    const bruto = (d.textoOriginal ?? String(d.valor).replace(".", ",")).trim();
+    if (/[a-zA-Z]/.test(bruto)) continue;
+    if (!/^\d+[.,]\d9$/.test(bruto.replace(/\s/g, ""))) continue;
+    const sinNueve = parseFloat(bruto.replace(",", ".").slice(0, -1));
+    if (!Number.isFinite(sinNueve)) continue;
+    inc.push({
+      codigo: "unidad_leida_como_nueve",
+      gravedad: "aviso",
+      campos: [campo],
+      mensaje: `${May(NOMBRE[campo] ?? campo)} marca ${bruto} sin unidad. Cuando la "g" va pegada al número, los lectores la confunden con un nueve: puede que en el envase ponga ${r13(sinNueve)} g.`,
+      correccion: {
+        campo,
+        valorActual: v(d),
+        valorPropuesto: r2(sinNueve),
+        motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
+      }
+    });
+  }
+  {
+    const culpable = buscarComaPerdida(n);
+    if (culpable) {
+      inc.push({
+        codigo: "coma_perdida",
+        gravedad: "error",
+        campos: [culpable.campo],
+        mensaje: `${May(NOMBRE[culpable.campo] ?? culpable.campo)} marca ${r13(culpable.actual)} y la energía declarada no cuadra. Con ${r13(culpable.propuesto)} la cuenta encaja casi exacta, así que lo más probable es que se haya perdido la coma decimal al leer.`,
+        correccion: {
+          campo: culpable.campo,
+          valorActual: culpable.actual,
+          valorPropuesto: culpable.propuesto,
+          motivo: "Es el único campo que, dividido por diez, hace que la energía cuadre."
+        }
+      });
+    }
+  }
+  if (hay(n.saturadas_g) && !hay(n.grasas_g)) {
+    inc.push({
+      codigo: "saturada_sin_grasa",
+      gravedad: "aviso",
+      campos: ["grasas_g"],
+      mensaje: "Se ha leído la grasa saturada pero no la grasa total. En la etiqueta la saturada va justo debajo, así que probablemente se saltó una línea."
+    });
+  }
+  if (hay(n.azucares_g) && !hay(n.hidratos_g)) {
+    inc.push({
+      codigo: "azucar_sin_hidratos",
+      gravedad: "aviso",
+      campos: ["hidratos_g"],
+      mensaje: "Se han leído los azúcares pero no los hidratos de carbono. En la etiqueta los azúcares van justo debajo, así que probablemente se saltó una línea."
+    });
+  }
+  if (hay(n.fvl_porcentaje) && (v(n.fvl_porcentaje) < 0 || v(n.fvl_porcentaje) > 100)) {
+    inc.push({
+      codigo: "porcentaje_imposible",
+      gravedad: "error",
+      campos: ["fvl_porcentaje"],
+      mensaje: `El porcentaje de fruta y verdura marca ${v(n.fvl_porcentaje)} %, y un porcentaje va de 0 a 100.`
+    });
+  }
+  const errores = inc.filter((i) => i.gravedad === "error").length;
+  const avisos = inc.filter((i) => i.gravedad === "aviso").length;
+  const indiceCoherencia = Math.max(0, 1 - errores * 0.28 - avisos * 0.08);
+  return { incidencias: inc, errores, avisos, coherente: errores === 0, indiceCoherencia };
+}
+function menorQueMalLeido(valor, campo) {
+  const texto = String(valor);
+  if (!/^[23]\d*[.,]?\d*$/.test(texto)) return void 0;
+  const sinPrimera = parseFloat(texto.slice(1).replace(",", "."));
+  if (!Number.isFinite(sinPrimera) || sinPrimera >= 1 || sinPrimera <= 0) return void 0;
+  return {
+    campo,
+    valorActual: valor,
+    valorPropuesto: sinPrimera,
+    motivo: 'Muchas etiquetas ponen "menos de 0,5" con el símbolo «<», y el lector lo confunde con un 2. La cifra encaja si era «<' + sinPrimera.toString().replace(".", ",") + "»."
+  };
+}
+function validarContraIngredientes(n, ctx) {
+  const inc = [];
+  if (ctx.total === 0) return inc;
+  if (hay(n.azucares_g) && v(n.azucares_g) > 5 && !ctx.hayFuenteAzucar && !ctx.hayLacteo && !ctx.hayFruta) {
+    inc.push({
+      codigo: "azucar_sin_origen",
+      gravedad: "aviso",
+      campos: ["azucares_g"],
+      mensaje: `La tabla declara ${r13(v(n.azucares_g))} g de azúcares, pero en la lista de ingredientes no hay nada de donde puedan salir: ni azúcar añadido, ni fruta, ni lácteo. Una de las dos cifras está mal leída.`,
+      correccion: menorQueMalLeido(v(n.azucares_g), "azucares_g")
+    });
+  }
+  if (hay(n.grasas_g) && v(n.grasas_g) > 15 && !ctx.hayGrasaAnadida) {
+    inc.push({
+      codigo: "grasa_sin_origen",
+      gravedad: "aviso",
+      campos: ["grasas_g"],
+      mensaje: `La tabla declara ${r13(v(n.grasas_g))} g de grasa, pero en los ingredientes no aparece ningún aceite ni grasa. Comprueba la cifra.`
+    });
+  }
+  if (hay(n.sal_g) && v(n.sal_g) > 1.5 && !ctx.haySal) {
+    inc.push({
+      codigo: "sal_sin_origen",
+      gravedad: "aviso",
+      campos: ["sal_g"],
+      mensaje: `La tabla declara ${r13(v(n.sal_g))} g de sal, pero la sal no figura en la lista de ingredientes. Comprueba la cifra.`
+    });
+  }
+  return inc;
+}
+function buscarComaPerdida(n) {
+  const kcal = hay(n.energia_kcal) ? v(n.energia_kcal) : hay(n.energia_kj) ? v(n.energia_kj) / 4.184 : null;
+  if (kcal === null || kcal <= 0) return null;
+  const g = hay(n.grasas_g) ? v(n.grasas_g) : null;
+  const h = hay(n.hidratos_g) ? v(n.hidratos_g) : null;
+  const p = hay(n.proteinas_g) ? v(n.proteinas_g) : null;
+  if (g === null || h === null || p === null) return null;
+  const f = hay(n.fibra_g) ? v(n.fibra_g) : 0;
+  const calcular = (gg, hh, pp, ff) => gg * 9 + hh * 4 + pp * 4 + ff * 2;
+  const desvio = (calc) => Math.abs(calc - kcal) / kcal;
+  if (desvio(calcular(g, h, p, f)) < 0.2) return null;
+  const candidatos = [];
+  const pruebas = [
+    ["grasas_g", g, (x) => calcular(x, h, p, f)],
+    ["hidratos_g", h, (x) => calcular(g, x, p, f)],
+    ["proteinas_g", p, (x) => calcular(g, h, x, f)]
+  ];
+  if (hay(n.fibra_g)) pruebas.push(["fibra_g", f, (x) => calcular(g, h, p, x)]);
+  for (const [campo2, actual2, recalcular] of pruebas) {
+    if (actual2 < 1) continue;
+    const propuesto2 = Math.round(actual2 / 10 * 100) / 100;
+    const e = desvio(recalcular(propuesto2));
+    if (e < 0.08) candidatos.push({ campo: campo2, actual: actual2, propuesto: propuesto2, error: e });
+  }
+  if (candidatos.length !== 1) return null;
+  const { campo, actual, propuesto } = candidatos[0];
+  return { campo, actual, propuesto };
+}
+
+// src/nucleo/confianza.ts
+var PESOS_CONFIANZA = {
+  completitud: 0.45,
+  calidadLectura: 0.3,
+  coherencia: 0.25
+};
+var ETIQUETA = {
+  alta: "Análisis fiable",
+  media: "Análisis orientativo",
+  baja: "Confianza baja, conviene revisar los datos",
+  insuficiente: "Análisis incompleto"
+};
+function calcularConfianza(e) {
+  const { nutrientes: n } = e;
+  const faltan = camposQueFaltan(n);
+  const presentes = CAMPOS_OBLIGATORIOS.length - faltan.length;
+  const porTabla = presentes / CAMPOS_OBLIGATORIOS.length;
+  const completitud = 0.75 * porTabla + 0.25 * (e.hayIngredientes ? 1 : 0);
+  const valores = Object.values(n).filter(
+    (d) => d.estado === "leido" || d.estado === "corregido"
+  );
+  let calidadLectura = 1;
+  if (valores.length > 0) {
+    const suma = valores.reduce((s, d) => {
+      if (d.estado === "corregido") return s + 1;
+      return s + (typeof d.confianzaOCR === "number" ? d.confianzaOCR : 1);
+    }, 0);
+    calidadLectura = suma / valores.length;
+  }
+  const coherencia = Math.max(0, Math.min(1, e.indiceCoherencia));
+  const bruto = PESOS_CONFIANZA.completitud * completitud + PESOS_CONFIANZA.calidadLectura * calidadLectura + PESOS_CONFIANZA.coherencia * coherencia;
+  let valor = Math.round(bruto * 100);
+  let nivel;
+  if (faltan.length > 0) {
+    nivel = "insuficiente";
+    valor = Math.min(valor, 55);
+  } else if (e.huboErrores) {
+    nivel = "baja";
+    valor = Math.min(valor, 55);
+  } else if (valor >= 85) nivel = "alta";
+  else if (valor >= 60) nivel = "media";
+  else nivel = "baja";
+  const comoMejorarla = [];
+  if (faltan.length > 0) {
+    comoMejorarla.push(`Completa estos datos de la tabla: ${faltan.join(", ")}.`);
+  }
+  if (!e.hayIngredientes) {
+    comoMejorarla.push("Fotografía también la lista de ingredientes. Es lo que más sube la fiabilidad del análisis.");
+  }
+  if (e.huboErrores) {
+    comoMejorarla.push("Revisa los datos marcados en rojo: hay cifras que no cuadran entre sí.");
+  }
+  if (calidadLectura < 0.75 && faltan.length === 0) {
+    comoMejorarla.push("La foto se ha leído con dificultad. Repítela con más luz y el envase liso, o pega el texto copiado desde el iPhone.");
+  }
+  return {
+    valor: Math.max(0, Math.min(100, valor)),
+    nivel,
+    etiqueta: ETIQUETA[nivel],
+    completitud: Math.round(completitud * 100),
+    calidadLectura: Math.round(calidadLectura * 100),
+    coherencia: Math.round(coherencia * 100),
+    comoMejorarla
+  };
+}
 
 // src/datos/fuentes.ts
 var F = [
@@ -5522,6 +5989,11 @@ function analizarIngredientesTexto(crudo) {
 }
 
 // src/nucleo/explicar.ts
+function conTipoDeDano(codigo, motivo) {
+  const tipo = danoDe(codigo);
+  if (tipo === "sin_especificar") return motivo;
+  return `${motivo} ${EXPLICA_DANO[tipo]}`;
+}
 function veredictoDe(v2) {
   if (v2 > 0) return "favorable";
   if (v2 < 0) return "limitar";
@@ -5761,7 +6233,7 @@ function explicarIngrediente(texto, porcentaje, profundidad = 0) {
         veredicto: ad.riesgo === 0 ? "neutro" : "limitar",
         valoracion: -ad.riesgo,
         queEs: ad.fichado === false ? `Aditivo alimentario. Por su numeración es un ${ad.funcion}.` : `Aditivo alimentario que cumple la función de ${ad.funcion}.`,
-        porQue: ad.motivo,
+        porQue: conTipoDeDano(ad.codigo, ad.motivo),
         evidencia: ad.evidencia,
         codigoE: ad.codigo,
         fuentes: fuentesDe(ad.fuentes ?? ["ue-1333"])
@@ -5782,7 +6254,7 @@ function explicarIngrediente(texto, porcentaje, profundidad = 0) {
         veredicto: ad.riesgo === 0 ? "neutro" : "limitar",
         valoracion: -ad.riesgo,
         queEs: `Aditivo alimentario que cumple la función de ${ad.funcion}. En la etiqueta aparece por su nombre y no por su código.`,
-        porQue: ad.motivo,
+        porQue: conTipoDeDano(ad.codigo, ad.motivo),
         evidencia: ad.evidencia,
         codigoE: ad.codigo,
         fuentes: fuentesDe(ad.fuentes ?? ["ue-1333"])
@@ -6545,10 +7017,12 @@ export {
   CATALOGO,
   COLORES_SEMAFORO,
   ETIQUETAS_SEMAFORO,
+  EXPLICA_DANO,
   FUENTES,
   MINIMO_PARA_TENDENCIA,
   NIVELES,
   NO_DEDUCIBLES,
+  PESO_DANO,
   RECORTE_COMPLETO,
   RepositorioIndexedDB,
   RepositorioMemoria,
@@ -6569,6 +7043,7 @@ export {
   comparar,
   contarSustancias,
   crearImagen,
+  danoDe,
   deducciones,
   desactualizados,
   desconocido,

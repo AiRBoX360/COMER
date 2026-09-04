@@ -24,7 +24,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.7.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -74,9 +74,29 @@ function irA(clave, conservarScroll = false) {
   vistaActual = clave;
 
   const y = conservarScroll ? window.scrollY : 0;
-  contenedor.innerHTML = vista.pinta({ irA });
+
+  /**
+   * Cada vista se pinta dentro de un envoltorio NUEVO.
+   *
+   * Cambiar solo el innerHTML del contenedor lo deja vivo, y con él todos los
+   * oyentes que las vistas le hayan colgado. En cada repintado se acumulaba
+   * uno más, así que un botón que alterna acababa alternándose dos veces
+   * seguidas en el mismo toque: encendía y apagaba a la vez.
+   *
+   * Lo destapó el filtro "solo lo que conviene limitar" de la pestaña Saber,
+   * pero el riesgo lo tenían las nueve pantallas que enganchan oyentes.
+   *
+   * La solución es un envoltorio interno que se tira y se rehace en cada
+   * pintado: los oyentes se van con él. El contenedor de fuera no se toca, así
+   * que cualquier código que guarde una referencia a él sigue valiendo.
+   */
+  const envoltorio = document.createElement('div');
+  envoltorio.className = 'vista__cuerpo';
+  envoltorio.innerHTML = vista.pinta({ irA });
+  contenedor.replaceChildren(envoltorio);
+
   if (vista.activa) {
-    vista.activa(contenedor, {
+    vista.activa(envoltorio, {
       irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar,
       // Repintar sin perder el sitio: al volver de la cámara, saltar arriba
       // sería desconcertante.
