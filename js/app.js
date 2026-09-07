@@ -24,7 +24,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '1.9.0';
+export const VERSION = '1.10.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -73,7 +73,8 @@ function irA(clave, conservarScroll = false) {
   if (!vista || (clave === vistaActual && !conservarScroll)) return;
   vistaActual = clave;
 
-  const y = conservarScroll ? window.scrollY : 0;
+  const zona = document.querySelector('.principal');
+  const y = conservarScroll ? (zona?.scrollTop ?? 0) : 0;
 
   /**
    * Cada vista se pinta dentro de un envoltorio NUEVO.
@@ -110,8 +111,9 @@ function irA(clave, conservarScroll = false) {
   }
 
   document.title = `${vista.titulo} · Catario`;
-  window.scrollTo({ top: y });
-  // Sin animación de scroll: en móvil molesta más de lo que aporta.
+  // Se desplaza el contenedor, no la ventana: la página entera ya no se mueve.
+  if (zona) zona.scrollTop = y;
+  // Sin animación: en móvil molesta más de lo que aporta.
 }
 
 for (const p of pestanas) {
@@ -224,5 +226,20 @@ window.addEventListener('comer:tendencia', () => irA('tendencia'));
 window.addEventListener('comer:acerca', () => irA('acerca'));
 
 export { irA };
+
+/**
+ * Mide la cabecera y se lo dice al CSS.
+ *
+ * Su alto depende del tamaño de letra que se haya elegido y de la muesca del
+ * teléfono, así que no se puede escribir un número fijo en la hoja de estilos.
+ */
+function medirCabecera() {
+  const cab = document.querySelector('.cabecera');
+  if (!cab) return;
+  document.documentElement.style.setProperty('--alto-cabecera', `${cab.offsetHeight}px`);
+}
+medirCabecera();
+window.addEventListener('resize', medirCabecera);
+window.addEventListener('orientationchange', () => setTimeout(medirCabecera, 250));
 
 irA('inicio');

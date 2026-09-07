@@ -61,13 +61,27 @@
 
 /* 17px de base en vez de 16: en un móvil a un brazo de distancia se agradece.
    El multiplicador permite subirlo sin tocar una sola regla más. */
+/**
+ * La página no se desplaza: se desplaza su contenido.
+ *
+ * En Safari de iPhone, al estirar la página más allá del final, los elementos
+ * fijos se mueven CON ella. La barra de pestañas se despegaba de abajo. No es
+ * un fallo del navegador: es cómo funciona el rebote elástico.
+ *
+ * La solución es que el documento no se desplace nunca, y que lo haga un
+ * contenedor interno. Así el rebote ocurre dentro y la barra no se entera.
+ */
 html{
   -webkit-text-size-adjust:100%;
   font-size:calc(17px * var(--escala));
+  height:100%;
+  overflow:hidden;
 }
 
 body{
   margin:0;
+  height:100%;
+  overflow:hidden;
   background:var(--tinta);
   color:var(--hueso);
   font-family:var(--cuerpo);
@@ -100,8 +114,10 @@ button{touch-action:manipulation}
 }
 
 /* --- Cabecera ------------------------------------------------------------- */
+/* Fija, no pegajosa: ahora que el documento no se desplaza, "sticky" no
+   tendría respecto a qué pegarse. */
 .cabecera{
-  position:sticky; top:0; z-index:20;
+  position:fixed; top:0; left:0; right:0; z-index:20;
   display:flex; align-items:center; justify-content:space-between;
   padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
   background:rgba(16,19,25,.86);
@@ -133,10 +149,21 @@ button{touch-action:manipulation}
 
 /* --- Contenido ------------------------------------------------------------ */
 .principal{
-  padding:var(--e5) var(--e4) calc(var(--alto-barra) + var(--e7) + env(safe-area-inset-bottom));
-  max-width:640px; margin:0 auto;
-  min-height:60vh;
+  /* Este es el único elemento que se desplaza. El rebote elástico ocurre aquí
+     dentro, así que la barra de abajo no se mueve con él. */
+  position:absolute;
+  /* Debajo de la cabecera fija. Su alto lo mide el propio navegador y se
+     guarda en esta variable al arrancar: depende del tamaño de letra elegido
+     y de la muesca del teléfono, así que no se puede escribir a mano. */
+  top:var(--alto-cabecera, 4.2rem);
+  left:0; right:0;
+  bottom:calc(var(--alto-barra) + env(safe-area-inset-bottom));
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:var(--e5) var(--e4) var(--e7);
 }
+.principal > *{max-width:640px; margin-inline:auto}
 .principal:focus{outline:none}
 
 /* --- Barra de pestañas ---------------------------------------------------- */

@@ -185,8 +185,12 @@ export function analizar() {
     </div>
     <div id="resultadosFresco"></div>
     <p class="texto" style="font-size:0.9rem">
-      <strong>Son valores de tabla, no de un envase.</strong> Un plátano muy maduro
-      tiene más azúcar que uno verde, y un salmón de piscifactoría más grasa que uno
+      <strong>Todos los valores son por 100 gramos</strong> de porción comestible,
+      en crudo salvo los que dicen "cocida".
+    </p>
+    <p class="texto" style="font-size:0.9rem">
+      <strong>Y son de tabla, no de un envase.</strong> Un plátano muy maduro tiene
+      más azúcar que uno verde, y un salmón de piscifactoría más grasa que uno
       salvaje. Sirven para situar el alimento, no para contar gramos.
     </p>
 
@@ -238,7 +242,12 @@ function irAlResumen() {
   setTimeout(() => {
     const destino = document.querySelector('#resumenLectura');
     if (!destino || !destino.innerHTML.trim()) return;
-    destino.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Se desplaza el contenedor, que es lo único que se mueve ahora. Antes se
+    // usaba scrollIntoView, que actúa sobre la ventana y ya no vale.
+    const zona = document.querySelector('.principal');
+    if (!zona) { destino.scrollIntoView({ block: 'start' }); return; }
+    const arriba = destino.getBoundingClientRect().top - zona.getBoundingClientRect().top;
+    zona.scrollTo({ top: zona.scrollTop + arriba - 12, behavior: 'smooth' });
   }, 60);
 }
 
@@ -503,6 +512,13 @@ export function analizarActivo(raiz, { repintar, irA }) {
       `Código ${p.codigo} · Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
       (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
     repintar();
+    // El desplazamiento va AQUÍ dentro, no en quien llama.
+    //
+    // Estaba solo en la rama del escáner con cámara, así que al teclear el
+    // código o al pulsar "Buscar el producto" la pantalla se quedaba arriba y
+    // el resultado aparecía abajo, fuera de la vista. Parecía que no había
+    // encontrado nada. Poniéndolo dentro, todos los caminos lo hacen.
+    irAlResumen();
   }
 
   raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', () => {
@@ -574,7 +590,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     enCurso.nutrientes = e2.nutrientes;
     enCurso.ingredientes = e2.ingredientes;
     leido.tabla = { nutrientes: e2.nutrientes, base: 'por_100',
-      avisos: ['Estos valores vienen de tablas de composición de alimentos, no de un envase. Un alimento fresco varía con la madurez, la variedad y la procedencia.'] };
+      avisos: ['Valores por 100 g de porción comestible, tomados de tablas de composición de alimentos y no de un envase. Un alimento fresco varía con la madurez, la variedad y la procedencia.'] };
     repintar();
     irAlResumen();
   });
