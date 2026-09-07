@@ -167,31 +167,10 @@ button{touch-action:manipulation}
 .principal:focus{outline:none}
 
 /* --- Barra de pestañas ---------------------------------------------------- */
-.barra{
-  position:fixed; left:0; right:0; bottom:0; z-index:30;
-  display:grid; grid-template-columns:repeat(5,1fr);
-  background:rgba(16,19,25,.94);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  border-top:1px solid var(--linea);
-  padding-bottom:env(safe-area-inset-bottom);
-}
-.barra__pestana{
-  appearance:none; border:0; background:none; cursor:pointer;
-  display:flex; flex-direction:column; align-items:center; gap:3px;
-  height:var(--alto-barra);
-  padding:var(--e2) var(--e1) 0;
-  color:var(--ceniza-tenue);
-  font-family:var(--cuerpo); font-size:0.75rem; font-weight:600;
-  letter-spacing:.01em;
-  transition:color .18s ease;
-}
-.barra__pestana svg{
-  width:1.55rem; height:1.55rem; fill:none;
-  stroke:currentColor; stroke-width:1.6;
-  stroke-linecap:round; stroke-linejoin:round;
-}
-.barra__pestana[aria-selected="true"]{color:var(--hueso)}
+
+
+
+
 
 /* --- Piezas reutilizables ------------------------------------------------- */
 .tarjeta{
@@ -361,12 +340,7 @@ button{touch-action:manipulation}
 /* --- Escritorio ----------------------------------------------------------- */
 @media (min-width:44rem){
   .principal{padding-bottom:var(--e7)}
-  .barra{
-    position:sticky; bottom:0;
-    max-width:640px; margin:0 auto;
-    border-radius:var(--radio) var(--radio) 0 0;
-    border:1px solid var(--linea); border-bottom:0;
-  }
+  
 }
 
 /* --- Filas de factor: las dos tablas del veredicto ------------------------ */
@@ -1078,4 +1052,128 @@ button{touch-action:manipulation}
 .fresco__nota{
   display:block; margin-top:2px; font-size:0.88rem; color:var(--ceniza-tenue);
   line-height:1.4;
+}
+
+
+/* --- La barra de abajo ----------------------------------------------------
+   Flotante y separada del borde, no pegada de lado a lado. La pestaña activa
+   se ensancha y muestra su nombre; las demás se quedan en el icono. Así se
+   sabe dónde estás sin leer nada, y caben las cinco sin apretarse. */
+.barra{
+  position:fixed; z-index:30;
+  left:50%; transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom) + 0.6rem);
+  display:flex; align-items:center; gap:0.3rem;
+  padding:0.42rem;
+  background:rgba(26,30,38,.92);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:2.4rem;
+  box-shadow:0 10px 30px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
+  max-width:calc(100vw - 1.6rem);
+}
+
+.barra__pestana{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:0.42rem;
+  flex:none;
+  width:2.9rem; height:2.9rem; padding:0;
+  background:rgba(255,255,255,.05);
+  border:0; border-radius:1.5rem;
+  color:var(--ceniza);
+  transition:width .22s ease, background-color .22s ease, color .22s ease;
+  overflow:hidden;
+}
+.barra__pestana svg{
+  width:1.32rem; height:1.32rem; flex:none;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.barra__pestana span{
+  font-family:var(--cuerpo); font-weight:600; font-size:0.82rem;
+  white-space:nowrap; max-width:0; opacity:0;
+  transition:max-width .22s ease, opacity .16s ease;
+}
+
+/* La activa: pastilla clara con su nombre al lado del icono. */
+.barra__pestana[aria-selected="true"]{
+  width:auto; padding:0 0.95rem 0 0.8rem;
+  background:var(--hueso); color:var(--tinta);
+}
+.barra__pestana[aria-selected="true"] span{max-width:7rem; opacity:1}
+.barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
+
+@media (prefers-reduced-motion:reduce){
+  .barra__pestana, .barra__pestana span{transition:none}
+}
+
+/* --- Las cuatro vías de Analizar ------------------------------------------
+   Tarjetas que se despliegan de una en una. Antes estaban las cuatro abiertas
+   a la vez, cada una con un párrafo explicando para qué servía: un muro que se
+   lee una vez y estorba las otras cien. */
+.vias{margin-bottom:var(--e5)}
+
+.via{
+  background:var(--carbon);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  margin-bottom:var(--e3);
+  overflow:hidden;
+  transition:border-color .18s ease;
+}
+.via--abierta{border-color:rgba(233,235,239,.22)}
+
+.via__cabeza{
+  appearance:none; cursor:pointer; width:100%;
+  display:flex; align-items:center; gap:var(--e4);
+  padding:var(--e4);
+  background:none; border:0; color:inherit; text-align:left;
+}
+.via__icono{
+  flex:none; width:2.6rem; height:2.6rem;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--carbon-alto); border-radius:var(--radio-s);
+  color:var(--ceniza);
+}
+.via--abierta .via__icono{background:var(--hueso); color:var(--tinta)}
+.via__icono svg{
+  width:1.35rem; height:1.35rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.via__texto{flex:1; min-width:0}
+.via__texto b{
+  display:block; font-family:var(--display); font-weight:600; font-size:1.12rem;
+  color:var(--hueso); line-height:1.2;
+}
+.via__texto small{
+  display:block; margin-top:2px;
+  font-size:0.85rem; color:var(--ceniza-tenue);
+}
+.via__flecha{flex:none; color:var(--ceniza-tenue)}
+.via__flecha svg{
+  width:1.1rem; height:1.1rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .2s ease;
+}
+.via--abierta .via__flecha svg{transform:rotate(90deg)}
+
+.via__cuerpo{
+  padding:0 var(--e4) var(--e4);
+  border-top:1px solid var(--linea);
+  padding-top:var(--e4);
+}
+.via__cuerpo > .boton-grande{margin-bottom:var(--e3)}
+
+/* La letra pequeña de cada vía: una sola línea, y en voz baja. */
+.apunte-via{
+  margin:var(--e3) 0 0;
+  font-size:0.85rem; line-height:1.45;
+  color:var(--ceniza-tenue);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .via__flecha svg{transition:none}
 }

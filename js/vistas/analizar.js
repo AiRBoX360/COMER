@@ -139,93 +139,44 @@ function barraEnCurso() {
     </div>`;
 }
 
-export function analizar() {
-  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
+/**
+ * Qué vía está abierta. Solo una a la vez.
+ *
+ * Antes se veían las cuatro desplegadas con su párrafo explicando para qué
+ * servía cada una: un muro de texto que se lee una vez y estorba las otras
+ * cien. Ahora son cuatro tarjetas y se abre la que se toca.
+ */
+let abierta = 'codigo';
+
+const VIAS = [
+  { clave: 'codigo', titulo: 'Escanear el código', pista: 'Lo más rápido',
+    icono: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9v6M10 9v6M13 9v6M17 9v6"/>' },
+  { clave: 'fresco', titulo: 'Alimento fresco', pista: 'Sin etiqueta: fruta, pescado, legumbre',
+    icono: '<path d="M12 20c4.5 0 8-3.6 8-8 0-4-3-8-8-8s-8 4-8 8c0 4.4 3.5 8 8 8Z"/><path d="M12 20V9"/>' },
+  { clave: 'texto', titulo: 'Pegar el texto', pista: 'Lo más fiable',
+    icono: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>' },
+  { clave: 'fotos', titulo: 'Hacer fotos', pista: 'Funciona sin internet',
+    icono: '<path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/>' },
+];
+
+function tarjeta(via, cuerpo) {
+  const esta = abierta === via.clave;
   return `
-    <h1 class="titulo">Analizar</h1>
-    ${barraEnCurso()}
-    <p class="texto">Tres formas de meter una etiqueta, ordenadas de la más rápida a la más laboriosa. Ninguna sustituye a las otras.</p>
-
-    <h2 class="subtitulo">1 · Código de barras</h2>
-    <p class="texto">Lo más rápido. La app consulta Open Food Facts, una base abierta hecha por voluntarios.</p>
-
-    <div class="escaner" id="zonaEscaner" hidden>
-      <video id="videoEscaner" muted playsinline></video>
-      <div class="escaner__mira"></div>
-      <button class="boton" id="btnCancelarEscaner">Cancelar</button>
-    </div>
-    <button class="boton-grande" id="btnEscanear" style="margin-bottom:12px">
-      ESCANEAR EL CÓDIGO
-      <small>Apunta con la cámara, sin teclear nada</small>
-    </button>
-    <div class="campo">
-      <label class="campo__nombre" for="codigoBarras">O tecléalo</label>
-      <div class="campo__entrada">
-        <input id="codigoBarras" type="text" inputmode="numeric"
-               value="${esc(ultimoCodigo)}"
-               placeholder="los 13 dígitos de debajo del código"
-               autocomplete="off">
-      </div>
-    </div>
-    <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
-    <p class="texto" id="estadoCodigo" role="status" aria-live="polite" style="margin-top:12px"></p>
-    <p class="texto" style="font-size:0.9rem">
-      <strong>Esta es la única parte de la app que sale a internet.</strong>
-      Viaja solo el número, ninguna foto ni ningún dato tuyo. Y lo que devuelva
-      hay que comprobarlo contra el envase: la ficha puede ser de una versión
-      anterior del producto.
-    </p>
-
-    <h2 class="subtitulo">2 · Un alimento fresco</h2>
-    <p class="texto">Lo que no lleva etiqueta: un plátano, un filete de salmón, unas lentejas a granel. Escribe el nombre y se busca en tablas de composición.</p>
-    <div class="campo">
-      <div class="campo__entrada">
-        <input id="buscaFresco" type="search" placeholder="plátano, salmón, lentejas…" autocomplete="off">
-      </div>
-    </div>
-    <div id="resultadosFresco"></div>
-    <p class="texto" style="font-size:0.9rem">
-      <strong>Todos los valores son por 100 gramos</strong> de porción comestible,
-      en crudo salvo los que dicen "cocida".
-    </p>
-    <p class="texto" style="font-size:0.9rem">
-      <strong>Y son de tabla, no de un envase.</strong> Un plátano muy maduro tiene
-      más azúcar que uno verde, y un salmón de piscifactoría más grasa que uno
-      salvaje. Sirven para situar el alimento, no para contar gramos.
-    </p>
-
-    <h2 class="subtitulo">3 · Pegar el texto</h2>
-    <p class="texto">Lo más fiable. Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
-    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
-    <textarea id="pegaTabla" class="pegar pegar--alta" rows="12" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
-    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
-    <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
-    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
-
-    <h2 class="subtitulo">4 · Fotos dentro de la app</h2>
-    <p class="texto">Funciona sin internet y sin salir de aquí. Puedes recortar para dejar dentro solo lo que interesa.</p>
-
-    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
-
-    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:16px">
-      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
-      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
-    </button>
-    <p class="texto" id="estadoLectura" role="status" aria-live="polite" style="margin-top:12px"></p>
-    <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
-    <p class="texto" style="font-size:0.9rem; margin-top:8px">Revisa los ficheros y luego intenta arrancarlo de verdad. Tarda un poco la primera vez.</p>
-    <div id="diagLector" style="margin-top:12px"></div>
-
-    <div id="resumenLectura" style="margin-top:24px"></div>
-    <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
-      REVISAR Y CORREGIR
-      <small>Comprueba las cifras antes de analizar</small>
-    </button>
-
-    <div style="margin-top:24px">
-      ${pendiente('<b>Tres formas, y ninguna sustituye a las otras.</b> El código de barras es la más rápida; pegar el texto copiado del iPhone, la más fiable; las fotos, la única que funciona sin internet. Elige la que te venga bien en cada momento.')}
-    </div>
-  `;
+    <section class="via${esta ? ' via--abierta' : ''}">
+      <button class="via__cabeza" data-via="${via.clave}" aria-expanded="${esta}">
+        <span class="via__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24">${via.icono}</svg>
+        </span>
+        <span class="via__texto">
+          <b>${esc(via.titulo)}</b>
+          <small>${esc(via.pista)}</small>
+        </span>
+        <span class="via__flecha" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+      ${esta ? `<div class="via__cuerpo">${cuerpo}</div>` : ''}
+    </section>`;
 }
 
 /**
@@ -251,9 +202,85 @@ function irAlResumen() {
   }, 60);
 }
 
+export function analizar() {
+  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
+
+  const cuerpoCodigo = `
+    <div class="escaner" id="zonaEscaner" hidden>
+      <video id="videoEscaner" muted playsinline></video>
+      <div class="escaner__mira"></div>
+      <button class="boton" id="btnCancelarEscaner">Cancelar</button>
+    </div>
+    <button class="boton-grande" id="btnEscanear">
+      ESCANEAR CON LA CÁMARA
+      <small>Apunta al código de barras</small>
+    </button>
+    <div class="campo">
+      <label class="campo__nombre" for="codigoBarras">O tecléalo</label>
+      <div class="campo__entrada">
+        <input id="codigoBarras" type="text" inputmode="numeric"
+               value="${esc(ultimoCodigo)}"
+               placeholder="los 13 dígitos de debajo del código"
+               autocomplete="off">
+      </div>
+    </div>
+    <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
+    <p class="texto" id="estadoCodigo" role="status" aria-live="polite"></p>
+    <p class="apunte-via">Consulta Open Food Facts. Es la única parte de la app que sale a internet, y solo viaja el número.</p>`;
+
+  const cuerpoFresco = `
+    <div class="campo">
+      <div class="campo__entrada">
+        <input id="buscaFresco" type="search" placeholder="plátano, salmón, lentejas…" autocomplete="off">
+      </div>
+    </div>
+    <div id="resultadosFresco"></div>
+    <p class="apunte-via">Valores por 100 g de tablas de composición, no de un envase. Sirven para situar el alimento, no para contar gramos.</p>`;
+
+  const cuerpoTexto = `
+    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
+    <textarea id="pegaTabla" class="pegar pegar--alta" rows="10" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
+    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
+    <textarea id="pegaIng" class="pegar pegar--alta" rows="8" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
+    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
+    <p class="apunte-via">Copia el texto con el reconocimiento del iPhone: lee mejor que ningún programa.</p>`;
+
+  const cuerpoFotos = `
+    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
+    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:16px">
+      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
+      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
+    </button>
+    <p class="texto" id="estadoLectura" role="status" aria-live="polite"></p>
+    <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
+    <div id="diagLector"></div>`;
+
+  return `
+    <h1 class="titulo">Analizar</h1>
+    ${barraEnCurso()}
+
+    <div class="vias">
+      ${tarjeta(VIAS[0], cuerpoCodigo)}
+      ${tarjeta(VIAS[1], cuerpoFresco)}
+      ${tarjeta(VIAS[2], cuerpoTexto)}
+      ${tarjeta(VIAS[3], cuerpoFotos)}
+    </div>
+
+    <div id="resumenLectura"></div>
+    <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
+      REVISAR Y CORREGIR
+      <small>Comprueba las cifras antes de analizar</small>
+    </button>
+  `;
+}
+
 export function analizarActivo(raiz, { repintar, irA }) {
+  // Antes esto se salía si no encontraba las tomas de foto. Con las cuatro
+  // vías desplegadas siempre, la condición nunca se cumplía. Ahora las fotos
+  // solo existen cuando su tarjeta está abierta, así que salirse aquí dejaba
+  // TODA la pantalla sin enganchar: ni el escáner, ni el código, ni las
+  // tarjetas. Cada bloque comprueba lo suyo por su cuenta.
   const zona = raiz.querySelector('#tomas');
-  if (!zona) return;
 
   async function tomar(clave, deGaleria = false) {
     const fichero = await pedirFoto({ camara: !deGaleria });
@@ -306,7 +333,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
 
   // Mover un deslizador solo mueve el marco. Repintar en cada movimiento
   // robaría el foco del deslizador a media pasada.
-  zona.addEventListener('input', (e) => {
+  zona?.addEventListener('input', (e) => {
     const eje = e.target.dataset.desliza;
     if (!eje) return;
     const clave = e.target.dataset.toma;
@@ -325,7 +352,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     marco.style.height = `${y1 - y0}%`;
   });
 
-  zona.addEventListener('click', (e) => {
+  zona?.addEventListener('click', (e) => {
     const abrir = e.target.closest('[data-recortar]');
     if (abrir) {
       const c = capturas.get(abrir.dataset.recortar);
@@ -474,6 +501,14 @@ export function analizarActivo(raiz, { repintar, irA }) {
     leido.tabla = null;
     leido.ingredientes = null;
     ultimoCodigo = '';
+    repintar();
+  });
+
+  raiz.addEventListener('click', (e) => {
+    const cab = e.target.closest('[data-via]');
+    if (!cab) return;
+    // Tocar la abierta la cierra; tocar otra la abre y cierra la anterior.
+    abierta = abierta === cab.dataset.via ? '' : cab.dataset.via;
     repintar();
   });
 
