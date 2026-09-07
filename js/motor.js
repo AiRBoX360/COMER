@@ -4599,14 +4599,28 @@ function construirCatalogo() {
   return out;
 }
 var CATALOGO = construirCatalogo();
+function ordenar(fichas, orden) {
+  const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, "es");
+  switch (orden) {
+    case "alfabetico":
+      return [...fichas].sort(porNombre);
+    case "peor_primero":
+      return [...fichas].sort((a, b) => a.valoracion - b.valoracion || porNombre(a, b));
+    case "mejor_primero":
+      return [...fichas].sort((a, b) => b.valoracion - a.valoracion || porNombre(a, b));
+    default:
+      return fichas;
+  }
+}
 function buscar(termino, opts = {}) {
   const t = normalizarTexto(termino);
   const limite = opts.limite ?? 40;
+  const orden = opts.orden ?? (t ? "relevancia" : "alfabetico");
   let base = CATALOGO;
   if (opts.tipos?.length) base = base.filter((f) => opts.tipos.includes(f.tipo));
   if (opts.soloLimitar) base = base.filter((f) => f.valoracion < 0);
   if (opts.soloFavorable) base = base.filter((f) => f.valoracion > 0);
-  if (!t) return base.slice(0, limite);
+  if (!t) return ordenar(base, orden).slice(0, limite);
   const puntuadas = base.map((f) => {
     const nombre = normalizarTexto(f.nombre);
     const sinonimos = f.sinonimos.map(normalizarTexto);
@@ -4617,7 +4631,8 @@ function buscar(termino, opts = {}) {
     else if (normalizarTexto(f.explicacion).includes(t)) p = 10;
     return { f, p };
   }).filter((x) => x.p > 0).sort((a, b) => b.p - a.p || Math.abs(b.f.valoracion) - Math.abs(a.f.valoracion));
-  return puntuadas.slice(0, limite).map((x) => x.f);
+  const encontradas = puntuadas.map((x) => x.f);
+  return ordenar(encontradas, orden).slice(0, limite);
 }
 function ficha(clave2) {
   const directa = CATALOGO.find((f) => f.clave === clave2);
@@ -6374,22 +6389,51 @@ function deLaBase(valor) {
   };
 }
 function categoriaDe(tags) {
-  const lista = Array.isArray(tags) ? tags.map((t) => String(t).toLowerCase()) : [];
-  const tiene = (...claves) => claves.some((c) => lista.some((t) => t.includes(c)));
-  if (tiene("beverages", "bebidas", "sodas", "waters", "juices", "aguas", "refrescos")) return "bebida";
+  const lista = Array.isArray(tags) ? tags.map((t) => String(t).toLowerCase().replace(/^[a-z]{2}:/, "")) : [];
+  const tiene = (...claves) => claves.some((c) => lista.includes(c));
+  if (tiene(
+    "beverages",
+    "bebidas",
+    "sodas",
+    "refrescos",
+    "waters",
+    "aguas",
+    "juices",
+    "zumos",
+    "fruit-juices",
+    "sweetened-beverages",
+    "non-sugared-beverages",
+    "plant-based-beverages",
+    "teas",
+    "coffees"
+  )) return "bebida";
   if (tiene("cheeses", "quesos", "fromages")) return "queso";
-  if (tiene("red-meat", "beef", "pork", "carnes-rojas", "ternera", "cerdo", "cordero")) return "carne_roja";
+  if (tiene(
+    "red-meat",
+    "red-meats",
+    "beef",
+    "pork",
+    "lamb",
+    "carnes-rojas",
+    "ternera",
+    "cerdo",
+    "cordero",
+    "meats"
+  )) return "carne_roja";
   if (tiene(
     "fats",
     "olive-oils",
     "vegetable-oils",
+    "oils",
     "aceites",
     "grasas",
     "nuts",
     "frutos-secos",
     "butters",
     "mantequillas",
-    "margarines"
+    "margarines",
+    "nuts-and-their-products",
+    "vegetable-fats"
   )) return "grasa_anadida";
   return "general";
 }
@@ -7010,6 +7054,737 @@ var NO_DEDUCIBLES = {
   hidratos_g: "Los hidratos no se deducen con fiabilidad de los demás campos.",
   proteinas_g: "Las proteínas no se deducen de ningún otro dato."
 };
+
+// src/datos/frescos.ts
+var F2 = (nombre, busca, categoria, kcal, grasas, saturadas, hidratos, azucares, fibra, proteinas, sal, nota) => ({ nombre, busca, categoria, n: { kcal, grasas, saturadas, hidratos, azucares, fibra, proteinas, sal }, nota });
+var FRESCOS = [
+  // --- Fruta -------------------------------------------------------------
+  F2(
+    "Plátano",
+    ["platano", "banana", "platanos"],
+    "general",
+    89,
+    0.3,
+    0.1,
+    20,
+    12,
+    2.6,
+    1.1,
+    0,
+    "Potasio y vitamina B6. Cuanto más verde, más almidón resistente y menos azúcar libre."
+  ),
+  F2(
+    "Manzana",
+    ["manzana", "manzanas"],
+    "general",
+    52,
+    0.2,
+    0.1,
+    12,
+    10,
+    2.4,
+    0.3,
+    0,
+    "Pectina, una fibra soluble, y polifenoles en la piel."
+  ),
+  F2(
+    "Naranja",
+    ["naranja", "naranjas"],
+    "general",
+    47,
+    0.1,
+    0,
+    9,
+    9,
+    2.4,
+    0.9,
+    0,
+    "Vitamina C, folato y fibra. Entera vale mucho más que en zumo."
+  ),
+  F2("Pera", ["pera", "peras"], "general", 57, 0.1, 0, 12, 10, 3.1, 0.4, 0, "Fibra soluble, potasio y muy buena tolerancia digestiva."),
+  F2(
+    "Fresa",
+    ["fresa", "fresas", "fresón"],
+    "general",
+    32,
+    0.3,
+    0,
+    6,
+    4.9,
+    2,
+    0.7,
+    0,
+    "Más vitamina C que una naranja y muy poco azúcar para ser fruta."
+  ),
+  F2(
+    "Kiwi",
+    ["kiwi", "kiwis"],
+    "general",
+    61,
+    0.5,
+    0.1,
+    12,
+    9,
+    3,
+    1.1,
+    0,
+    "De las frutas con más vitamina C por gramo."
+  ),
+  F2(
+    "Uva",
+    ["uva", "uvas"],
+    "general",
+    69,
+    0.2,
+    0.1,
+    17,
+    16,
+    0.9,
+    0.7,
+    0,
+    "Resveratrol en la piel, pero de las frutas con más azúcar."
+  ),
+  F2("Melocotón", ["melocoton", "melocotones", "durazno"], "general", 39, 0.3, 0, 8, 8, 1.5, 0.9, 0, "Carotenoides, potasio y mucha agua: sacia con poca energía."),
+  F2("Sandía", ["sandia"], "general", 30, 0.2, 0, 7, 6, 0.4, 0.6, 0, "Un 92 % agua, con licopeno y potasio. Muy poca energía por ración."),
+  F2("Melón", ["melon", "melones"], "general", 34, 0.2, 0, 8, 8, 0.9, 0.8, 0, "Agua, potasio y carotenoides."),
+  F2(
+    "Aguacate",
+    ["aguacate", "aguacates"],
+    "grasa_anadida",
+    160,
+    15,
+    2.1,
+    9,
+    0.7,
+    6.7,
+    2,
+    0,
+    "Grasa monoinsaturada, potasio y mucha fibra. Es fruta, pero se comporta como una grasa."
+  ),
+  F2(
+    "Arándano",
+    ["arandano", "arandanos"],
+    "general",
+    57,
+    0.3,
+    0,
+    14,
+    10,
+    2.4,
+    0.7,
+    0,
+    "De las mayores concentraciones de antocianinas de la fruta corriente."
+  ),
+  F2("Ciruela", ["ciruela", "ciruelas"], "general", 46, 0.3, 0, 11, 10, 1.4, 0.7, 0, "Fibra y sorbitol natural, que es lo que le da su efecto laxante suave."),
+  F2("Piña", ["pina", "piña"], "general", 50, 0.1, 0, 13, 10, 1.4, 0.5, 0, "Vitamina C, manganeso y bromelina, una enzima que ayuda a digerir proteínas."),
+  F2("Mandarina", ["mandarina", "mandarinas"], "general", 53, 0.3, 0, 13, 11, 1.8, 0.8, 0, "Vitamina C y carotenoides."),
+  // --- Verdura y hortaliza -----------------------------------------------
+  F2(
+    "Tomate",
+    ["tomate", "tomates"],
+    "general",
+    18,
+    0.2,
+    0,
+    3.9,
+    2.6,
+    1.2,
+    0.9,
+    0,
+    "Licopeno, potasio y vitamina C. El licopeno se absorbe mejor cocinado."
+  ),
+  F2(
+    "Brócoli",
+    ["brocoli", "brécol"],
+    "general",
+    34,
+    0.4,
+    0.1,
+    4.4,
+    1.7,
+    2.6,
+    2.8,
+    0,
+    "Sulforafano, folato y vitamina C."
+  ),
+  F2(
+    "Espinaca",
+    ["espinaca", "espinacas"],
+    "general",
+    23,
+    0.4,
+    0.1,
+    1.4,
+    0.4,
+    2.2,
+    2.9,
+    0.1,
+    "Folato, hierro no hemo y nitratos con efecto vasodilatador."
+  ),
+  F2(
+    "Zanahoria",
+    ["zanahoria", "zanahorias"],
+    "general",
+    41,
+    0.2,
+    0,
+    10,
+    4.7,
+    2.8,
+    0.9,
+    0.1,
+    "Betacarotenos, precursores de vitamina A."
+  ),
+  F2(
+    "Cebolla",
+    ["cebolla", "cebollas"],
+    "general",
+    40,
+    0.1,
+    0,
+    9,
+    4.2,
+    1.7,
+    1.1,
+    0,
+    "Quercetina y fructanos que alimentan a la microbiota."
+  ),
+  F2(
+    "Pimiento",
+    ["pimiento", "pimientos"],
+    "general",
+    31,
+    0.3,
+    0.1,
+    6,
+    4.2,
+    2.1,
+    1,
+    0,
+    "Más vitamina C que una naranja."
+  ),
+  F2("Calabacín", ["calabacin", "calabacines"], "general", 17, 0.3, 0.1, 3.1, 2.5, 1, 1.2, 0, "Muy poca energía y algo de potasio."),
+  F2(
+    "Berenjena",
+    ["berenjena", "berenjenas"],
+    "general",
+    25,
+    0.2,
+    0,
+    3,
+    3,
+    3,
+    1,
+    0,
+    "Fibra y antocianinas en la piel. Absorbe mucho aceite al freírla."
+  ),
+  F2(
+    "Lechuga",
+    ["lechuga", "lechugas"],
+    "general",
+    15,
+    0.2,
+    0,
+    1.6,
+    0.8,
+    1.3,
+    1.4,
+    0,
+    "Casi toda agua. Folato y muy poca energía: sirve para dar volumen al plato."
+  ),
+  F2(
+    "Judía verde",
+    ["judia verde", "judias verdes", "habichuela"],
+    "general",
+    31,
+    0.2,
+    0,
+    4.3,
+    3.3,
+    2.7,
+    1.8,
+    0,
+    "Fibra, folato y vitamina C. De las verduras que mejor aguantan la congelación."
+  ),
+  F2(
+    "Coliflor",
+    ["coliflor"],
+    "general",
+    25,
+    0.3,
+    0.1,
+    3,
+    1.9,
+    2,
+    1.9,
+    0,
+    "Fibra, vitamina C y compuestos azufrados de la familia de las coles."
+  ),
+  F2(
+    "Champiñón",
+    ["champinon", "champiñon", "champiñones", "seta", "setas"],
+    "general",
+    22,
+    0.3,
+    0,
+    2.3,
+    1.4,
+    1,
+    3.1,
+    0,
+    "Fibra, selenio y vitaminas del grupo B."
+  ),
+  F2(
+    "Patata",
+    ["patata", "patatas"],
+    "general",
+    77,
+    0.1,
+    0,
+    17,
+    0.8,
+    2.2,
+    2,
+    0,
+    "Potasio y vitamina C. Cocida y enfriada genera almidón resistente."
+  ),
+  F2("Boniato", ["boniato", "batata"], "general", 86, 0.1, 0, 20, 4.2, 3, 1.6, 0.1, "Betacarotenos, fibra y potasio. Más azúcar que la patata, pero también más fibra."),
+  F2("Ajo", ["ajo", "ajos"], "general", 149, 0.5, 0.1, 33, 1, 2.1, 6.4, 0, "Compuestos azufrados. Se come en muy poca cantidad."),
+  // --- Legumbre ----------------------------------------------------------
+  F2(
+    "Lenteja cocida",
+    ["lenteja", "lentejas"],
+    "general",
+    116,
+    0.4,
+    0.1,
+    20,
+    1.8,
+    8,
+    9,
+    0,
+    "Proteína, fibra y hierro. De los alimentos mejor asociados a longevidad."
+  ),
+  F2(
+    "Garbanzo cocido",
+    ["garbanzo", "garbanzos"],
+    "general",
+    164,
+    2.6,
+    0.3,
+    27,
+    4.8,
+    7.6,
+    8.9,
+    0,
+    "Proteína vegetal, fibra y almidón resistente."
+  ),
+  F2(
+    "Alubia cocida",
+    ["alubia", "alubias", "judia blanca", "frijol"],
+    "general",
+    127,
+    0.5,
+    0.1,
+    23,
+    0.3,
+    6.4,
+    8.7,
+    0,
+    "Fibra y almidón resistente que alimenta a la microbiota."
+  ),
+  F2("Guisante", ["guisante", "guisantes"], "general", 81, 0.4, 0.1, 14, 5.7, 5.1, 5.4, 0, "Fibra, proteína y vitamina C."),
+  F2("Soja cocida", ["soja"], "general", 173, 9, 1.3, 10, 3, 6, 17, 0, "Proteína completa e isoflavonas."),
+  // --- Pescado y marisco --------------------------------------------------
+  F2(
+    "Salmón",
+    ["salmon", "salmón"],
+    "general",
+    208,
+    13,
+    3.1,
+    0,
+    0,
+    0,
+    20,
+    0.1,
+    "De las mejores fuentes de EPA y DHA, los omega-3 con efecto cardiovascular directo."
+  ),
+  F2(
+    "Merluza",
+    ["merluza", "pescadilla"],
+    "general",
+    72,
+    0.6,
+    0.1,
+    0,
+    0,
+    0,
+    17,
+    0.2,
+    "Proteína de calidad con muy poca grasa."
+  ),
+  F2(
+    "Sardina",
+    ["sardina", "sardinas"],
+    "general",
+    208,
+    11,
+    2.7,
+    0,
+    0,
+    0,
+    25,
+    0.2,
+    "Omega-3, vitamina D y calcio si se come con espina."
+  ),
+  F2(
+    "Atún fresco",
+    ["atun", "atún", "bonito"],
+    "general",
+    144,
+    5,
+    1.3,
+    0,
+    0,
+    0,
+    23,
+    0.1,
+    "Proteína y omega-3. Los túnidos grandes acumulan mercurio."
+  ),
+  F2("Boquerón", ["boqueron", "boquerones", "anchoa fresca"], "general", 131, 4.8, 1.3, 0, 0, 0, 20, 0.2, "Omega-3, calcio y vitamina D. Pescado azul pequeño, con muy poco mercurio."),
+  F2("Bacalao fresco", ["bacalao"], "general", 82, 0.7, 0.1, 0, 0, 0, 18, 0.2, "Proteína magra y muy poco mercurio."),
+  F2(
+    "Mejillón",
+    ["mejillon", "mejillones"],
+    "general",
+    86,
+    2.2,
+    0.4,
+    3.7,
+    0,
+    0,
+    12,
+    0.7,
+    "Muchísimo hierro y vitamina B12 para muy pocas calorías."
+  ),
+  F2("Gamba", ["gamba", "gambas", "langostino"], "general", 85, 0.5, 0.1, 0.9, 0, 0, 20, 0.6, "Proteína magra, yodo y selenio."),
+  // --- Carne y huevo ------------------------------------------------------
+  F2(
+    "Pechuga de pollo",
+    ["pollo", "pechuga de pollo"],
+    "general",
+    120,
+    2.6,
+    0.7,
+    0,
+    0,
+    0,
+    23,
+    0.1,
+    "Proteína magra, hierro y vitaminas del grupo B."
+  ),
+  F2(
+    "Pechuga de pavo",
+    ["pavo", "pechuga de pavo"],
+    "general",
+    111,
+    1.7,
+    0.5,
+    0,
+    0,
+    0,
+    24,
+    0.1,
+    "De las carnes con más proteína y menos grasa. Nada que ver con el fiambre de pavo."
+  ),
+  F2(
+    "Lomo de cerdo",
+    ["lomo de cerdo", "cerdo", "magro de cerdo"],
+    "general",
+    143,
+    5,
+    1.8,
+    0,
+    0,
+    0,
+    24,
+    0.1,
+    "Proteína, hierro y vitamina B1."
+  ),
+  F2(
+    "Ternera magra",
+    ["ternera", "vacuno", "carne de vaca"],
+    "carne_roja",
+    158,
+    6,
+    2.4,
+    0,
+    0,
+    0,
+    25,
+    0.1,
+    "Proteína, hierro hemo y B12. La OMS aconseja moderar la carne roja."
+  ),
+  F2(
+    "Huevo",
+    ["huevo", "huevos"],
+    "general",
+    143,
+    9.5,
+    3.1,
+    0.7,
+    0.4,
+    0,
+    13,
+    0.4,
+    "La proteína de referencia. Colina, vitamina D y luteína."
+  ),
+  // --- Frutos secos y semillas --------------------------------------------
+  F2(
+    "Almendra",
+    ["almendra", "almendras"],
+    "grasa_anadida",
+    579,
+    50,
+    3.8,
+    22,
+    4.4,
+    12.5,
+    21,
+    0,
+    "Grasa monoinsaturada, vitamina E, magnesio y fibra."
+  ),
+  F2(
+    "Nuez",
+    ["nuez", "nueces"],
+    "grasa_anadida",
+    654,
+    65,
+    6.1,
+    14,
+    2.6,
+    6.7,
+    15,
+    0,
+    "Casi la única fuente vegetal corriente de omega-3 de cadena corta."
+  ),
+  F2("Avellana", ["avellana", "avellanas"], "grasa_anadida", 628, 61, 4.5, 17, 4.3, 9.7, 15, 0, "Monoinsaturados y vitamina E."),
+  F2("Pistacho", ["pistacho", "pistachos"], "grasa_anadida", 560, 45, 5.6, 28, 7.7, 10.6, 20, 0, "Proteína, fibra y potasio."),
+  F2(
+    "Cacahuete",
+    ["cacahuete", "cacahuetes", "mani"],
+    "grasa_anadida",
+    567,
+    49,
+    6.3,
+    16,
+    4.7,
+    8.5,
+    26,
+    0,
+    "Legumbre que se come como fruto seco. Alérgeno potente."
+  ),
+  F2(
+    "Nuez de Brasil",
+    ["nuez de brasil"],
+    "grasa_anadida",
+    659,
+    67,
+    15,
+    12,
+    2.3,
+    7.5,
+    14,
+    0,
+    "La mayor fuente de selenio que existe: con dos al día basta."
+  ),
+  // --- Cereales y otros ---------------------------------------------------
+  F2(
+    "Arroz integral cocido",
+    ["arroz integral"],
+    "general",
+    123,
+    1,
+    0.2,
+    26,
+    0.4,
+    1.6,
+    2.7,
+    0,
+    "Conserva el salvado: fibra, magnesio y vitaminas del grupo B."
+  ),
+  F2(
+    "Arroz blanco cocido",
+    ["arroz", "arroz blanco"],
+    "general",
+    130,
+    0.3,
+    0.1,
+    28,
+    0.1,
+    0.4,
+    2.7,
+    0,
+    "Energía casi pura, con poca fibra."
+  ),
+  F2(
+    "Pasta cocida",
+    ["pasta", "macarrones", "espagueti", "espaguetis"],
+    "general",
+    158,
+    0.9,
+    0.2,
+    31,
+    0.6,
+    1.8,
+    5.8,
+    0,
+    "Hidratos de absorción media. Al dente sube menos la glucosa."
+  ),
+  F2(
+    "Avena en copos",
+    ["avena", "copos de avena"],
+    "general",
+    389,
+    7,
+    1.2,
+    66,
+    1,
+    10.6,
+    17,
+    0,
+    "Beta-glucanos con efecto demostrado sobre el colesterol LDL."
+  ),
+  F2(
+    "Quinoa cocida",
+    ["quinoa", "quinua"],
+    "general",
+    120,
+    1.9,
+    0.2,
+    21,
+    0.9,
+    2.8,
+    4.4,
+    0,
+    "Proteína con todos los aminoácidos esenciales. Sin gluten."
+  ),
+  F2(
+    "Pan integral",
+    ["pan integral"],
+    "general",
+    247,
+    3.4,
+    0.7,
+    41,
+    4.3,
+    7,
+    13,
+    1.2,
+    "Fibra y minerales del grano entero. Mira la sal: suele rondar el 1,2 %."
+  ),
+  F2(
+    "Pan blanco",
+    ["pan", "pan blanco"],
+    "general",
+    265,
+    3.2,
+    0.7,
+    49,
+    5,
+    2.7,
+    9,
+    1.2,
+    "Poca fibra y bastante sal. El integral es mejor elección."
+  ),
+  F2(
+    "Yogur natural",
+    ["yogur", "yogur natural"],
+    "general",
+    61,
+    3.3,
+    2.1,
+    4.7,
+    4.7,
+    0,
+    3.5,
+    0.1,
+    "Matriz fermentada con bacterias vivas. Sin azúcar añadido."
+  ),
+  F2(
+    "Leche entera",
+    ["leche", "leche entera"],
+    "bebida",
+    61,
+    3.3,
+    1.9,
+    4.8,
+    4.8,
+    0,
+    3.2,
+    0.1,
+    "Proteína, calcio y vitamina B12."
+  ),
+  {
+    nombre: "Aceite de oliva virgen extra",
+    busca: ["aceite de oliva", "aove", "aceite"],
+    categoria: "grasa_anadida",
+    // Se declara la monoinsaturada porque es lo que distingue un aceite bueno
+    // de uno malo: sin ese dato, el motor solo ve cien gramos de grasa.
+    n: {
+      kcal: 899,
+      grasas: 100,
+      saturadas: 14,
+      monoinsaturadas: 73,
+      hidratos: 0,
+      azucares: 0,
+      fibra: 0,
+      proteinas: 0,
+      sal: 0
+    },
+    nota: "Ácido oleico y polifenoles. La grasa mejor estudiada, y la única con evidencia sólida de efecto cardiovascular."
+  }
+];
+function buscarFresco(termino) {
+  const t = termino.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (t.length < 2) return [];
+  const conNota = FRESCOS.map((f) => {
+    const nombres = [f.nombre, ...f.busca].map(
+      (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+    let p = 0;
+    if (nombres.includes(t)) p = 100;
+    else if (nombres.some((n) => n.startsWith(t))) p = 70;
+    else if (nombres.some((n) => n.includes(t))) p = 40;
+    return { f, p };
+  }).filter((x) => x.p > 0);
+  return conNota.sort((a, b) => b.p - a.p).slice(0, 8).map((x) => x.f);
+}
+function frescoAEntrada(f) {
+  const de = (valor) => ({
+    valor,
+    estado: "calculado",
+    textoOriginal: "valor de tabla de composición, no de un envase"
+  });
+  return {
+    nombre: f.nombre,
+    categoria: f.categoria,
+    nutrientes: {
+      energia_kcal: de(f.n.kcal),
+      grasas_g: de(f.n.grasas),
+      saturadas_g: de(f.n.saturadas),
+      hidratos_g: de(f.n.hidratos),
+      azucares_g: de(f.n.azucares),
+      ...f.n.fibra !== void 0 ? { fibra_g: de(f.n.fibra) } : {},
+      ...f.n.monoinsaturadas !== void 0 ? { monoinsaturadas_g: de(f.n.monoinsaturadas) } : {},
+      proteinas_g: de(f.n.proteinas),
+      sal_g: de(f.n.sal)
+    },
+    // Un alimento fresco es su propio ingrediente, y no lleva ningún otro.
+    ingredientes: [{ texto: f.nombre }]
+  };
+}
 export {
   ADITIVOS,
   ALERGENOS,
@@ -7018,6 +7793,7 @@ export {
   COLORES_SEMAFORO,
   ETIQUETAS_SEMAFORO,
   EXPLICA_DANO,
+  FRESCOS,
   FUENTES,
   MINIMO_PARA_TENDENCIA,
   NIVELES,
@@ -7037,6 +7813,7 @@ export {
   binarizarSauvola,
   buscar,
   buscarAditivo,
+  buscarFresco,
   calcularConfianza,
   calcularTendencia,
   codigoValido,
@@ -7055,6 +7832,7 @@ export {
   extraerNumeros,
   ficha,
   filtrarYOrdenar,
+  frescoAEntrada,
   fuentesDe,
   hay,
   hayIndexedDB,
@@ -7066,6 +7844,7 @@ export {
   normalizar,
   normalizarNutrientes,
   nuevoId,
+  ordenar,
   partirRespetandoParentesis,
   prepararParaLectura,
   queBuscarEnLugarDe,

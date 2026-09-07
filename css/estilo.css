@@ -1036,3 +1036,19 @@ button{touch-action:manipulation}
 .apunte--calc{color:var(--amarillo)}
 .propuesta--calc{color:var(--amarillo); border-color:var(--amarillo)}
 .propuesta--calc:active{background:var(--amarillo); color:var(--tinta)}
+
+/* --- Alimentos frescos ---------------------------------------------------- */
+.fresco{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  background:var(--carbon); border:1px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.fresco__nombre{
+  display:block; font-family:var(--display); font-weight:600; font-size:1.05rem;
+  color:var(--hueso);
+}
+.fresco__nota{
+  display:block; margin-top:2px; font-size:0.88rem; color:var(--ceniza-tenue);
+  line-height:1.4;
+}

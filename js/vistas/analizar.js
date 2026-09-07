@@ -4,6 +4,7 @@ import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
 import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
+import { buscarFresco, frescoAEntrada } from '../motor.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
@@ -175,7 +176,21 @@ export function analizar() {
       anterior del producto.
     </p>
 
-    <h2 class="subtitulo">2 · Pegar el texto</h2>
+    <h2 class="subtitulo">2 · Un alimento fresco</h2>
+    <p class="texto">Lo que no lleva etiqueta: un plátano, un filete de salmón, unas lentejas a granel. Escribe el nombre y se busca en tablas de composición.</p>
+    <div class="campo">
+      <div class="campo__entrada">
+        <input id="buscaFresco" type="search" placeholder="plátano, salmón, lentejas…" autocomplete="off">
+      </div>
+    </div>
+    <div id="resultadosFresco"></div>
+    <p class="texto" style="font-size:0.9rem">
+      <strong>Son valores de tabla, no de un envase.</strong> Un plátano muy maduro
+      tiene más azúcar que uno verde, y un salmón de piscifactoría más grasa que uno
+      salvaje. Sirven para situar el alimento, no para contar gramos.
+    </p>
+
+    <h2 class="subtitulo">3 · Pegar el texto</h2>
     <p class="texto">Lo más fiable. Haz la foto, mantén el dedo sobre el texto, copia y pega aquí. Tu iPhone lee mejor que ningún programa, y no hace falta descargar nada.</p>
     <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
     <textarea id="pegaTabla" class="pegar pegar--alta" rows="12" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
@@ -183,7 +198,7 @@ export function analizar() {
     <textarea id="pegaIng" class="pegar pegar--alta" rows="9" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
     <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
 
-    <h2 class="subtitulo">3 · Fotos dentro de la app</h2>
+    <h2 class="subtitulo">4 · Fotos dentro de la app</h2>
     <p class="texto">Funciona sin internet y sin salir de aquí. Puedes recortar para dejar dentro solo lo que interesa.</p>
 
     <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
@@ -526,6 +541,42 @@ export function analizarActivo(raiz, { repintar, irA }) {
     zonaCamara.hidden = true;
     escaneando = false;
     estadoCodigo.textContent = '';
+  });
+
+  // --- Alimentos frescos ---------------------------------------------------
+  const cajaFresco = raiz.querySelector('#buscaFresco');
+  const listaFresco = raiz.querySelector('#resultadosFresco');
+  cajaFresco?.addEventListener('input', () => {
+    const encontrados = buscarFresco(cajaFresco.value);
+    if (!encontrados.length) { listaFresco.innerHTML = ''; return; }
+    listaFresco.innerHTML = encontrados.map((f, i) => `
+      <button class="fresco" data-fresco="${i}">
+        <span class="fresco__nombre">${esc(f.nombre)}</span>
+        <span class="fresco__nota">${esc(f.nota)}</span>
+      </button>`).join('');
+    listaFresco.dataset.encontrados = JSON.stringify(encontrados.map((f) => f.nombre));
+  });
+
+  listaFresco?.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-fresco]');
+    if (!b) return;
+    const encontrados = buscarFresco(cajaFresco.value);
+    const f = encontrados[Number(b.dataset.fresco)];
+    if (!f) return;
+
+    // Un alimento fresco sustituye lo que hubiera: es un producto entero.
+    reiniciar();
+    capturas.clear();
+    ultimoCodigo = '';
+    const e2 = frescoAEntrada(f);
+    enCurso.nombre = e2.nombre;
+    enCurso.categoria = e2.categoria;
+    enCurso.nutrientes = e2.nutrientes;
+    enCurso.ingredientes = e2.ingredientes;
+    leido.tabla = { nutrientes: e2.nutrientes, base: 'por_100',
+      avisos: ['Estos valores vienen de tablas de composición de alimentos, no de un envase. Un alimento fresco varía con la madurez, la variedad y la procedencia.'] };
+    repintar();
+    irAlResumen();
   });
 
   raiz.querySelector('#btnDiagLector')?.addEventListener('click', async (e) => {

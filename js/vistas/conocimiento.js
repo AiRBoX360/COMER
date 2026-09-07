@@ -17,6 +17,7 @@ import { sustanciasMasVistas } from '../almacen.js';
 let termino = '';
 let tipoActivo = '';
 let soloLimitar = false;
+let orden = 'alfabetico';
 let recuento = null;
 
 const TIPOS = [
@@ -27,6 +28,13 @@ const TIPOS = [
   { clave: 'grasa', nombre: 'Grasas' },
   { clave: 'ingrediente', nombre: 'Ingredientes' },
   { clave: 'nutriente', nombre: 'Nutrientes' },
+];
+
+const ORDENES = [
+  { clave: 'alfabetico', nombre: 'Nombre' },
+  { clave: 'peor_primero', nombre: 'Lo peor primero' },
+  { clave: 'mejor_primero', nombre: 'Lo mejor primero' },
+  { clave: 'relevancia', nombre: 'Lo más parecido' },
 ];
 
 const SELLO = { 3: 'Muy favorable', 2: 'Favorable', 1: 'Suma poco', 0: 'Neutro' };
@@ -68,6 +76,7 @@ export function conocimiento() {
   const resultados = buscar(termino, {
     tipos: tipoActivo ? [tipoActivo] : undefined,
     soloLimitar: soloLimitar || undefined,
+    orden,
     limite: 60,
   });
 
@@ -94,6 +103,12 @@ export function conocimiento() {
       ${r.ingrediente} ingredientes, ${r.azucar} formas de azúcar, ${r.grasa} grasas
       y ${r.nutriente} nutrientes. Cada una con su fuente.
     </p>
+    <p class="texto" style="font-size:0.9rem">
+      <strong>Este catálogo no crece cuando escaneas.</strong> Va escrito dentro de
+      la app y es el mismo para todo el mundo. Lo que sí sale de lo que tú analizas
+      es la lista de aquí arriba. Si te encuentras algo que no está, mándalo y se
+      le escribe ficha.
+    </p>
 
     <div class="campo">
       <div class="campo__entrada">
@@ -112,6 +127,14 @@ export function conocimiento() {
       <button class="filtro${soloLimitar ? ' es-activo' : ''}" data-solo="limitar">
         Solo lo que conviene limitar
       </button>
+    </div>
+
+    <h3 class="rotulo" style="margin-top:16px">Ordenar por</h3>
+    <div class="filtros">
+      ${ORDENES.map((o) => `
+        <button class="filtro${o.clave === orden ? ' es-activo' : ''}" data-orden="${o.clave}">
+          ${o.nombre}
+        </button>`).join('')}
     </div>
 
     <p class="texto" style="font-size:0.9rem; margin-top:16px">
@@ -148,6 +171,8 @@ export async function conocimientoActivo(raiz, { repintar }) {
   raiz.addEventListener('click', (e) => {
     const t = e.target.closest('[data-tipo]');
     if (t) { tipoActivo = t.dataset.tipo; repintar(); return; }
+    const o = e.target.closest('[data-orden]');
+    if (o) { orden = o.dataset.orden; repintar(); return; }
     const s = e.target.closest('[data-solo]');
     if (s) { soloLimitar = !soloLimitar; repintar(); }
   });
