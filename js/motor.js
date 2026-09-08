@@ -8131,6 +8131,127 @@ var COMBINACIONES = [
   },
   // --- Estorbos ------------------------------------------------------------
   {
+    clave: "huevo-carotenoides",
+    clase: "sinergia",
+    fuerza: "alta",
+    a: ["huevo", "huevos"],
+    b: [
+      "zanahoria",
+      "tomate",
+      "espinaca",
+      "lechuga",
+      "pimiento",
+      "calabaza",
+      "brocoli",
+      "canonigo",
+      "rucula",
+      "kale"
+    ],
+    titulo: "Huevo con ensalada o verdura",
+    queOcurre: "Los carotenoides de la verdura se absorben varias veces mejor.",
+    porQue: "La grasa y los fosfolípidos de la yema forman las micelas que transportan los carotenoides a través del intestino. Se ha medido: añadir huevo a una ensalada multiplica lo que se absorbe.",
+    queHacer: "Un huevo cocido sobre la ensalada, o una tortilla con verduras."
+  },
+  {
+    clave: "ajo-hierro",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["ajo", "cebolla", "puerro", "cebolleta", "chalota"],
+    b: ["lenteja", "garbanzo", "alubia", "espinaca", "arroz", "trigo", "quinoa", "avena"],
+    titulo: "Ajo o cebolla con cereales y legumbres",
+    queOcurre: "Se absorbe bastante más hierro y zinc del plato.",
+    porQue: "Los compuestos azufrados del ajo y la cebolla contrarrestan el efecto de los fitatos, que son lo que en los cereales y legumbres deja el hierro y el zinc sin absorber.",
+    queHacer: "Un sofrito de ajo y cebolla como base del guiso. Es lo que hace media cocina del mundo sin saber por qué."
+  },
+  {
+    clave: "vitaminae-vitaminac",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["almendra", "avellana", "pistacho", "nuez", "girasol", "pipa", "aceite de oliva", "aove", "aguacate"],
+    b: ["naranja", "kiwi", "fresa", "pimiento", "limon", "mandarina", "brocoli", "tomate"],
+    titulo: "Vitamina E con vitamina C",
+    queOcurre: "La vitamina E dura mucho más y protege mejor las grasas del cuerpo.",
+    porQue: "Cuando la vitamina E neutraliza un radical, queda ella misma oxidada y fuera de juego. La vitamina C la regenera y la devuelve a funcionar, así que una misma molécula sirve muchas veces.",
+    queHacer: "Frutos secos con fruta. Ensalada con aceite de oliva y pimiento o limón."
+  },
+  {
+    clave: "almidon-frio",
+    clase: "sinergia",
+    fuerza: "media",
+    a: [
+      "patata",
+      "arroz",
+      "pasta",
+      "boniato",
+      "macarrones",
+      "espagueti",
+      "legumbre",
+      "lenteja",
+      "garbanzo",
+      "alubia"
+    ],
+    b: ["nevera", "frio", "ensalada", "vinagre", "limon"],
+    titulo: "Cocer y enfriar antes de comer",
+    queOcurre: "Parte del almidón deja de comportarse como azúcar y pasa a comportarse como fibra.",
+    porQue: "Al enfriarse, las cadenas de almidón se reordenan en una forma que las enzimas digestivas ya no rompen: se llama almidón resistente. Llega al colon y alimenta a la microbiota en vez de convertirse en glucosa. Recalentar suave conserva buena parte.",
+    queHacer: "Cocer el día antes y dejarlo en la nevera. Ensalada de patata, de arroz o de legumbre."
+  },
+  {
+    clave: "omega3-antioxidante",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["salmon", "sardina", "caballa", "boqueron", "atun", "nuez", "chia", "lino"],
+    b: ["limon", "perejil", "tomate", "aceite de oliva", "aove", "pimiento", "romero"],
+    titulo: "Pescado azul con algo antioxidante",
+    queOcurre: "Los omega-3 llegan enteros en vez de oxidarse por el camino.",
+    porQue: "Los ácidos grasos poliinsaturados son muy frágiles: se oxidan con el calor y el oxígeno. Los antioxidantes del limón, el perejil o el aceite de oliva los protegen durante la cocción y la digestión.",
+    queHacer: "Limón sobre el pescado. Cocinarlo con aceite de oliva y no a fuego muy alto."
+  },
+  {
+    clave: "calcio-vitaminak",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["leche", "yogur", "queso", "kefir", "sardina", "almendra", "tofu"],
+    b: ["espinaca", "brocoli", "col", "kale", "acelga", "perejil", "coles de bruselas", "rucula"],
+    titulo: "Calcio con verdura de hoja verde",
+    queOcurre: "El calcio tiene más probabilidades de acabar en el hueso.",
+    porQue: "La vitamina K de las hojas verdes activa la osteocalcina, la proteína que fija el calcio en el hueso. Sin ella, el calcio circula pero se deposita peor.",
+    queHacer: "Que la verdura verde acompañe a los lácteos a lo largo del día."
+  },
+  {
+    clave: "te-limon",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["te verde", "té verde", "te", "matcha"],
+    b: ["limon", "naranja", "lima"],
+    titulo: "Té verde con limón",
+    queOcurre: "Se aprovechan muchas más catequinas, sus compuestos característicos.",
+    porQue: "Las catequinas se degradan en el intestino delgado y apenas llegan a la sangre. El ácido de los cítricos las estabiliza, y se ha medido que multiplica varias veces lo que se absorbe.",
+    queHacer: "Un chorro de limón en el té. Y recordar que el té junto a las legumbres estorba el hierro."
+  },
+  {
+    clave: "proteina-vegetal-variada",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["tofu", "tempeh", "soja", "seitan", "proteína de guisante"],
+    b: ["arroz", "quinoa", "avena", "trigo", "pan", "semilla", "sesamo", "pipa"],
+    titulo: "Proteína vegetal acompañada",
+    queOcurre: "El perfil de aminoácidos se completa.",
+    porQue: "Cada fuente vegetal cojea en un aminoácido distinto. Combinar dos familias diferentes cubre los huecos de las dos, igual que pasa con la legumbre y el cereal.",
+    queHacer: "Tofu con arroz y sésamo, tempeh con quinoa."
+  },
+  {
+    clave: "fibra-agua",
+    clase: "estorbo",
+    fuerza: "media",
+    a: ["salvado", "psyllium", "semilla de chia", "chia", "lino", "avena"],
+    b: ["pan", "arroz", "pasta", "galleta"],
+    titulo: "Mucha fibra sin beber",
+    queOcurre: "Puede sentar peor en vez de mejor: hinchazón y tránsito más lento.",
+    porQue: "La fibra soluble necesita agua para formar el gel que la hace útil. Sin líquido suficiente, forma un tapón denso y hace justo lo contrario de lo que se espera.",
+    queHacer: "Beber agua cuando se sube la fibra de golpe, y subirla poco a poco."
+  },
+  {
     clave: "hierro-cafe",
     clase: "estorbo",
     fuerza: "alta",

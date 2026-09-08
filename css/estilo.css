@@ -54,7 +54,11 @@
   --radio:0.85rem;
   --radio-s:0.5rem;
 
-  --alto-barra:4rem;
+  /* El alto REAL de la barra flotante: 2,9rem del botón + 0,42 de relleno
+     arriba y abajo + 0,3 de separación del borde. Estaba en 4rem, medida de
+     la barra antigua que iba de lado a lado, y sobraban casi tres rem de
+     negro entre el contenido y la barra. */
+  --alto-barra:4.05rem;
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -163,9 +167,16 @@ button{touch-action:manipulation}
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
-  padding:var(--e5) var(--e4) var(--e7);
+  /* Abajo solo lo justo para que el último elemento no quede pegado a la
+     barra. Antes había 2,8rem encima del hueco que ya reserva el `bottom`. */
+  padding:var(--e5) var(--e4) var(--e4);
 }
-.principal > *{max-width:640px; margin-inline:auto}
+
+/* El envoltorio ocupa el alto de la zona: así una pantalla que quiera repartir
+   su contenido de arriba abajo tiene contra qué medirse. */
+.vista__cuerpo{min-height:100%; display:flex; flex-direction:column}
+.vista__cuerpo > *{max-width:640px; width:100%; margin-inline:auto}
+
 .principal:focus{outline:none}
 
 /* --- Barra de pestañas ---------------------------------------------------- */
@@ -1525,7 +1536,10 @@ body{
    el texto. Quien abre una app por primera vez no viene a leer. */
 .bien{
   display:flex; flex-direction:column;
-  min-height:calc(100dvh - var(--alto-cabecera, 4.2rem) - 7rem);
+  /* Ocupa el alto de la zona, ni más ni menos. Antes se calculaba a mano
+     restando alturas y se pasaba: el botón de siguiente quedaba cortado por
+     debajo del borde. */
+  flex:1; min-height:0;
   text-align:center;
 }
 .bien__cabeza{display:flex; justify-content:flex-end; margin-bottom:var(--e4)}
@@ -1636,3 +1650,63 @@ body{
 }
 .sugerencia b{font-family:var(--display); font-weight:600; color:var(--hueso)}
 .sugerencia span{font-size:0.88rem; color:var(--ceniza-tenue); line-height:1.4}
+
+/* --- El movimiento de la bienvenida ----------------------------------------
+   En CSS y no con animación de SVG: los colores van en variables, que ese
+   sistema no sabe interpolar, y las animaciones de SVG insertadas con
+   innerHTML no siempre arrancan. */
+
+.esc-linea{animation:escanea 2.6s ease-in-out infinite}
+@keyframes escanea{
+  0%   {transform:translateY(42px); opacity:0}
+  12%  {opacity:1}
+  50%  {transform:translateY(104px); opacity:1}
+  88%  {opacity:1}
+  100% {transform:translateY(42px); opacity:0}
+}
+
+/* El arco se llena y recorre los cinco colores del semáforo. */
+.esc-arco{
+  stroke:var(--rojo);
+  stroke-dasharray:calc(var(--vuelta) * 0.2) var(--vuelta);
+  animation:arcoColor 6s ease-in-out infinite, arcoLlena 6s ease-in-out infinite;
+}
+@keyframes arcoColor{
+  0%,8%    {stroke:var(--rojo)}
+  22%      {stroke:var(--naranja)}
+  42%      {stroke:var(--amarillo)}
+  62%      {stroke:var(--verde-claro)}
+  82%,92%  {stroke:var(--verde-parchis)}
+  100%     {stroke:var(--rojo)}
+}
+@keyframes arcoLlena{
+  0%,8%    {stroke-dasharray:calc(var(--vuelta) * 0.18) var(--vuelta)}
+  22%      {stroke-dasharray:calc(var(--vuelta) * 0.36) var(--vuelta)}
+  42%      {stroke-dasharray:calc(var(--vuelta) * 0.55) var(--vuelta)}
+  62%      {stroke-dasharray:calc(var(--vuelta) * 0.76) var(--vuelta)}
+  82%,92%  {stroke-dasharray:calc(var(--vuelta) * 0.97) var(--vuelta)}
+  100%     {stroke-dasharray:calc(var(--vuelta) * 0.18) var(--vuelta)}
+}
+.esc-cifra{animation:latido 6s ease-in-out infinite}
+@keyframes latido{0%,100%{opacity:.5} 50%{opacity:1}}
+
+/* Las tres barras crecen a distinto ritmo, como el desglose de una nota. */
+.esc-barra{
+  transform-origin:36px 0;
+  animation:crece 3.6s ease-in-out infinite;
+}
+.esc-barra--2{animation-delay:.25s}
+.esc-barra--3{animation-delay:.5s}
+@keyframes crece{
+  0%      {transform:scaleX(0)}
+  35%,80% {transform:scaleX(1)}
+  100%    {transform:scaleX(0)}
+}
+
+.esc-candado{animation:latido 3s ease-in-out infinite}
+
+@media (prefers-reduced-motion:reduce){
+  .esc-linea, .esc-arco, .esc-cifra, .esc-barra, .esc-candado{animation:none}
+  .esc-arco{stroke:var(--verde-claro)}
+  .esc-linea{transform:translateY(72px)}
+}

@@ -52,9 +52,9 @@ export function inicio({ irA }) {
         <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 6-8"/><path d="M15 6h4v4"/></svg></span>
         Tu tendencia
       </button>
-      <button class="atajo" id="btnAjustes">
-        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></span>
-        Ajustes
+      <button class="atajo" id="btnCombinarInicio">
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg></span>
+        Qué juntar
       </button>
       <button class="atajo" id="btnAcerca">
         <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>
@@ -96,14 +96,10 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
   raiz.querySelector('#btnSupermercado')?.addEventListener('click', () => irA('supermercado'));
   raiz.querySelector('#btnTendencia')?.addEventListener('click', () => irA('tendencia'));
   raiz.querySelector('#btnAcerca')?.addEventListener('click', () => irA('acerca'));
-  // Los ajustes viven en un desplegable: se tocan una vez y no se vuelven a
-  // mirar, así que no merecen sitio fijo en la pantalla principal.
-  raiz.querySelector('#btnAjustes')?.addEventListener('click', () => {
-    const panel = raiz.querySelector('#panelAjustes');
-    if (!panel) return;
-    panel.open = true;
-    panel.scrollIntoView({ block: 'start' });
-  });
+  // Había dos botones de Ajustes: el atajo y el desplegable de abajo. Sobraba
+  // el atajo, así que su sitio lo ocupa "Qué juntar", que no tenía ninguno.
+  raiz.querySelector('#btnCombinarInicio')?.addEventListener('click',
+    () => irA('combinar'));
 
   const control = raiz.querySelector('#controlEscala');
   if (control) {

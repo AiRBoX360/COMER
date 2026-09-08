@@ -71,27 +71,37 @@ export function combinar() {
         </button>`).join('')}
     </div>` : ''}
 
-    ${nombres.length < 2
-      ? `<p class="texto" style="margin-top:24px">Elige al menos dos cosas.</p>`
-      : `
-        ${halladas.length === 0
-          ? `<div class="tarjeta" style="margin-top:24px">
-               <p class="texto">No conozco ninguna interacción entre lo que has elegido. Eso no significa que no combinen: significa que no tengo nada demostrado que contarte.</p>
-             </div>`
-          : halladas.map(tarjetaCombinacion).join('')}
+    ${nombres.length === 0
+      ? '<p class="texto" style="margin-top:24px">Elige algo de arriba para empezar.</p>'
+      : ''}
 
-        <button class="boton-grande" id="btnRecetas" style="margin-top:20px">
-          BUSCAR RECETAS CON ESTO
-          <small>Abre el buscador con tus ingredientes. Sale de la app.</small>
-        </button>`}
+    ${halladas.length > 0 ? `
+      <h2 class="subtitulo">Lo que pasa al juntarlos</h2>
+      ${halladas.map(tarjetaCombinacion).join('')}` : ''}
+
+    ${nombres.length >= 1 && halladas.length === 0 ? `
+      <div class="tarjeta" style="margin-top:20px">
+        <p class="texto">
+          ${nombres.length === 1
+            ? 'Con una sola cosa no hay nada que juntar. Elige otra, o mira lo de abajo.'
+            : 'No conozco ninguna interacción entre lo que has elegido. Eso no significa que no combinen: significa que no tengo nada demostrado que contarte, y prefiero decirlo a inventármelo.'}
+        </p>
+      </div>` : ''}
 
     ${sugerencias.length ? `
-      <h2 class="subtitulo">Si añadieras una cosa</h2>
+      <h2 class="subtitulo">Con una cosa más</h2>
+      <p class="texto" style="font-size:0.92rem">Lo que desbloquearías si lo añadieras a lo que ya tienes.</p>
       ${sugerencias.map((s) => `
         <div class="sugerencia">
-          <b>${esc(s.alimento)}</b>
-          <span>${esc(s.desbloquea)} · ${esc(s.porQue)}</span>
+          <b>+ ${esc(s.alimento)}</b>
+          <span><b>${esc(s.desbloquea)}.</b> ${esc(s.porQue)}</span>
         </div>`).join('')}` : ''}
+
+    ${nombres.length >= 2 ? `
+      <button class="boton-grande" id="btnRecetas" style="margin-top:20px">
+        BUSCAR RECETAS CON ESTO
+        <small>Abre el buscador con tus ingredientes. Sale de la app.</small>
+      </button>` : ''}
   `;
 }
 

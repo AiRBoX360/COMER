@@ -56,8 +56,15 @@ const PAGINAS = [
 ];
 
 /* --- Las escenas ---------------------------------------------------------
-   SVG con animación declarativa. No hay bucle de JavaScript detrás: el
-   navegador la lleva, así que no consume batería ni se atasca. */
+   El movimiento se hace con CSS, no con animación de SVG.
+   
+   La primera versión usaba <animate> dentro del SVG. No funcionaba por dos
+   motivos: los colores iban en variables CSS, que ese sistema no sabe
+   interpolar, y además las animaciones de SVG insertadas con innerHTML no
+   siempre arrancan. Con CSS las dos cosas dejan de ser un problema.
+
+   Si el teléfono pide menos movimiento, se quedan quietas y se entienden
+   igual: el dibujo ya dice lo que tiene que decir. */
 
 function escenaEscaneo() {
   return `
@@ -67,54 +74,41 @@ function escenaEscaneo() {
       ${[62, 72, 78, 90, 100, 110, 122, 132].map((x, i) => `
         <rect x="${x}" y="44" width="${i % 3 === 0 ? 5 : 3}" height="52" rx="1.5"
               fill="var(--ceniza-tenue)"/>`).join('')}
-      <rect x="46" y="42" width="108" height="3" rx="1.5" fill="var(--verde-claro)">
-        <animate attributeName="y" values="42;104;42" dur="2.6s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0;1;1;0" dur="2.6s" repeatCount="indefinite"/>
-      </rect>
+      <rect class="esc-linea" x="46" y="0" width="108" height="3" rx="1.5"
+            fill="var(--verde-claro)"/>
     </svg>`;
 }
 
 function escenaEscala() {
-  // Un círculo que recorre los cinco colores del semáforo, de peor a mejor.
-  const colores = ['var(--rojo)', 'var(--naranja)', 'var(--amarillo)',
-                   'var(--verde-claro)', 'var(--verde-parchis)'];
+  // Un círculo que recorre los cinco colores del semáforo, de peor a mejor,
+  // mientras el arco se va llenando. Es la escala de la app, en movimiento.
   const VUELTA = 2 * Math.PI * 44;
   return `
     <svg viewBox="0 0 200 140" class="bien__svg" aria-hidden="true">
-      <circle cx="100" cy="70" r="44" fill="none" stroke="var(--carbon-alto)" stroke-width="10"/>
-      <circle cx="100" cy="70" r="44" fill="none" stroke-width="10" stroke-linecap="round"
-              transform="rotate(-90 100 70)">
-        <animate attributeName="stroke"
-                 values="${colores.join(';')};${colores[0]}"
-                 dur="5s" repeatCount="indefinite"/>
-        <animate attributeName="stroke-dasharray"
-                 values="${[0.2, 0.4, 0.6, 0.8, 0.97, 0.2].map((f) =>
-                   `${(VUELTA * f).toFixed(0)} ${(VUELTA * (1 - f)).toFixed(0)}`).join(';')}"
-                 dur="5s" repeatCount="indefinite"/>
-      </circle>
-      <text x="100" y="78" text-anchor="middle" class="bien__cifra">
-        <animate attributeName="opacity" values=".55;1;.55" dur="5s" repeatCount="indefinite"/>
-        0-100
-      </text>
+      <circle cx="100" cy="70" r="44" fill="none"
+              stroke="var(--carbon-alto)" stroke-width="10"/>
+      <circle class="esc-arco" cx="100" cy="70" r="44" fill="none"
+              stroke-width="10" stroke-linecap="round"
+              transform="rotate(-90 100 70)"
+              style="--vuelta:${VUELTA.toFixed(1)}"/>
+      <text x="100" y="77" text-anchor="middle" class="bien__cifra esc-cifra">0-100</text>
     </svg>`;
 }
 
 function escenaPorQue() {
   // Tres barras que crecen a distinto ritmo: el desglose de la nota.
   const barras = [
-    { y: 40, ancho: 58, color: 'var(--rojo)', retraso: '0s' },
-    { y: 64, ancho: 96, color: 'var(--amarillo)', retraso: '.25s' },
-    { y: 88, ancho: 128, color: 'var(--verde-claro)', retraso: '.5s' },
+    { y: 40, ancho: 58, color: 'var(--rojo)' },
+    { y: 64, ancho: 96, color: 'var(--amarillo)' },
+    { y: 88, ancho: 128, color: 'var(--verde-claro)' },
   ];
   return `
     <svg viewBox="0 0 200 140" class="bien__svg" aria-hidden="true">
-      ${barras.map((b) => `
+      ${barras.map((b, i) => `
         <rect x="36" y="${b.y}" width="132" height="12" rx="6" fill="var(--carbon-alto)"/>
-        <rect x="36" y="${b.y}" width="0" height="12" rx="6" fill="${b.color}">
-          <animate attributeName="width" values="0;${b.ancho};${b.ancho};0"
-                   keyTimes="0;.35;.85;1" dur="3.4s" begin="${b.retraso}"
-                   repeatCount="indefinite"/>
-        </rect>`).join('')}
+        <rect class="esc-barra esc-barra--${i + 1}" x="36" y="${b.y}"
+              width="${b.ancho}" height="12" rx="6" fill="${b.color}"
+              style="--ancho:${b.ancho}"/>`).join('')}
     </svg>`;
 }
 
@@ -126,9 +120,8 @@ function escenaPrivacidad() {
       <rect x="80" y="38" width="40" height="60" rx="4" fill="var(--carbon-alto)"/>
       <path d="M90 66v-8a10 10 0 0 1 20 0v8" fill="none"
             stroke="var(--verde-claro)" stroke-width="3" stroke-linecap="round"/>
-      <rect x="86" y="66" width="28" height="22" rx="4" fill="var(--verde-claro)">
-        <animate attributeName="opacity" values=".55;1;.55" dur="3s" repeatCount="indefinite"/>
-      </rect>
+      <rect class="esc-candado" x="86" y="66" width="28" height="22" rx="4"
+            fill="var(--verde-claro)"/>
     </svg>`;
 }
 
