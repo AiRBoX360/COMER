@@ -55,6 +55,7 @@ export async function guardarAnalisis({ veredicto, entrada, fotos = [] }) {
   await r.guardarProducto({
     id,
     nombre: veredicto.nombre,
+    codigoBarras: entrada?.codigoBarras ?? undefined,
     marca: veredicto.marca,
     categoria: veredicto.categoria,
     fechaAnalisis: veredicto.fechaAnalisis,
@@ -65,6 +66,37 @@ export async function guardarAnalisis({ veredicto, entrada, fotos = [] }) {
     fotos: refs,
   });
   return id;
+}
+
+/**
+ * Añade una foto a un producto ya guardado.
+ *
+ * Sin esto había que borrar el producto entero y rehacerlo solo para ponerle
+ * una foto, que es un castigo absurdo por haber escaneado el código antes de
+ * tener el envase a mano.
+ *
+ * Si ya había una foto de ese mismo tipo, se sustituye y la vieja se borra:
+ * dejarla suelta iría llenando el espacio sin que nadie pueda verla.
+ */
+export async function anadirFoto(idProducto, bytes, tipo = 'frontal') {
+  const r = almacen();
+  const producto = await r.obtenerProducto(idProducto);
+  if (!producto) throw new Error('Ese producto ya no está en la despensa.');
+
+  const idFoto = nuevoId('f');
+  await r.guardarFoto({
+    id: idFoto, tipo, mime: 'image/jpeg',
+    datos: bytes, creada: new Date().toISOString(),
+  });
+
+  const anterior = producto.fotos.find((f) => f.tipo === tipo);
+  const fotos = [...producto.fotos.filter((f) => f.tipo !== tipo), { tipo, idFoto }];
+  await r.guardarProducto({ ...producto, fotos });
+
+  if (anterior?.idFoto && r.borrarFoto) {
+    try { await r.borrarFoto(anterior.idFoto); } catch { /* si no se puede, no es grave */ }
+  }
+  return idFoto;
 }
 
 export async function listar(filtro) {

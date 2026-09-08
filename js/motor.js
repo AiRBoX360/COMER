@@ -924,6 +924,10 @@ var OTRAS_VIGILADAS = [
   { patron: "sirope de glucosa fructosa", etiqueta: "Jarabe de glucosa y fructosa", severidad: 62, motivo: "Fructosa libre en dosis altas: se metaboliza en el hígado y se asocia a hígado graso no alcohólico." },
   { patron: "jarabe de glucosa y fructosa", etiqueta: "Jarabe de glucosa y fructosa", severidad: 62, motivo: "Fructosa libre en dosis altas: se metaboliza en el hígado y se asocia a hígado graso no alcohólico." }
 ];
+function casaPalabra(texto, patron) {
+  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${p}(es|s)?([^a-z0-9]|$)`).test(texto);
+}
 
 // src/datos/ingredientes-comunes.ts
 var FILAS2 = [
@@ -2556,10 +2560,7 @@ var REALES = (() => {
   }
   return lista.sort((a, b) => b.patron.length - a.patron.length);
 })();
-function tienePalabra(texto, patron) {
-  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|\\s)${p}(es|s)?(\\s|$)`).test(texto);
-}
+var tienePalabra = casaPalabra;
 function tienePrefijo(texto, patron) {
   return texto.includes(patron);
 }
@@ -2856,14 +2857,14 @@ function notaNova(grupo, alLimite = false) {
 }
 
 // src/nucleo/normalizar.ts
-function leido(valor, textoOriginal) {
-  return { valor, estado: "leido", textoOriginal };
+function leido(valor2, textoOriginal) {
+  return { valor: valor2, estado: "leido", textoOriginal };
 }
 function desconocido() {
   return { valor: null, estado: "desconocido" };
 }
-function calculado(valor, de) {
-  return { valor, estado: "calculado", textoOriginal: `deducido de ${de}` };
+function calculado(valor2, de) {
+  return { valor: valor2, estado: "calculado", textoOriginal: `deducido de ${de}` };
 }
 function hay(d) {
   return Boolean(d) && d.estado !== "desconocido" && typeof d.valor === "number";
@@ -2967,9 +2968,9 @@ var SAL = [
 var FIBRA = [3, 4.1, 5.2, 6.3, 7.4];
 var PROTEINA = [2.4, 4.8, 7.2, 9.6, 12, 14, 17];
 var PROTEINA_BEBIDA = [1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3];
-function puntos(valor, umbrales) {
+function puntos(valor2, umbrales) {
   let n = 0;
-  for (const u of umbrales) if (valor > u) n++;
+  for (const u of umbrales) if (valor2 > u) n++;
   return n;
 }
 function puntosFVL(pct, esBebida) {
@@ -3077,9 +3078,9 @@ function notaDesdeLetra(letra) {
 }
 
 // src/nucleo/limitar.ts
-function porUmbral(valor, umbral, base, tope = 96) {
-  if (valor <= 0 || umbral <= 0) return 0;
-  return Math.min(tope, base * Math.pow(valor / umbral, EXPONENTE_DOSIS));
+function porUmbral(valor2, umbral, base, tope = 96) {
+  if (valor2 <= 0 || umbral <= 0) return 0;
+  return Math.min(tope, base * Math.pow(valor2 / umbral, EXPONENTE_DOSIS));
 }
 var r1 = (x) => Math.round(x * 10) / 10;
 function construirLimitar(n, ing, nova, categoria) {
@@ -3312,9 +3313,9 @@ function construirLimitar(n, ing, nova, categoria) {
 }
 
 // src/nucleo/favorables.ts
-function porUmbral2(valor, umbral, base, exp = 0.75, tope = 95) {
-  if (valor <= 0 || umbral <= 0) return 0;
-  return Math.min(tope, base * Math.pow(valor / umbral, exp));
+function porUmbral2(valor2, umbral, base, exp = 0.75, tope = 95) {
+  if (valor2 <= 0 || umbral <= 0) return 0;
+  return Math.min(tope, base * Math.pow(valor2 / umbral, exp));
 }
 var r12 = (x) => Math.round(x * 10) / 10;
 function construirFavorables(n, ing, categoria, micros = [], esUltraprocesado = false) {
@@ -3993,14 +3994,14 @@ var EN_GRAMOS = [
 var v = (d) => d.valor;
 var r13 = (x) => Math.round(x * 10) / 10;
 var r2 = (x) => Math.abs(x) < 10 ? Math.round(x * 100) / 100 : Math.round(x * 10) / 10;
-function proponerPara(campo, valor, enMiligramos) {
-  const texto = String(valor);
+function proponerPara(campo, valor2, enMiligramos) {
+  const texto = String(valor2);
   if (/9$/.test(texto)) {
     const sinNueve = parseFloat(texto.slice(0, -1));
     if (Number.isFinite(sinNueve) && sinNueve > 0 && sinNueve <= 100) {
       return {
         campo,
-        valorActual: valor,
+        valorActual: valor2,
         valorPropuesto: sinNueve,
         motivo: 'La "g" pegada al número se lee como un 9 con mucha frecuencia.'
       };
@@ -4009,7 +4010,7 @@ function proponerPara(campo, valor, enMiligramos) {
   if (enMiligramos > 0 && enMiligramos <= 100) {
     return {
       campo,
-      valorActual: valor,
+      valorActual: valor2,
       valorPropuesto: r2(enMiligramos),
       motivo: "La cifra encaja si estaba en miligramos y se leyó como gramos."
     };
@@ -4199,14 +4200,14 @@ function validar(n, esProductoSalado = false) {
   const indiceCoherencia = Math.max(0, 1 - errores * 0.28 - avisos * 0.08);
   return { incidencias: inc, errores, avisos, coherente: errores === 0, indiceCoherencia };
 }
-function menorQueMalLeido(valor, campo) {
-  const texto = String(valor);
+function menorQueMalLeido(valor2, campo) {
+  const texto = String(valor2);
   if (!/^[23]\d*[.,]?\d*$/.test(texto)) return void 0;
   const sinPrimera = parseFloat(texto.slice(1).replace(",", "."));
   if (!Number.isFinite(sinPrimera) || sinPrimera >= 1 || sinPrimera <= 0) return void 0;
   return {
     campo,
-    valorActual: valor,
+    valorActual: valor2,
     valorPropuesto: sinPrimera,
     motivo: 'Muchas etiquetas ponen "menos de 0,5" con el símbolo «<», y el lector lo confunde con un 2. La cifra encaja si era «<' + sinPrimera.toString().replace(".", ",") + "»."
   };
@@ -4301,16 +4302,16 @@ function calcularConfianza(e) {
   }
   const coherencia = Math.max(0, Math.min(1, e.indiceCoherencia));
   const bruto = PESOS_CONFIANZA.completitud * completitud + PESOS_CONFIANZA.calidadLectura * calidadLectura + PESOS_CONFIANZA.coherencia * coherencia;
-  let valor = Math.round(bruto * 100);
+  let valor2 = Math.round(bruto * 100);
   let nivel;
   if (faltan.length > 0) {
     nivel = "insuficiente";
-    valor = Math.min(valor, 55);
+    valor2 = Math.min(valor2, 55);
   } else if (e.huboErrores) {
     nivel = "baja";
-    valor = Math.min(valor, 55);
-  } else if (valor >= 85) nivel = "alta";
-  else if (valor >= 60) nivel = "media";
+    valor2 = Math.min(valor2, 55);
+  } else if (valor2 >= 85) nivel = "alta";
+  else if (valor2 >= 60) nivel = "media";
   else nivel = "baja";
   const comoMejorarla = [];
   if (faltan.length > 0) {
@@ -4326,7 +4327,7 @@ function calcularConfianza(e) {
     comoMejorarla.push("La foto se ha leído con dificultad. Repítela con más luz y el envase liso, o pega el texto copiado desde el iPhone.");
   }
   return {
-    valor: Math.max(0, Math.min(100, valor)),
+    valor: Math.max(0, Math.min(100, valor2)),
     nivel,
     etiqueta: ETIQUETA[nivel],
     completitud: Math.round(completitud * 100),
@@ -4817,11 +4818,21 @@ function clave(s) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 var SEMAFOROS = ["rojo", "naranja", "amarillo", "verde_claro", "verde_parchis"];
+function textoBuscableDe(p) {
+  const ingredientes = (p.entrada?.ingredientes ?? []).map((i) => i.texto);
+  const aditivos = (p.veredicto?.sustancias ?? []).filter((s) => typeof s.riesgo === "number").map((s) => `${s.codigo} ${s.nombre}`);
+  const alergenos = (p.veredicto?.alergenos ?? []).map((a) => a.nombre);
+  return [...ingredientes, ...aditivos, ...alergenos].join(" | ");
+}
 function filtrarYOrdenar(lista, f = {}) {
   let out = lista;
   if (f.texto) {
     const t = clave(f.texto);
     out = out.filter((p) => clave(`${p.nombre} ${p.marca ?? ""}`).includes(t));
+  }
+  if (f.ingrediente) {
+    const t = clave(f.ingrediente);
+    out = out.filter((p) => clave(textoBuscableDe(p)).includes(t));
   }
   if (f.semaforo?.length) out = out.filter((p) => p.semaforo !== null && f.semaforo.includes(p.semaforo));
   if (f.categoria?.length) out = out.filter((p) => f.categoria.includes(p.categoria));
@@ -4922,8 +4933,8 @@ var RepositorioMemoria = class {
   async borrarFoto(id) {
     this.fotos.delete(id);
   }
-  async guardarPreferencia(clave2, valor) {
-    this.preferencias.set(clave2, valor);
+  async guardarPreferencia(clave2, valor2) {
+    this.preferencias.set(clave2, valor2);
   }
   async obtenerPreferencia(clave2) {
     return this.preferencias.get(clave2);
@@ -5052,9 +5063,9 @@ var RepositorioIndexedDB = class {
       st.delete(id);
     });
   }
-  async guardarPreferencia(clave2, valor) {
+  async guardarPreferencia(clave2, valor2) {
     await this.escribir(ALMACEN_PREFERENCIAS, (st) => {
-      st.put(valor, clave2);
+      st.put(valor2, clave2);
     });
   }
   async obtenerPreferencia(clave2) {
@@ -5600,9 +5611,9 @@ function extraerNumeros(texto) {
     const bruto = m[0].trim();
     let crudo = m[1].replace(/[<>~]/g, "").trim();
     crudo = crudo.replace(/[ ](?=\d{3}\b)/g, "").replace(/\.(?=\d{3}\b)/g, "");
-    const valor = parseFloat(crudo.replace(",", "."));
-    if (!Number.isFinite(valor)) continue;
-    out.push({ valor, unidad: normalizarUnidad(m[2] ?? ""), bruto });
+    const valor2 = parseFloat(crudo.replace(",", "."));
+    if (!Number.isFinite(valor2)) continue;
+    out.push({ valor: valor2, unidad: normalizarUnidad(m[2] ?? ""), bruto });
   }
   return out;
 }
@@ -5743,18 +5754,18 @@ function analizarTabla(textoCrudo) {
       }
       const n = elegirColumna(nums, indice100);
       if (!n) return;
-      let valor = n.valor;
+      let valor2 = n.valor;
       let unidad = n.unidad;
       if (marca.campo === "sodio_mg") {
         if (unidad === "g") {
-          valor = valor * 1e3;
+          valor2 = valor2 * 1e3;
           unidad = "mg";
         }
       } else if (unidad === "mg") {
-        valor = valor / 1e3;
+        valor2 = valor2 / 1e3;
         unidad = "g";
       } else if (unidad === "ug" || unidad === "µg" || unidad === "mcg") {
-        valor = valor / 1e6;
+        valor2 = valor2 / 1e6;
         unidad = "g";
       }
       let confianza2 = 0.9;
@@ -5764,7 +5775,7 @@ function analizarTabla(textoCrudo) {
       if (dudosos.has(iLinea)) confianza2 = Math.min(confianza2, 0.4);
       valores.push({
         campo: marca.campo,
-        valor,
+        valor: valor2,
         unidad: unidad || "",
         textoOriginal: n.bruto,
         confianza: Math.max(0.3, confianza2),
@@ -6014,10 +6025,7 @@ function veredictoDe(v2) {
   if (v2 < 0) return "limitar";
   return "neutro";
 }
-function casa(texto, patron) {
-  const p = patron.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`).test(texto);
-}
+var casa = casaPalabra;
 var FUNCIONES_DECLARADAS2 = [
   "emulgente",
   "emulgentes",
@@ -6378,9 +6386,9 @@ function numero(x) {
   }
   return void 0;
 }
-function deLaBase(valor) {
+function deLaBase(valor2) {
   return {
-    valor,
+    valor: valor2,
     estado: "leido",
     textoOriginal: "Open Food Facts",
     // Alta, pero no plena: es un dato de una base colaborativa, no una cifra
@@ -7762,8 +7770,8 @@ function buscarFresco(termino) {
   return conNota.sort((a, b) => b.p - a.p).slice(0, 8).map((x) => x.f);
 }
 function frescoAEntrada(f) {
-  const de = (valor) => ({
-    valor,
+  const de = (valor2) => ({
+    valor: valor2,
     estado: "calculado",
     textoOriginal: "valor de tabla de composición, no de un envase"
   });
@@ -7785,12 +7793,426 @@ function frescoAEntrada(f) {
     ingredientes: [{ texto: f.nombre }]
   };
 }
+
+// src/nucleo/alternativas.ts
+var VACIAS = /* @__PURE__ */ new Set([
+  "de",
+  "del",
+  "la",
+  "el",
+  "los",
+  "las",
+  "con",
+  "sin",
+  "en",
+  "y",
+  "a",
+  "al",
+  "para",
+  "por",
+  "un",
+  "una",
+  "sabor",
+  "natural",
+  "original",
+  "clasico",
+  "clasica",
+  "light",
+  "zero",
+  "bio",
+  "eco",
+  "gr",
+  "ml",
+  "pack",
+  "familiar"
+]);
+function palabrasDe(nombre) {
+  return new Set(
+    normalizarTexto(nombre).split(/[^a-z0-9]+/).filter((p) => p.length >= 4 && !VACIAS.has(p))
+  );
+}
+function familiaPrincipal(ingredientes) {
+  for (const i of ingredientes.slice(0, 2)) {
+    const e = explicarIngrediente(i.texto);
+    if (e.categoria && e.categoria !== "sin clasificar") return e.categoria;
+  }
+  return "";
+}
+function buscarAlternativas(actual, guardados, limite = 3) {
+  if (actual.puntuacion === null) return [];
+  const familia = familiaPrincipal(actual.ingredientes);
+  const palabras = palabrasDe(actual.nombre);
+  const candidatos = [];
+  for (const g of guardados) {
+    if (g.id === actual.id) continue;
+    if (typeof g.puntuacion !== "number") continue;
+    if (g.puntuacion <= actual.puntuacion + 4) continue;
+    if (g.categoria && actual.categoria && g.categoria !== actual.categoria) continue;
+    const suyos = g.entrada?.ingredientes ?? [];
+    const compartidas = [...palabrasDe(g.nombre)].filter((p) => palabras.has(p));
+    const mismaFamilia = familia !== "" && familiaPrincipal(suyos) === familia;
+    let comparablePor = "";
+    let afinidad = 0;
+    if (compartidas.length > 0) {
+      comparablePor = `los dos son ${compartidas[0]}`;
+      afinidad = 2 + compartidas.length;
+    } else if (mismaFamilia) {
+      comparablePor = `los dos empiezan por ${familia}`;
+      afinidad = 2;
+    } else {
+      continue;
+    }
+    candidatos.push({
+      id: g.id,
+      nombre: g.nombre,
+      puntuacion: g.puntuacion,
+      semaforo: g.semaforo,
+      mejora: g.puntuacion - actual.puntuacion,
+      porQue: enQueEsMejor(actual.veredicto, g.veredicto),
+      comparablePor,
+      fecha: g.fechaAnalisis,
+      // Primero lo más parecido, y dentro de eso lo que más mejora.
+      orden: afinidad * 100 + (g.puntuacion - actual.puntuacion)
+    });
+  }
+  return candidatos.sort((a, b) => b.orden - a.orden).slice(0, limite).map(({ orden, ...resto }) => resto);
+}
+function enPalabras(nombre) {
+  const partes = nombre.split("·").map((x) => x.trim());
+  return (partes.length > 1 ? partes[1] : partes[0]).toLowerCase();
+}
+function enQueEsMejor(peor, mejor) {
+  if (!mejor) return [];
+  const razones = [];
+  const pesaEn = (v2, id) => v2.limitar.find((f) => f.id === id)?.peso ?? 0;
+  const ids = new Set([...peor.limitar, ...mejor.limitar].map((f) => f.id));
+  for (const id of ids) {
+    const antes = pesaEn(peor, id);
+    const ahora = pesaEn(mejor, id);
+    if (antes - ahora < 25) continue;
+    const f = peor.limitar.find((x) => x.id === id);
+    if (!f) continue;
+    razones.push(ahora === 0 ? `sin ${enPalabras(f.nombre)}` : `menos ${enPalabras(f.nombre)}`);
+  }
+  const buenosDeEste = new Set(peor.favorables.map((f) => f.id));
+  for (const f of mejor.favorables) {
+    if (buenosDeEste.has(f.id) || f.peso < 45) continue;
+    razones.push(enPalabras(f.nombre));
+  }
+  if (razones.length === 0 && mejor.nova.grupo !== null && peor.nova.grupo !== null && mejor.nova.grupo < peor.nova.grupo) {
+    razones.push("menos procesado");
+  }
+  return razones.slice(0, 3);
+}
+
+// src/almacen/reformulacion.ts
+var NOMBRE2 = {
+  energia_kcal: ["Energía", "kcal"],
+  grasas_g: ["Grasas", "g"],
+  saturadas_g: ["Grasas saturadas", "g"],
+  hidratos_g: ["Hidratos de carbono", "g"],
+  azucares_g: ["Azúcares", "g"],
+  fibra_g: ["Fibra", "g"],
+  proteinas_g: ["Proteínas", "g"],
+  sal_g: ["Sal", "g"]
+};
+var MINIMO_RELATIVO = 0.05;
+function valor(n, campo) {
+  const d = n?.[campo];
+  return typeof d?.valor === "number" ? d.valor : null;
+}
+function compararConAnterior(anterior, ahora) {
+  const nutrientes = [];
+  for (const [campo, [nombre, unidad]] of Object.entries(NOMBRE2)) {
+    const antes = valor(anterior.entrada?.nutrientes, campo);
+    const despues = valor(ahora.nutrientes, campo);
+    if (antes === null || despues === null || antes === despues) continue;
+    const base = Math.max(Math.abs(antes), 0.01);
+    const variacion = Math.abs(despues - antes) / base;
+    if (variacion < MINIMO_RELATIVO) continue;
+    nutrientes.push({ campo, nombre, antes, ahora: despues, variacion, unidad });
+  }
+  nutrientes.sort((a, b) => b.variacion - a.variacion);
+  const comoConjunto = (lista) => new Set(lista.map((i) => normalizarTexto(i.texto)));
+  const antesIng = comoConjunto(anterior.entrada?.ingredientes ?? []);
+  const ahoraIng = comoConjunto(ahora.ingredientes);
+  const nuevos = ahora.ingredientes.filter((i) => !antesIng.has(normalizarTexto(i.texto)));
+  const quitados = (anterior.entrada?.ingredientes ?? []).filter((i) => !ahoraIng.has(normalizarTexto(i.texto)));
+  const hayCambios = nutrientes.length > 0 || nuevos.length > 0 || quitados.length > 0;
+  return {
+    hayCambios,
+    fechaAnterior: anterior.fechaAnalisis,
+    notaAntes: anterior.puntuacion,
+    notaAhora: ahora.veredicto.puntuacion,
+    nutrientes,
+    ingredientesNuevos: nuevos.map((i) => i.texto),
+    ingredientesQuitados: quitados.map((i) => i.texto),
+    resumen: resumir2(
+      hayCambios,
+      nutrientes,
+      nuevos.length,
+      quitados.length,
+      anterior.puntuacion,
+      ahora.veredicto.puntuacion
+    )
+  };
+}
+function resumir2(hay2, nutrientes, nuevos, quitados, notaAntes, notaAhora) {
+  if (!hay2) return "";
+  const partes = [];
+  if (nutrientes.length) {
+    const peor = nutrientes[0];
+    partes.push(`${peor.nombre.toLowerCase()} ha pasado de ${peor.antes} a ${peor.ahora} ${peor.unidad}`);
+  }
+  if (nuevos) partes.push(`lleva ${nuevos} ingrediente(s) que antes no`);
+  if (quitados) partes.push(`ha dejado de llevar ${quitados}`);
+  let frase = `Este producto ha cambiado: ${partes.join(", ")}.`;
+  if (typeof notaAntes === "number" && typeof notaAhora === "number" && notaAntes !== notaAhora) {
+    frase += notaAhora < notaAntes ? ` Su nota baja de ${notaAntes} a ${notaAhora}.` : ` Su nota sube de ${notaAntes} a ${notaAhora}.`;
+  }
+  return frase;
+}
+function buscarPorCodigoGuardado(guardados, codigo) {
+  const c = String(codigo).replace(/\D/g, "");
+  if (!c) return void 0;
+  return guardados.filter((p) => (p.codigoBarras ?? "").replace(/\D/g, "") === c).sort((a, b) => b.fechaAnalisis.localeCompare(a.fechaAnalisis))[0];
+}
+
+// src/datos/combinaciones.ts
+var COMBINACIONES = [
+  // --- Sinergias -----------------------------------------------------------
+  {
+    clave: "hierro-vitaminac",
+    clase: "sinergia",
+    fuerza: "alta",
+    a: [
+      "lenteja",
+      "garbanzo",
+      "alubia",
+      "soja",
+      "espinaca",
+      "acelga",
+      "quinoa",
+      "avena",
+      "tofu",
+      "guisante",
+      "pistacho",
+      "anacardo"
+    ],
+    b: [
+      "pimiento",
+      "naranja",
+      "mandarina",
+      "limon",
+      "kiwi",
+      "fresa",
+      "brocoli",
+      "tomate",
+      "perejil",
+      "coliflor",
+      "papaya",
+      "pomelo"
+    ],
+    titulo: "Hierro vegetal con vitamina C",
+    queOcurre: "El hierro de los vegetales se absorbe mucho mejor, hasta tres veces más.",
+    porQue: "El hierro vegetal es de la forma que el intestino absorbe peor. La vitamina C lo transforma en la forma que sí absorbe bien, y además impide que los fitatos del propio alimento lo secuestren.",
+    queHacer: "Que estén en el mismo plato o en la misma comida. Un chorro de limón sobre las lentejas, o un pimiento en la ensalada."
+  },
+  {
+    clave: "legumbre-cereal",
+    clase: "sinergia",
+    fuerza: "alta",
+    a: ["lenteja", "garbanzo", "alubia", "guisante", "soja", "cacahuete"],
+    b: ["arroz", "trigo", "pan", "pasta", "avena", "maiz", "cuscus", "quinoa", "centeno"],
+    titulo: "Legumbre con cereal",
+    queOcurre: "Juntos dan proteína completa. Por separado, ninguno de los dos lo es.",
+    porQue: "A las legumbres les falta metionina y a los cereales lisina. Cada uno aporta el aminoácido que al otro le falta, así que la mezcla iguala a la proteína de la carne o el huevo.",
+    queHacer: "No hace falta que sea en el mismo plato: basta con que sea a lo largo del día. Lentejas con arroz, garbanzos con pan, hummus con pita."
+  },
+  {
+    clave: "carotenoides-grasa",
+    clase: "sinergia",
+    fuerza: "alta",
+    a: [
+      "zanahoria",
+      "tomate",
+      "calabaza",
+      "boniato",
+      "espinaca",
+      "pimiento",
+      "brocoli",
+      "mango",
+      "papaya",
+      "kale",
+      "acelga"
+    ],
+    b: [
+      "aceite de oliva",
+      "aove",
+      "aguacate",
+      "nuez",
+      "almendra",
+      "avellana",
+      "huevo",
+      "queso",
+      "aceite"
+    ],
+    titulo: "Verdura de color con una grasa",
+    queOcurre: "Los carotenoides pasan de aprovecharse a medias a aprovecharse casi enteros.",
+    porQue: "El betacaroteno, el licopeno y la luteína son liposolubles: sin grasa que los transporte, la mayor parte atraviesa el intestino sin absorberse.",
+    queHacer: "Un chorro de aceite de oliva sobre la ensalada o la verdura al vapor. No hace falta mucha: una cucharada basta."
+  },
+  {
+    clave: "licopeno-calor",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["tomate"],
+    b: ["aceite de oliva", "aove", "aceite"],
+    titulo: "Tomate cocinado con aceite",
+    queOcurre: "El licopeno del tomate se aprovecha varias veces mejor cocinado y con grasa que crudo.",
+    porQue: "El calor rompe las paredes celulares que lo tienen atrapado y la grasa lo transporta. Por eso un sofrito aporta más licopeno que un tomate en rodajas.",
+    queHacer: "Un sofrito lento, o tomate triturado con aceite."
+  },
+  {
+    clave: "curcuma-pimienta",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["curcuma", "cúrcuma"],
+    b: ["pimienta"],
+    titulo: "Cúrcuma con pimienta negra",
+    queOcurre: "La curcumina, que sola apenas se absorbe, pasa a absorberse muchísimo más.",
+    porQue: "La piperina de la pimienta frena las enzimas del hígado que eliminan la curcumina nada más entrar. Con ella al lado, la curcumina permanece en sangre en vez de desaparecer.",
+    queHacer: "Una pizca de pimienta negra siempre que uses cúrcuma. Y algo de grasa, que también ayuda."
+  },
+  {
+    clave: "vitd-calcio",
+    clase: "sinergia",
+    fuerza: "alta",
+    a: ["salmon", "sardina", "caballa", "huevo", "boqueron", "atun", "seta", "champinon"],
+    b: ["leche", "yogur", "queso", "kefir", "almendra", "sardina", "tofu", "brocoli"],
+    titulo: "Vitamina D con calcio",
+    queOcurre: "El calcio se aprovecha bastante mejor.",
+    porQue: "La vitamina D es lo que activa las proteínas del intestino que transportan el calcio. Sin ella, buena parte del calcio que comes no llega a absorberse.",
+    queHacer: "Que coincidan en la misma comida. Y el sol sigue siendo la mejor fuente de vitamina D."
+  },
+  {
+    clave: "crucifera-grasa",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["brocoli", "coliflor", "col", "kale", "rucula", "rábano", "coles de bruselas"],
+    b: ["mostaza", "rucula", "aceite de oliva", "aove"],
+    titulo: "Crucíferas poco cocinadas",
+    queOcurre: "Se conserva mucho más sulforafano, su compuesto más estudiado.",
+    porQue: "El sulforafano no está hecho: lo fabrica una enzima de la propia planta cuando la cortas, y el calor fuerte la destruye. Al vapor y poco tiempo conserva la enzima.",
+    queHacer: "Al vapor unos minutos, no cocido veinte. Cortarlo y dejarlo reposar unos minutos antes de cocinar también ayuda."
+  },
+  {
+    clave: "fermentado-fibra",
+    clase: "sinergia",
+    fuerza: "media",
+    a: ["yogur", "kefir", "chucrut", "kimchi", "miso", "tempeh"],
+    b: [
+      "avena",
+      "platano",
+      "cebolla",
+      "ajo",
+      "puerro",
+      "esparrago",
+      "alcachofa",
+      "legumbre",
+      "lenteja",
+      "garbanzo",
+      "alubia"
+    ],
+    titulo: "Fermentado con fibra fermentable",
+    queOcurre: "Las bacterias del fermentado llegan con algo que comer.",
+    porQue: "Los fructanos y el almidón resistente de esos vegetales son el alimento de las bacterias intestinales. Sin ellos, los fermentos aportan poco: pasan de largo.",
+    queHacer: "Yogur con avena y plátano. Chucrut junto a un guiso de legumbre."
+  },
+  // --- Estorbos ------------------------------------------------------------
+  {
+    clave: "hierro-cafe",
+    clase: "estorbo",
+    fuerza: "alta",
+    a: ["lenteja", "garbanzo", "alubia", "espinaca", "acelga", "quinoa", "tofu", "soja"],
+    b: ["cafe", "te", "té", "vino tinto", "cacao", "chocolate"],
+    titulo: "Hierro vegetal con café o té",
+    queOcurre: "La absorción de hierro cae mucho, hasta la mitad o menos.",
+    porQue: "Los taninos y polifenoles del café, el té y el vino se unen al hierro en el intestino y forman un compuesto que no se puede absorber.",
+    queHacer: "Dejar una hora entre la comida y el café. No hace falta renunciar a ninguno de los dos, solo separarlos."
+  },
+  {
+    clave: "hierro-calcio",
+    clase: "estorbo",
+    fuerza: "media",
+    a: ["lenteja", "garbanzo", "alubia", "espinaca", "quinoa", "tofu"],
+    b: ["leche", "yogur", "queso", "kefir"],
+    titulo: "Hierro con lácteos en la misma comida",
+    queOcurre: "El calcio compite con el hierro y reduce cuánto se absorbe.",
+    porQue: "Los dos minerales usan en parte los mismos transportadores del intestino, así que se estorban cuando llegan juntos y en cantidad.",
+    queHacer: "Si te preocupa el hierro, deja el lácteo para otro momento del día. Si no, no es para tanto."
+  },
+  {
+    clave: "zinc-fitatos",
+    clase: "estorbo",
+    fuerza: "media",
+    a: ["pipa de calabaza", "anacardo", "ternera", "cordero", "ostra", "garbanzo"],
+    b: ["salvado", "integral", "legumbre cruda"],
+    titulo: "Zinc con mucho salvado",
+    queOcurre: "Parte del zinc queda atrapado y no se absorbe.",
+    porQue: "Los fitatos del salvado se unen al zinc formando un complejo que el intestino no puede aprovechar.",
+    queHacer: "Remojar y cocer bien las legumbres reduce mucho los fitatos. Fermentar el pan, también."
+  }
+];
+var sinTildes = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+function alguno(texto, terminos) {
+  const t = sinTildes(texto);
+  for (const x of terminos) {
+    const p = sinTildes(x);
+    if (new RegExp(`(^|[^a-z0-9])${p}(es|s)?([^a-z0-9]|$)`).test(t)) return x;
+  }
+  return null;
+}
+function combinacionesEntre(nombres) {
+  const encontradas = [];
+  for (const c of COMBINACIONES) {
+    let ladoA = null;
+    let ladoB = null;
+    for (const n of nombres) {
+      if (!ladoA && alguno(n, c.a)) ladoA = n;
+      if (!ladoB && alguno(n, c.b)) ladoB = n;
+    }
+    if (!ladoA || !ladoB || ladoA === ladoB) continue;
+    encontradas.push({ ...c, ladoA, ladoB });
+  }
+  const peso = (c) => (c.clase === "sinergia" ? 10 : 0) + (c.fuerza === "alta" ? 5 : 0);
+  return encontradas.sort((a, b) => peso(b) - peso(a));
+}
+function queAnadir(nombres, limite = 3) {
+  const sugerencias = [];
+  const yaEstan = /* @__PURE__ */ new Set();
+  for (const c of COMBINACIONES) {
+    if (c.clase !== "sinergia") continue;
+    const tieneA = nombres.some((n) => alguno(n, c.a));
+    const tieneB = nombres.some((n) => alguno(n, c.b));
+    if (tieneA === tieneB) continue;
+    const falta = tieneA ? c.b : c.a;
+    for (const candidato of falta.slice(0, 3)) {
+      if (yaEstan.has(candidato)) continue;
+      yaEstan.add(candidato);
+      sugerencias.push({ alimento: candidato, desbloquea: c.titulo, porQue: c.queOcurre });
+      break;
+    }
+  }
+  return sugerencias.slice(0, limite);
+}
 export {
   ADITIVOS,
   ALERGENOS,
   AVISO_ALERGENOS,
   CATALOGO,
   COLORES_SEMAFORO,
+  COMBINACIONES,
   ETIQUETAS_SEMAFORO,
   EXPLICA_DANO,
   FRESCOS,
@@ -7813,11 +8235,15 @@ export {
   binarizarSauvola,
   buscar,
   buscarAditivo,
+  buscarAlternativas,
   buscarFresco,
+  buscarPorCodigoGuardado,
   calcularConfianza,
   calcularTendencia,
   codigoValido,
+  combinacionesEntre,
   comparar,
+  compararConAnterior,
   contarSustancias,
   crearImagen,
   danoDe,
@@ -7847,6 +8273,7 @@ export {
   ordenar,
   partirRespetandoParentesis,
   prepararParaLectura,
+  queAnadir,
   queBuscarEnLugarDe,
   recalcularTodo,
   recortar,

@@ -1,10 +1,12 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
-import { hayRecorte, RECORTE_COMPLETO } from '../motor.js';
+import { hayRecorte, RECORTE_COMPLETO, analizarProducto } from '../motor.js';
 import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
 import { buscarPorCodigo } from '../codigobarras.js';
-import { buscarFresco, frescoAEntrada } from '../motor.js';
+import { buscarFresco, frescoAEntrada, compararConAnterior,
+         buscarPorCodigoGuardado } from '../motor.js';
+import { listar } from '../almacen.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
@@ -266,12 +268,69 @@ export function analizar() {
       ${tarjeta(VIAS[3], cuerpoFotos)}
     </div>
 
+    ${bloqueCambio()}
     <div id="resumenLectura"></div>
     <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
       REVISAR Y CORREGIR
       <small>Comprueba las cifras antes de analizar</small>
     </button>
   `;
+}
+
+/**
+ * ¿Ha cambiado la receta desde la última vez?
+ *
+ * Las marcas reformulan en silencio: suben la sal, cambian el aceite, meten un
+ * aroma, y el envase sigue igual. Nadie avisa.
+ *
+ * Esto no vigila nada por detrás. Solo compara cuando vuelves a pasar el mismo
+ * código, que es cuando de verdad se puede saber. Y lo viejo no se machaca: se
+ * guarda como versión nueva y la anterior queda en el historial, porque lo que
+ * importa es precisamente el cambio.
+ */
+let cambioDetectado = null;
+
+async function avisarSiCambio(codigo) {
+  cambioDetectado = null;
+  try {
+    const anterior = buscarPorCodigoGuardado(await listar({ orden: 'fecha_desc' }), codigo);
+    if (!anterior) return;
+    const v = analizarProducto({
+      nombre: enCurso.nombre, categoria: enCurso.categoria,
+      nutrientes: enCurso.nutrientes, ingredientes: enCurso.ingredientes,
+    });
+    const r = compararConAnterior(anterior, {
+      nutrientes: enCurso.nutrientes, ingredientes: enCurso.ingredientes, veredicto: v,
+    });
+    if (r.hayCambios) cambioDetectado = r;
+  } catch { /* sin base de datos, sin comparación */ }
+}
+
+function bloqueCambio() {
+  const r = cambioDetectado;
+  if (!r) return '';
+  const fecha = new Date(r.fechaAnterior).toLocaleDateString('es-ES',
+    { day: 'numeric', month: 'long', year: 'numeric' });
+  const baja = typeof r.notaAntes === 'number' && typeof r.notaAhora === 'number' &&
+               r.notaAhora < r.notaAntes;
+  return `
+    <div class="cambio${baja ? ' cambio--peor' : ''}">
+      <h3>Ha cambiado desde la última vez</h3>
+      <p class="cambio__cuando">Lo analizaste el ${esc(fecha)}.</p>
+      <ul class="cambio__lista">
+        ${r.nutrientes.slice(0, 4).map((n) => `
+          <li><b>${esc(n.nombre)}</b>
+            <span class="cifra">${n.antes} → ${n.ahora} ${esc(n.unidad)}</span></li>`).join('')}
+        ${r.ingredientesNuevos.length ? `
+          <li><b>Ahora lleva</b> <span>${esc(r.ingredientesNuevos.join(', '))}</span></li>` : ''}
+        ${r.ingredientesQuitados.length ? `
+          <li><b>Ya no lleva</b> <span>${esc(r.ingredientesQuitados.join(', '))}</span></li>` : ''}
+      </ul>
+      ${typeof r.notaAntes === 'number' && typeof r.notaAhora === 'number' && r.notaAntes !== r.notaAhora
+        ? `<p class="cambio__nota cifra">Su nota ${baja ? 'baja' : 'sube'} de ${r.notaAntes} a ${r.notaAhora}</p>`
+        : ''}
+      <p class="apunte-via">El análisis anterior no se borra: los dos quedan en la Despensa.</p>
+    </div>`;
 }
 
 export function analizarActivo(raiz, { repintar, irA }) {
@@ -534,6 +593,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     // Lo que llega de la base se trata igual que lo leído de una foto: entra
     // como dato leído, no como dato confirmado, y va a la pantalla de revisión.
     enCurso.nombre = p.nombre;
+    enCurso.codigoBarras = p.codigo ?? ultimoCodigo;
     enCurso.categoria = p.categoria;
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
     for (const [k, d] of Object.entries(p.nutrientes)) {
@@ -546,6 +606,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     estadoCodigo.textContent =
       `Código ${p.codigo} · Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
       (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
+    await avisarSiCambio(codigo);
     repintar();
     // El desplazamiento va AQUÍ dentro, no en quien llama.
     //

@@ -1,9 +1,10 @@
 import { NIVELES, esc, vacio } from '../ui.js';
 import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
          descargarCopia, restaurarCopia, almacenDuradero,
-         simularRecalculoTodo, aplicarRecalculo } from '../almacen.js';
+         simularRecalculoTodo, aplicarRecalculo, anadirFoto } from '../almacen.js';
 import { enCurso } from '../estado.js';
-import { pedirFichero } from '../camara.js';
+import { pedirFichero, pedirFoto, capturar, aBytes } from '../camara.js';
+import { reiniciarCombinar } from './combinar.js';
 
 /**
  * La Despensa.
@@ -15,6 +16,7 @@ import { pedirFichero } from '../camara.js';
 
 let cache = [];
 let filtro = '';
+let buscarDentro = false;
 let pendientes = null;
 
 /**
@@ -47,15 +49,38 @@ function bloqueRecalculo() {
     </div>`;
 }
 
+/**
+ * ¿Encaja este producto con lo buscado?
+ *
+ * Buscando "dentro" se mira lo que dice la ETIQUETA: ingredientes, aditivos
+ * detectados y alérgenos. NO la prosa del motor, porque uno de sus textos es
+ * "Sin azúcares añadidos" y buscar "azúcar" devolvía unas lentejas.
+ */
+function coincide(p, termino) {
+  const t = termino.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const limpiar = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (!buscarDentro) return limpiar(`${p.nombre} ${p.marca ?? ''}`).includes(t);
+
+  const ingredientes = (p.entrada?.ingredientes ?? []).map((i) => i.texto);
+  const aditivos = (p.veredicto?.sustancias ?? [])
+    .filter((s) => typeof s.riesgo === 'number')
+    .map((s) => `${s.codigo} ${s.nombre}`);
+  const alergenos = (p.veredicto?.alergenos ?? []).map((a) => a.nombre);
+  return limpiar([...ingredientes, ...aditivos, ...alergenos].join(' | ')).includes(t);
+}
+
 function ficha(p) {
   const fecha = new Date(p.fechaAnalisis).toLocaleDateString('es-ES',
     { day: 'numeric', month: 'short', year: 'numeric' });
   const frontal = p.fotos.find((f) => f.tipo === 'frontal') ?? p.fotos[0];
   return `
     <article class="producto" data-id="${p.id}">
-      <div class="producto__foto" ${frontal ? `data-foto="${frontal.idFoto}"` : ''}>
-        ${frontal ? '' : '<span>sin foto</span>'}
-      </div>
+      ${frontal
+        ? `<div class="producto__foto" data-foto="${frontal.idFoto}"></div>`
+        : `<button class="producto__foto producto__foto--vacia" data-poner-foto="${p.id}"
+                   aria-label="Añadir una foto de ${esc(p.nombre)}">
+             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
+           </button>`}
       <div class="producto__texto">
         <h3>${esc(p.nombre)}</h3>
         <p class="producto__fecha cifra">${esc(fecha)}</p>
@@ -69,20 +94,17 @@ function ficha(p) {
 
 export function despensa() {
   const total = cache.length;
-  const visibles = filtro
-    ? cache.filter((p) => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
-    : cache;
+  // Dos formas de buscar: por el nombre del producto, o DENTRO de él. La
+  // segunda es la que convierte la despensa en algo consultable: poder
+  // preguntar "¿qué tengo con aceite de palma?".
+  const visibles = filtro ? cache.filter((p) => coincide(p, filtro)) : cache;
 
   const bloques = NIVELES.slice().reverse().map((n) => {
     const suyos = visibles.filter((p) => p.semaforo === n.clave);
     if (total > 0 && suyos.length === 0) return '';
     return `
-      <section class="bloque">
-        <div class="banda" style="margin-bottom:12px">
-          <div class="banda__tramo es-actual" data-nivel="${n.clave}">
-            ${esc(n.texto)} · ${suyos.length}
-          </div>
-        </div>
+      <section class="bloque" data-nivel="${n.clave}">
+        <h3 class="bloque__titulo">${esc(n.texto)} · ${suyos.length}</h3>
         ${suyos.map(ficha).join('') || '<p class="texto" style="font-size:0.9rem">Ninguno todavía.</p>'}
       </section>`;
   }).join('');
@@ -105,9 +127,17 @@ export function despensa() {
       <div class="campo">
         <div class="campo__entrada">
           <input type="search" id="buscarDespensa" value="${esc(filtro)}"
-                 placeholder="Buscar por nombre" autocomplete="off">
+                 placeholder="${buscarDentro ? 'aceite de palma, E250, gluten…' : 'Buscar por nombre'}"
+                 autocomplete="off">
         </div>
       </div>
+      <div class="filtros">
+        <button class="filtro${buscarDentro ? '' : ' es-activo'}" data-donde="nombre">Por nombre</button>
+        <button class="filtro${buscarDentro ? ' es-activo' : ''}" data-donde="dentro">Por lo que lleva dentro</button>
+      </div>
+      ${filtro ? `<p class="texto" style="font-size:0.9rem; margin-top:10px">
+        ${visibles.length} de ${total} producto(s)${buscarDentro ? ` llevan "${esc(filtro)}"` : ''}.
+      </p>` : ''}
       ${bloques}
       ${sinNota.length ? `
         <section class="bloque">
@@ -116,9 +146,14 @@ export function despensa() {
         </section>` : ''}`}
 
     ${total >= 2 ? `
-      <button class="boton-grande" id="btnComparar" style="margin:24px 0">
+      <button class="boton-grande" id="btnComparar" style="margin:24px 0 12px">
         COMPARAR DOS PRODUCTOS
         <small>Cuál conviene, y por qué</small>
+      </button>` : ''}
+    ${total >= 2 ? `
+      <button class="boton-grande boton-grande--suave" id="btnCombinar" style="margin-bottom:24px">
+        QUÉ JUNTAR
+        <small>Qué alimentos tuyos se potencian entre sí, y cuáles se estorban</small>
       </button>` : ''}
 
     <h2 class="subtitulo">Copia de seguridad</h2>
@@ -184,6 +219,35 @@ export async function despensaActivo(raiz, { repintar }) {
     }
   });
 
+  // --- Poner foto a un producto que no la tiene ---------------------------
+  raiz.addEventListener('click', (e) => {
+    const d = e.target.closest('[data-donde]');
+    if (!d) return;
+    buscarDentro = d.dataset.donde === 'dentro';
+    repintar();
+    raiz.querySelector('#buscarDespensa')?.focus();
+  });
+
+  raiz.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-poner-foto]');
+    if (!b) return;
+    e.stopPropagation();          // no abrir el producto al tocar el hueco
+
+    const fichero = await pedirFoto();
+    if (!fichero) return;
+
+    b.classList.add('producto__foto--trabajando');
+    try {
+      const { original } = await capturar(fichero);
+      await anadirFoto(b.dataset.ponerFoto, await aBytes(original, 0.7), 'frontal');
+      cache = await listar({ orden: 'fecha_desc' });
+      repintar();
+    } catch (err) {
+      b.classList.remove('producto__foto--trabajando');
+      alert(`No se ha podido guardar la foto. ${err.message}`);
+    }
+  });
+
   raiz.querySelector('#btnRecalcular')?.addEventListener('click', async (e) => {
     const b = e.target;
     b.disabled = true;
@@ -202,6 +266,11 @@ export async function despensaActivo(raiz, { repintar }) {
 
   raiz.querySelector('#btnComparar')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('comer:comparar'));
+  });
+
+  raiz.querySelector('#btnCombinar')?.addEventListener('click', () => {
+    reiniciarCombinar();
+    window.dispatchEvent(new CustomEvent('comer:combinar'));
   });
 
   const estado = raiz.querySelector('#estadoCopia');

@@ -7,6 +7,8 @@
  */
 
 export const enCurso = {
+  /** El código de barras, si vino de ahí. Sirve para detectar reformulaciones. */
+  codigoBarras: null,
   nombre: '',
   categoria: 'general',
   racionGramos: null,

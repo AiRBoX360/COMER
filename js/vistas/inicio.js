@@ -21,49 +21,72 @@ export function inicio({ irA }) {
     ${instrucciones}
 
     <h1 class="titulo">Qué llevas en la mano</h1>
-    <p class="texto">Fotografía la tabla nutricional y los ingredientes. Verdicto lee la etiqueta, la analiza y te dice qué conviene limitar y qué merece la pena.</p>
+    <p class="texto">Catario lee la etiqueta y te dice qué conviene limitar y qué merece la pena.</p>
 
-    <button class="boton-grande" id="btnSupermercado" style="margin:24px 0 12px">
-      ESTOY EN EL SUPERMERCADO
-      <small>Escanea y sabe en tres segundos si lo echas al carro</small>
-    </button>
-    <button class="boton-grande boton-grande--suave" id="btnAnalizar" style="margin-bottom:24px">
-      ANALIZAR CON CALMA
-      <small>Fotos, texto pegado o código, con revisión</small>
+    <button class="accion accion--principal" id="btnSupermercado">
+      <span class="accion__icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
+      </span>
+      <span class="accion__texto">
+        <b>Estoy en el supermercado</b>
+        <small>Escanea y sabe en tres segundos si lo echas al carro</small>
+      </span>
     </button>
 
-    <h2 class="rotulo">Tamaño del texto</h2>
-    <div class="escala">
-      <div class="escala__opciones" id="controlEscala" role="group" aria-label="Tamaño del texto">
-        <button class="escala__boton" data-escala="1" aria-pressed="false">Normal</button>
-        <button class="escala__boton" data-escala="1.15" aria-pressed="false">Grande</button>
-        <button class="escala__boton" data-escala="1.32" aria-pressed="false">Mayor</button>
-      </div>
+    <button class="accion" id="btnAnalizar">
+      <span class="accion__icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>
+      </span>
+      <span class="accion__texto">
+        <b>Analizar con calma</b>
+        <small>Código, alimento fresco, texto pegado o fotos</small>
+      </span>
+    </button>
+
+    <div id="ultimosAnalisis" class="recientes">
+      ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán aquí y en la Despensa.')}
     </div>
 
-    <h2 class="rotulo">Cambiar de pestaña deslizando</h2>
-    <div class="interruptor">
-      <label for="swDeslizar">Desliza el dedo a izquierda o derecha para pasar de una pestaña a otra.</label>
-      <button class="interruptor__boton" id="swDeslizar" role="switch" aria-checked="false">
-        <span></span>
+    <div class="atajos">
+      <button class="atajo" id="btnTendencia">
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 6-8"/><path d="M15 6h4v4"/></svg></span>
+        Tu tendencia
+      </button>
+      <button class="atajo" id="btnAjustes">
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></span>
+        Ajustes
+      </button>
+      <button class="atajo" id="btnAcerca">
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>
+        Qué es y qué no es
       </button>
     </div>
 
-    <h2 class="rotulo">Últimos análisis</h2>
-    <div id="ultimosAnalisis">
-      ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán en esta lista y en la Despensa.')}
-    </div>
+    <details class="ajustes" id="panelAjustes">
+      <summary>Ajustes</summary>
 
-    <div class="toma__botones" style="margin:24px 0">
-      <button class="boton" id="btnTendencia">Tu tendencia</button>
-      <button class="boton" id="btnAcerca">Qué es y qué no es</button>
-    </div>
+      <h2 class="rotulo">Tamaño del texto</h2>
+      <div class="escala">
+        <div class="escala__opciones" id="controlEscala" role="group" aria-label="Tamaño del texto">
+          <button class="escala__boton" data-escala="1" aria-pressed="false">Normal</button>
+          <button class="escala__boton" data-escala="1.15" aria-pressed="false">Grande</button>
+          <button class="escala__boton" data-escala="1.32" aria-pressed="false">Mayor</button>
+        </div>
+      </div>
 
-    <h2 class="subtitulo">Estado de la instalación</h2>
-    <p class="texto">Esta sección existe para que puedas comprobar que todo está en su sitio. Desaparecerá cuando la app esté terminada.</p>
-    <div class="tarjeta" style="margin-top:16px">
-      <ul class="diagnostico" id="listaDiagnostico"></ul>
-    </div>
+      <h2 class="rotulo">Cambiar de pestaña deslizando</h2>
+      <div class="interruptor">
+        <label for="swDeslizar">Desliza el dedo a izquierda o derecha para pasar de una pestaña a otra.</label>
+        <button class="interruptor__boton" id="swDeslizar" role="switch" aria-checked="false">
+          <span></span>
+        </button>
+      </div>
+
+      <h2 class="rotulo">Estado de la instalación</h2>
+      <div class="tarjeta">
+        <ul class="diagnostico" id="listaDiagnostico"></ul>
+      </div>
+    </details>
   `;
 }
 
@@ -73,6 +96,14 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
   raiz.querySelector('#btnSupermercado')?.addEventListener('click', () => irA('supermercado'));
   raiz.querySelector('#btnTendencia')?.addEventListener('click', () => irA('tendencia'));
   raiz.querySelector('#btnAcerca')?.addEventListener('click', () => irA('acerca'));
+  // Los ajustes viven en un desplegable: se tocan una vez y no se vuelven a
+  // mirar, así que no merecen sitio fijo en la pantalla principal.
+  raiz.querySelector('#btnAjustes')?.addEventListener('click', () => {
+    const panel = raiz.querySelector('#panelAjustes');
+    if (!panel) return;
+    panel.open = true;
+    panel.scrollIntoView({ block: 'start' });
+  });
 
   const control = raiz.querySelector('#controlEscala');
   if (control) {

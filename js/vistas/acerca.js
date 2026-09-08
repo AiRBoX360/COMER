@@ -1,3 +1,4 @@
+import { reiniciarBienvenida } from './bienvenida.js';
 import { esc } from '../ui.js';
 import { CATALOGO, FUENTES, VERSION_ALGORITMO } from '../motor.js';
 
@@ -17,6 +18,9 @@ export function acerca() {
   const fuentes = [...FUENTES.values()].sort((a, b) => a.organismo.localeCompare(b.organismo, 'es'));
 
   return `
+    <div class="toma__botones" style="margin-bottom:20px">
+      <button class="boton" id="btnVerBienvenida">Ver la presentación</button>
+    </div>
     <h1 class="titulo">Qué es y qué no es</h1>
 
     <div class="aviso-fuerte">
@@ -76,4 +80,12 @@ export function acerca() {
       Cada veredicto guardado lleva grabada la versión con la que se calculó.
     </p>
   `;
+}
+
+
+export function acercaActivo(raiz, { irA }) {
+  raiz.querySelector('#btnVerBienvenida')?.addEventListener('click', () => {
+    reiniciarBienvenida();
+    irA('bienvenida');
+  });
 }

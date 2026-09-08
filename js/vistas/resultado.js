@@ -1,9 +1,9 @@
 import { banda, marcador, esc, vacio, nivelDeNota } from '../ui.js';
 import { enCurso, reiniciar } from '../estado.js';
-import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe } from '../motor.js';
+import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe, buscarAlternativas } from '../motor.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
-import { guardarAnalisis } from '../almacen.js';
+import { guardarAnalisis, listar } from '../almacen.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
@@ -128,6 +128,45 @@ function topes(v) {
     </ul>`;
 }
 
+/**
+ * La tarjeta del veredicto.
+ *
+ * Lo primero que se ve: el nombre, la nota en grande dentro de un anillo que
+ * se llena, y la banda de los cinco niveles. Antes era un rótulo, un título y
+ * un marcador sueltos; ahora es una sola pieza.
+ *
+ * El anillo se dibuja con un círculo SVG al que se le recorta el trazo. No hay
+ * animación por defecto porque en móvil distrae más de lo que aporta.
+ */
+function tarjetaVeredicto(v) {
+  const n = Math.max(0, Math.min(100, v.puntuacion ?? 0));
+  const nivel = nivelDeNota(n);
+  const RADIO = 52;
+  const VUELTA = 2 * Math.PI * RADIO;
+  const lleno = (n / 100) * VUELTA;
+
+  return `
+    <div class="veredicto" data-nivel="${nivel.clave}">
+      <div class="veredicto__anillo">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="veredicto__pista" cx="60" cy="60" r="${RADIO}"/>
+          <circle class="veredicto__arco" cx="60" cy="60" r="${RADIO}"
+                  stroke-dasharray="${lleno.toFixed(1)} ${(VUELTA - lleno).toFixed(1)}"/>
+        </svg>
+        <div class="veredicto__cifra">
+          <b class="cifra">${n}</b>
+          <small>de 100</small>
+        </div>
+      </div>
+      <div class="veredicto__texto">
+        <h1>${esc(v.nombre)}</h1>
+        ${v.marca ? `<p class="veredicto__marca">${esc(v.marca)}</p>` : ''}
+        <p class="veredicto__nivel">${esc(nivel.texto)}</p>
+      </div>
+    </div>
+    ${banda(v.puntuacion)}`;
+}
+
 function bloqueVigilancia(v) {
   const avisos = revisarVigilancia(v, enCurso.ingredientes, vigilanciaActiva())
     .filter((a) => a.salta);
@@ -164,18 +203,15 @@ export function resultado() {
   const sinNota = v.puntuacion === null;
 
   return `
-    <h2 class="rotulo">Producto analizado</h2>
-    <h1 class="titulo">${esc(v.nombre)}</h1>
-
     ${bloqueVigilancia(v)}
 
     ${sinNota ? `
       <div class="pendiente" style="border-left-color:var(--naranja); margin-bottom:16px">
         <div><b>Análisis incompleto.</b> No hay datos suficientes para dar una nota.
         Faltan: ${esc(v.datosFaltantes.join(', '))}.</div>
-      </div>` : `
-      ${marcador(v.puntuacion)}
-      ${banda(v.puntuacion)}`}
+      </div>
+      <h1 class="titulo">${esc(v.nombre)}</h1>`
+      : tarjetaVeredicto(v)}
 
     <div class="resumen">
       <div><b class="cifra">${v.nutriScore.letra ?? '—'}</b><span>Nutri-Score</span></div>
@@ -213,6 +249,7 @@ export function resultado() {
         <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
       </div>` : ''}
 
+    <div id="alternativas"></div>
     ${bloqueAlternativa(v)}
 
     ${v.avisos.length ? `
@@ -233,7 +270,45 @@ export function resultado() {
   `;
 }
 
+/**
+ * Alternativas de tu propia despensa.
+ *
+ * Se piden después de pintar porque hay que leer la base entera. Si no hay
+ * ninguna comparable, no aparece nada: proponer un yogur como alternativa a un
+ * fiambre sería peor que no proponer nada.
+ */
+async function pintarAlternativas(raiz, v) {
+  const hueco = raiz.querySelector('#alternativas');
+  if (!hueco || v.puntuacion === null) return;
+
+  let guardados = [];
+  try { guardados = await listar({ orden: 'fecha_desc' }); } catch { return; }
+
+  const alt = buscarAlternativas({
+    nombre: v.nombre, puntuacion: v.puntuacion, categoria: v.categoria,
+    veredicto: v, ingredientes: enCurso.ingredientes,
+  }, guardados);
+  if (alt.length === 0) return;
+
+  hueco.innerHTML = `
+    <h2 class="subtitulo">Mejor esto, de tu despensa</h2>
+    <p class="texto" style="font-size:0.92rem">Productos parecidos que ya has analizado y puntúan mejor.</p>
+    ${alt.map((a) => `
+      <button class="alterna" data-ver-alt="${a.id}">
+        <span class="alterna__nota cifra" data-nivel="${a.semaforo ?? 'rojo'}">${a.puntuacion}</span>
+        <span class="alterna__texto">
+          <b>${esc(a.nombre)}</b>
+          <span class="alterna__por">${esc(a.porQue.join(' · ')) || esc(a.comparablePor)}</span>
+        </span>
+        <span class="alterna__mejora cifra">+${a.mejora}</span>
+      </button>`).join('')}`;
+}
+
 export function resultadoActivo(raiz, { irA }) {
+  pintarAlternativas(raiz, enCurso.veredicto ?? {}).catch(() => { /* sin base, sin alternativas */ });
+
+  raiz.querySelector('#alternativas')?.addEventListener('click', () => irA('despensa'));
+
   const estado = raiz.querySelector('#estadoGuardar');
   const boton = raiz.querySelector('#btnGuardar');
   if (!boton) return;
@@ -255,6 +330,9 @@ export function resultadoActivo(raiz, { irA }) {
           nombre: enCurso.nombre, categoria: enCurso.categoria,
           nutrientes: enCurso.nutrientes, ingredientes: enCurso.ingredientes,
           racion_declarada_g: enCurso.racionGramos ?? undefined,
+          // El código se guarda para poder detectar, dentro de meses, que la
+          // marca ha cambiado la receta sin decírselo a nadie.
+          codigoBarras: enCurso.codigoBarras ?? undefined,
         },
         fotos,
       });

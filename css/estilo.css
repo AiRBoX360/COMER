@@ -75,12 +75,14 @@ html{
   -webkit-text-size-adjust:100%;
   font-size:calc(17px * var(--escala));
   height:100%;
+  height:100dvh;   /* el visor de verdad, que en iPhone no es el 100% */
   overflow:hidden;
 }
 
 body{
   margin:0;
   height:100%;
+  height:100dvh;
   overflow:hidden;
   background:var(--tinta);
   color:var(--hueso);
@@ -128,15 +130,15 @@ button{touch-action:manipulation}
 .cabecera__marca{display:flex; align-items:center; gap:var(--e3)}
 /* El monograma: la C de Catario con la barra del veredicto saliendo por la
    boca. Sigue la regla de toda la app: gris salvo el veredicto. */
-.marca__signo{display:block; width:2.1rem; height:2.1rem; flex:none}
+.marca__signo{display:block; width:2.5rem; height:2.5rem; flex:none}
 .marca__signo svg{width:100%; height:100%; display:block}
 .marca__signo path{fill:#444C5B}
 .marca__barra{fill:var(--verde-claro)}
 /* El nombre respira un poco más que antes: una sola palabra aguanta mejor el
    espaciado abierto que tres, y así se sostiene junto al monograma. */
 .marca__nombre{
-  font-family:var(--display); font-weight:800; font-size:1.42rem;
-  letter-spacing:-.015em; line-height:0.95;
+  font-family:var(--display); font-weight:800; font-size:1.72rem;
+  letter-spacing:-.02em; line-height:0.95;
 }
 /* La coletilla es la instrucción de la etiqueta: va en voz baja. */
 .marca__nombre em{
@@ -145,7 +147,7 @@ button{touch-action:manipulation}
   letter-spacing:.14em; text-transform:uppercase;
   color:var(--ceniza-tenue); margin-top:4px;
 }
-.cabecera__version{font-family:var(--datos); font-size:0.72rem; color:var(--ceniza-tenue)}
+
 
 /* --- Contenido ------------------------------------------------------------ */
 .principal{
@@ -1062,7 +1064,7 @@ button{touch-action:manipulation}
 .barra{
   position:fixed; z-index:30;
   left:50%; transform:translateX(-50%);
-  bottom:calc(env(safe-area-inset-bottom) + 0.6rem);
+  bottom:calc(env(safe-area-inset-bottom) + 0.3rem);
   display:flex; align-items:center; gap:0.3rem;
   padding:0.42rem;
   background:rgba(26,30,38,.92);
@@ -1177,3 +1179,460 @@ button{touch-action:manipulation}
 @media (prefers-reduced-motion:reduce){
   .via__flecha svg{transition:none}
 }
+
+/* --- Un poco de color ------------------------------------------------------
+   La app era gris de arriba abajo salvo el veredicto, y eso la hacía parecer
+   una hoja de cálculo. Se añade color donde NO compite con el semáforo: en el
+   fondo, en muy baja intensidad, y en los acentos de la interfaz. La regla de
+   que el color fuerte es del veredicto se mantiene intacta. */
+body{
+  background:
+    radial-gradient(120% 55% at 88% -8%, rgba(120,179,65,.09), transparent 60%),
+    radial-gradient(100% 45% at 4% 4%, rgba(80,140,200,.07), transparent 58%),
+    var(--tinta);
+  background-attachment:fixed;
+}
+
+/* Las tarjetas dejan de ser cajas planas: un punto de luz arriba las levanta. */
+.via, .tarjeta, .parte, .ficha, .producto, .dif, .duelo__lado{
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 42%), var(--carbon);
+}
+
+/* La vía abierta se tiñe muy levemente en verde, como su icono. */
+.via--abierta{
+  background:linear-gradient(180deg, rgba(120,179,65,.08), rgba(255,255,255,0) 46%), var(--carbon);
+}
+
+/* La cabecera recoge el mismo tinte para que no se vea un corte. */
+.cabecera{
+  background:
+    radial-gradient(120% 200% at 88% 0%, rgba(120,179,65,.07), transparent 62%),
+    rgba(16,19,25,.9);
+}
+
+/* --- La tarjeta del veredicto --------------------------------------------- */
+.veredicto{
+  display:flex; align-items:center; gap:var(--e5);
+  padding:var(--e5) var(--e4);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  margin-bottom:var(--e4);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 50%), var(--carbon);
+}
+
+.veredicto__anillo{position:relative; width:7.2rem; height:7.2rem; flex:none}
+.veredicto__anillo svg{
+  width:100%; height:100%; display:block;
+  /* Se gira para que el arco empiece arriba y no a la derecha. */
+  transform:rotate(-90deg);
+}
+.veredicto__pista{
+  fill:none; stroke:var(--carbon-alto); stroke-width:9;
+}
+.veredicto__arco{
+  fill:none; stroke-width:9; stroke-linecap:round;
+  stroke:var(--ceniza);
+}
+.veredicto[data-nivel="rojo"] .veredicto__arco{stroke:var(--rojo)}
+.veredicto[data-nivel="naranja"] .veredicto__arco{stroke:var(--naranja)}
+.veredicto[data-nivel="amarillo"] .veredicto__arco{stroke:var(--amarillo)}
+.veredicto[data-nivel="verde_claro"] .veredicto__arco{stroke:var(--verde-claro)}
+.veredicto[data-nivel="verde_parchis"] .veredicto__arco{stroke:var(--verde-parchis)}
+
+.veredicto__cifra{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px;
+}
+.veredicto__cifra b{
+  font-family:var(--datos); font-size:2.1rem; font-weight:600;
+  line-height:1; color:var(--hueso); font-variant-numeric:tabular-nums;
+}
+.veredicto__cifra small{
+  font-family:var(--datos); font-size:0.62rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+
+.veredicto__texto{flex:1; min-width:0}
+.veredicto__texto h1{
+  margin:0; font-family:var(--display); font-weight:800;
+  font-size:1.5rem; line-height:1.1; letter-spacing:-.02em;
+  overflow-wrap:anywhere;
+}
+.veredicto__marca{
+  margin:4px 0 0; font-size:0.9rem; color:var(--ceniza-tenue);
+}
+.veredicto__nivel{
+  margin:var(--e3) 0 0;
+  font-family:var(--datos); font-size:0.78rem; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.veredicto[data-nivel="rojo"] .veredicto__nivel{color:var(--rojo)}
+.veredicto[data-nivel="naranja"] .veredicto__nivel{color:var(--naranja)}
+.veredicto[data-nivel="amarillo"] .veredicto__nivel{color:var(--amarillo)}
+.veredicto[data-nivel="verde_claro"] .veredicto__nivel{color:var(--verde-claro)}
+.veredicto[data-nivel="verde_parchis"] .veredicto__nivel{color:var(--verde-parchis)}
+
+/* En pantallas estrechas, el anillo encima y el texto debajo. */
+@media (max-width:23rem){
+  .veredicto{flex-direction:column; text-align:center; gap:var(--e4)}
+}
+
+/* Las tres casillas de debajo, con más aire y un punto de color. */
+.resumen{gap:var(--e2)}
+.resumen > div{
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 50%), var(--carbon);
+  border:1px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e4) var(--e2);
+}
+
+/* --- El hueco de la foto en la Despensa ------------------------------------
+   Cuando no hay foto, el hueco es un botón que abre la cámara. Antes había que
+   borrar el producto entero y rehacerlo solo para ponerle una foto. */
+.producto__foto--vacia{
+  appearance:none; cursor:pointer; padding:0;
+  border:1px dashed var(--linea);
+  background:var(--carbon-alto);
+  color:var(--ceniza-tenue);
+}
+.producto__foto--vacia svg{
+  width:1.5rem; height:1.5rem;
+  fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
+}
+.producto__foto--vacia:active{border-color:var(--hueso); color:var(--hueso)}
+.producto__foto--trabajando{opacity:.45}
+
+/* --- Alternativas de tu despensa ------------------------------------------ */
+.alterna{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e3);
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 50%), var(--carbon);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--verde-claro);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.alterna__nota{
+  flex:none; width:2.6rem; text-align:center;
+  font-size:1.3rem; font-weight:600;
+}
+.alterna__nota[data-nivel="rojo"]{color:var(--rojo)}
+.alterna__nota[data-nivel="naranja"]{color:var(--naranja)}
+.alterna__nota[data-nivel="amarillo"]{color:var(--amarillo)}
+.alterna__nota[data-nivel="verde_claro"]{color:var(--verde-claro)}
+.alterna__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis)}
+.alterna__texto{flex:1; min-width:0}
+.alterna__texto b{
+  display:block; font-family:var(--display); font-weight:600; font-size:1.02rem;
+  color:var(--hueso); line-height:1.25;
+}
+.alterna__por{
+  display:block; margin-top:2px;
+  font-size:0.85rem; color:var(--ceniza-tenue); line-height:1.35;
+}
+.alterna__mejora{
+  flex:none; font-size:0.92rem; font-weight:600; color:var(--verde-claro);
+}
+
+/* --- Aviso de que la receta ha cambiado ------------------------------------
+   Las marcas reformulan en silencio. Este bloque es la única forma que tiene
+   la app de decírtelo, y aparece antes que nada. */
+.cambio{
+  border:1px solid var(--linea);
+  border-left:3px solid var(--amarillo);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, rgba(232,182,23,.07), rgba(255,255,255,0) 50%), var(--carbon);
+  padding:var(--e4);
+  margin-bottom:var(--e4);
+}
+.cambio--peor{
+  border-left-color:var(--naranja);
+  background:linear-gradient(180deg, rgba(228,119,29,.08), rgba(255,255,255,0) 50%), var(--carbon);
+}
+.cambio h3{
+  margin:0; font-family:var(--display); font-weight:700; font-size:1.15rem;
+  color:var(--hueso);
+}
+.cambio__cuando{margin:2px 0 var(--e3); font-size:0.88rem; color:var(--ceniza-tenue)}
+.cambio__lista{list-style:none; margin:0; padding:0}
+.cambio__lista li{
+  display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0; border-bottom:1px solid var(--linea);
+  font-size:0.94rem;
+}
+.cambio__lista li:last-child{border-bottom:0}
+.cambio__lista b{font-weight:600; color:var(--hueso)}
+.cambio__lista span{color:var(--ceniza); text-align:right}
+.cambio__nota{
+  margin:var(--e3) 0 0; font-size:1.02rem; font-weight:600; color:var(--hueso);
+}
+.cambio--peor .cambio__nota{color:var(--naranja)}
+
+/* --- Inicio: dos acciones grandes y lo demás en voz baja ------------------- */
+.accion{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e4);
+  padding:var(--e4);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  margin:var(--e3) 0;
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 55%), var(--carbon);
+  color:var(--hueso);
+}
+.accion--principal{
+  background:var(--hueso); color:var(--tinta); border-color:transparent;
+}
+.accion__icono{
+  flex:none; width:3rem; height:3rem;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:1.5rem;
+  background:var(--carbon-alto); color:var(--ceniza);
+}
+.accion--principal .accion__icono{background:var(--tinta); color:var(--hueso)}
+.accion__icono svg{
+  width:1.5rem; height:1.5rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.accion__texto{flex:1; min-width:0}
+.accion__texto b{
+  display:block; font-family:var(--display); font-weight:700; font-size:1.16rem;
+  line-height:1.2;
+}
+.accion__texto small{
+  display:block; margin-top:3px; font-size:0.88rem; line-height:1.4;
+  color:var(--ceniza-tenue);
+}
+.accion--principal .accion__texto small{color:rgba(16,19,25,.62)}
+
+.recientes{margin-top:var(--e5)}
+
+/* Tres atajos en fila, en voz baja. */
+.atajos{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2);
+  margin:var(--e5) 0;
+}
+.atajo{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  padding:var(--e4) var(--e2);
+  border:1px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--ceniza);
+  font-size:0.8rem; line-height:1.25; text-align:center;
+}
+.atajo svg{
+  width:1.3rem; height:1.3rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.atajo:active{border-color:var(--hueso); color:var(--hueso)}
+
+/* Los ajustes, plegados. Se tocan una vez y no se vuelven a mirar. */
+.ajustes{
+  border:1px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon); padding:0 var(--e4);
+  margin-bottom:var(--e5);
+}
+.ajustes summary{
+  cursor:pointer; list-style:none;
+  padding:var(--e4) 0;
+  font-family:var(--display); font-weight:600; font-size:1.05rem;
+  color:var(--hueso);
+}
+.ajustes summary::-webkit-details-marker{display:none}
+.ajustes summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.ajustes[open] summary::after{content:'  −'}
+.ajustes[open]{padding-bottom:var(--e4)}
+
+/* --- Saber y Despensa: la misma piel que el resto -------------------------- */
+
+/* Las fichas del catálogo llevan su color en una barra lateral discreta y
+   ganan aire. El sello se vuelve una pastilla, que se lee de un vistazo. */
+.ficha{
+  border-radius:var(--radio);
+  border-left-width:3px;
+  margin-bottom:var(--e3);
+  overflow:hidden;
+}
+.ficha summary{padding:var(--e4)}
+.ficha__titulo{
+  font-family:var(--display); font-weight:600; font-size:1.05rem;
+  color:var(--hueso);
+}
+.ficha__sello{
+  font-family:var(--datos); font-size:0.68rem; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase;
+  padding:0.24rem 0.6rem; border-radius:1rem;
+  border:1px solid currentColor;
+  white-space:nowrap;
+}
+.ficha__cuerpo{padding:0 var(--e4) var(--e4)}
+.ficha__linea{margin:0 0 var(--e2); font-size:0.94rem; line-height:1.5}
+
+/* Los productos de la despensa: la nota en grande a la izquierda, como en el
+   resultado, para que las dos pantallas se reconozcan entre sí. */
+.producto{
+  padding:var(--e3) var(--e4);
+  border-radius:var(--radio);
+  margin-bottom:var(--e3);
+  gap:var(--e4);
+}
+.producto__foto{
+  width:3.4rem; height:3.4rem; border-radius:var(--radio-s);
+  display:flex; align-items:center; justify-content:center;
+}
+.producto__nombre{
+  font-family:var(--display); font-weight:600; font-size:1.06rem;
+  line-height:1.25;
+}
+.producto__nota{
+  font-family:var(--datos); font-size:1.5rem; font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Los encabezados de cada bloque de color, con su punto delante. */
+.bloque__titulo{
+  display:flex; align-items:center; gap:var(--e3);
+  margin:var(--e5) 0 var(--e3);
+  font-family:var(--datos); font-size:0.76rem; font-weight:600;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.bloque__titulo::before{
+  content:''; width:0.6rem; height:0.6rem; border-radius:50%;
+  background:currentColor; flex:none;
+}
+.bloque[data-nivel="rojo"] .bloque__titulo{color:var(--rojo)}
+.bloque[data-nivel="naranja"] .bloque__titulo{color:var(--naranja)}
+.bloque[data-nivel="amarillo"] .bloque__titulo{color:var(--amarillo)}
+.bloque[data-nivel="verde_claro"] .bloque__titulo{color:var(--verde-claro)}
+.bloque[data-nivel="verde_parchis"] .bloque__titulo{color:var(--verde-parchis)}
+
+/* Los filtros, como pastillas. */
+.filtro{
+  border-radius:1.4rem;
+  padding:0.42rem 0.9rem;
+  font-size:0.86rem;
+  border:1px solid var(--linea);
+  background:var(--carbon);
+  color:var(--ceniza);
+}
+.filtro.es-activo{background:var(--hueso); color:var(--tinta); border-color:transparent}
+.filtros{display:flex; flex-wrap:wrap; gap:0.4rem}
+
+/* --- La bienvenida --------------------------------------------------------
+   Cuatro pantallas, poco texto y un movimiento pequeño que explica lo que dice
+   el texto. Quien abre una app por primera vez no viene a leer. */
+.bien{
+  display:flex; flex-direction:column;
+  min-height:calc(100dvh - var(--alto-cabecera, 4.2rem) - 7rem);
+  text-align:center;
+}
+.bien__cabeza{display:flex; justify-content:flex-end; margin-bottom:var(--e4)}
+.bien__saltar{
+  appearance:none; cursor:pointer;
+  background:none; border:0;
+  padding:var(--e2) var(--e3);
+  font-family:var(--datos); font-size:0.84rem; letter-spacing:.05em;
+  color:var(--ceniza-tenue);
+}
+.bien__saltar:active{color:var(--hueso)}
+
+.bien__escena{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  min-height:11rem;
+}
+.bien__svg{width:100%; max-width:16rem; height:auto}
+/* El texto dentro del SVG se escala con el propio dibujo, así que va en
+   unidades del lienzo, no en píxeles de pantalla. Aun así se escribe en em
+   para que respete el tamaño de letra elegido. */
+.bien__cifra{
+  font-family:var(--datos); font-size:0.94em; font-weight:600;
+  fill:var(--hueso); letter-spacing:.04em;
+}
+
+.bien__texto h1{
+  margin:0 0 var(--e3);
+  font-family:var(--display); font-weight:800; font-size:1.9rem;
+  letter-spacing:-.025em; line-height:1.1;
+}
+.bien__texto p{
+  margin:0 auto; max-width:22rem;
+  font-size:1.02rem; line-height:1.5; color:var(--ceniza);
+}
+
+.bien__puntos{display:flex; justify-content:center; gap:0.45rem; margin:var(--e5) 0}
+.bien__punto{
+  appearance:none; cursor:pointer; padding:0;
+  width:0.5rem; height:0.5rem; border-radius:50%;
+  border:0; background:var(--carbon-alto);
+  transition:width .2s ease, background-color .2s ease;
+}
+.bien__punto.es-actual{width:1.5rem; border-radius:0.25rem; background:var(--hueso)}
+
+/* Si el teléfono pide menos movimiento, las escenas se quedan quietas. Se
+   entienden igual: el dibujo ya dice lo que tiene que decir. */
+@media (prefers-reduced-motion:reduce){
+  .bien__svg animate{display:none}
+  .bien__punto{transition:none}
+}
+
+/* --- Qué juntar ------------------------------------------------------------
+   No son recetas: son interacciones entre nutrientes con su mecanismo detrás.
+   Lo que suma lleva un más; lo que estorba, un menos. */
+.elegibles{display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:var(--e3)}
+.elegible{
+  appearance:none; cursor:pointer;
+  padding:0.45rem 0.85rem;
+  border:1px solid var(--linea); border-radius:1.4rem;
+  background:var(--carbon); color:var(--ceniza);
+  font-size:0.88rem; line-height:1.2; text-align:left;
+}
+.elegible.es-elegido{background:var(--hueso); color:var(--tinta); border-color:transparent}
+
+.combi{
+  border:1px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 50%), var(--carbon);
+  margin-bottom:var(--e3);
+  overflow:hidden;
+}
+.combi--suma{border-left-color:var(--verde-claro)}
+.combi--resta{border-left-color:var(--naranja)}
+.combi summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e4);
+}
+.combi summary::-webkit-details-marker{display:none}
+.combi__signo{
+  flex:none; width:2.1rem; height:2.1rem; border-radius:1.05rem;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--datos); font-size:1.2rem; font-weight:600;
+  background:var(--carbon-alto);
+}
+.combi--suma .combi__signo{color:var(--verde-claro)}
+.combi--resta .combi__signo{color:var(--naranja)}
+.combi__cabeza{flex:1; min-width:0}
+.combi__cabeza b{
+  display:block; font-family:var(--display); font-weight:600; font-size:1.05rem;
+  color:var(--hueso); line-height:1.25;
+}
+.combi__cabeza small{
+  display:block; margin-top:2px; font-size:0.85rem; color:var(--ceniza-tenue);
+}
+.combi__cuerpo{padding:0 var(--e4) var(--e4)}
+.combi__que{
+  margin:0 0 var(--e3); font-size:1rem; line-height:1.5; color:var(--hueso);
+}
+.combi__linea{margin:0 0 var(--e2); font-size:0.92rem; line-height:1.5; color:var(--ceniza)}
+.combi__linea b{color:var(--hueso)}
+
+.sugerencia{
+  display:flex; flex-direction:column; gap:2px;
+  border:1px dashed var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4); margin-bottom:var(--e2);
+}
+.sugerencia b{font-family:var(--display); font-weight:600; color:var(--hueso)}
+.sugerencia span{font-size:0.88rem; color:var(--ceniza-tenue); line-height:1.4}

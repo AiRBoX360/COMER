@@ -6,16 +6,18 @@
  */
 
 import { inicio, inicioActivo } from './vistas/inicio.js';
+import { bienvenida, bienvenidaActivo, bienvenidaVista, reiniciarBienvenida } from './vistas/bienvenida.js';
 import { analizar, analizarActivo } from './vistas/analizar.js';
 import { resultado, resultadoActivo } from './vistas/resultado.js';
 import { revisar, revisarActivo } from './vistas/revisar.js';
 import { escucharGestos, deslizarActivado, ponerDeslizar } from './gestos.js';
 import { vistaComparar, compararActivo } from './vistas/comparar.js';
-import { acerca } from './vistas/acerca.js';
+import { acerca, acercaActivo } from './vistas/acerca.js';
 import { tendencia, tendenciaActiva } from './vistas/tendencia.js';
 import { supermercado, supermercadoActivo } from './vistas/supermercado.js';
 import { conocimiento, conocimientoActivo } from './vistas/conocimiento.js';
 import { despensa, despensaActivo } from './vistas/despensa.js';
+import { combinar, combinarActivo, reiniciarCombinar } from './vistas/combinar.js';
 import {
   almacenamientoDuradero,
   espacioDisponible,
@@ -24,7 +26,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '2.0.0';
+export const VERSION = '2.8.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -49,6 +51,8 @@ function ponerEscala(valor) {
 
 const VISTAS = {
   inicio: { pinta: inicio, activa: inicioActivo, titulo: 'Inicio' },
+  // La bienvenida cuelga de Inicio: se ve una vez y no merece pestaña propia.
+  bienvenida: { pinta: bienvenida, activa: bienvenidaActivo, titulo: 'Bienvenida', pestana: 'inicio' },
   analizar: { pinta: analizar, activa: analizarActivo, titulo: 'Analizar' },
   // Revisar no tiene pestaña propia: es el segundo paso de Analizar.
   revisar: { pinta: revisar, activa: revisarActivo, titulo: 'Revisar', pestana: 'analizar' },
@@ -59,7 +63,9 @@ const VISTAS = {
   comparar: { pinta: vistaComparar, activa: compararActivo, titulo: 'Comparar', pestana: 'despensa' },
   // Cuelgan de Inicio: son sobre ti, no sobre un producto concreto.
   tendencia: { pinta: tendencia, activa: tendenciaActiva, titulo: 'Tu tendencia', pestana: 'inicio' },
-  acerca: { pinta: acerca, titulo: 'Qué es y qué no es', pestana: 'inicio' },
+  acerca: { pinta: acerca, activa: acercaActivo, titulo: 'Qué es y qué no es', pestana: 'inicio' },
+  // Qué juntar cuelga de la Despensa: se parte de lo que ya tienes guardado.
+  combinar: { pinta: combinar, activa: combinarActivo, titulo: 'Qué juntar', pestana: 'despensa' },
   supermercado: { pinta: supermercado, activa: supermercadoActivo, titulo: 'En el supermercado', pestana: 'analizar' },
 };
 
@@ -210,9 +216,6 @@ function formatearEspacio(mb) {
   return `${mb} MB`;
 }
 
-const etiqueta = document.getElementById('etiquetaVersion');
-if (etiqueta) etiqueta.textContent = `v${VERSION}`;
-
 // Se registra ANTES de pintar la pantalla. Al revés, el diagnóstico preguntaba
 // por el trabajador antes de que existiera y siempre respondía que no.
 const registroSW = activarSinConexion();
@@ -224,6 +227,7 @@ window.addEventListener('comer:ver-resultado', () => irA('resultado'));
 window.addEventListener('comer:comparar', () => irA('comparar'));
 window.addEventListener('comer:tendencia', () => irA('tendencia'));
 window.addEventListener('comer:acerca', () => irA('acerca'));
+window.addEventListener('comer:combinar', () => irA('combinar'));
 
 export { irA };
 
@@ -242,4 +246,11 @@ medirCabecera();
 window.addEventListener('resize', medirCabecera);
 window.addEventListener('orientationchange', () => setTimeout(medirCabecera, 250));
 
-irA('inicio');
+// La bienvenida solo la primera vez. Después queda accesible desde "Qué es y
+// qué no es", por si alguien quiere volver a verla o enseñársela a otro.
+if (bienvenidaVista()) {
+  irA('inicio');
+} else {
+  reiniciarBienvenida();
+  irA('bienvenida');
+}
