@@ -1,6 +1,37 @@
 import { vacio, pendiente, esc } from '../ui.js';
 import { estadoInstalacion } from '../diagnostico.js';
 import { ultimos } from './despensa.js';
+import { reiniciarCombinar } from './combinar.js';
+
+/**
+ * Lo último que se pulsó, para dejarlo marcado en verde.
+ *
+ * No es decoración: si vienes de escanear en el súper y vuelves a abrir la
+ * app, el botón que usaste queda señalado. Es una pista de por dónde ibas.
+ */
+const CLAVE_ULTIMA = 'catario.ultimaAccion';
+let ultima = (() => {
+  try { return localStorage.getItem(CLAVE_ULTIMA) ?? ''; } catch { return ''; }
+})();
+
+function recordar(accion) {
+  ultima = accion;
+  try { localStorage.setItem(CLAVE_ULTIMA, accion); } catch { /* se pierde y ya */ }
+}
+
+/** El monograma seguido del nombre de la pantalla. */
+export function nombrePantalla(nombre) {
+  return `
+    <div class="pantalla">
+      <span class="pantalla__signo" aria-hidden="true">
+        <svg viewBox="0 0 100 100">
+          <path d="M50 8a42 42 0 1 0 0 84 42 42 0 0 0 36.4-21H50a21 21 0 1 1 0-42h36.4A42 42 0 0 0 50 8Z"/>
+          <rect x="31" y="41" width="64" height="18" rx="9"/>
+        </svg>
+      </span>
+      <h1 class="pantalla__nombre">${nombre}</h1>
+    </div>`;
+}
 
 export function inicio({ irA }) {
   const est = estadoInstalacion();
@@ -20,50 +51,64 @@ export function inicio({ irA }) {
   return `
     ${instrucciones}
 
-    <h1 class="titulo">Qué llevas en la mano</h1>
-    <p class="texto">Catario lee la etiqueta y te dice qué conviene limitar y qué merece la pena.</p>
+    ${nombrePantalla('inicio')}
 
-    <button class="accion accion--principal" id="btnSupermercado">
+    <button class="accion${ultima === 'supermercado' ? ' accion--reciente' : ''}"
+            id="btnSupermercado" data-accion="supermercado">
       <span class="accion__icono" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
+        <svg viewBox="0 0 24 24">
+          <path d="M3.5 4h2l2.2 10.4a1.8 1.8 0 0 0 1.8 1.4h7.6a1.8 1.8 0 0 0 1.8-1.4L20.5 8H6.2"/>
+          <circle cx="10" cy="19.4" r="1.2"/><circle cx="17" cy="19.4" r="1.2"/>
+        </svg>
       </span>
       <span class="accion__texto">
-        <b>Estoy en el supermercado</b>
-        <small>Escanea y sabe en tres segundos si lo echas al carro</small>
+        <b>Escaneo rápido</b>
+        <small>Estoy en el súper</small>
       </span>
     </button>
 
-    <button class="accion" id="btnAnalizar">
+    <button class="accion${ultima === 'analizar' ? ' accion--reciente' : ''}"
+            id="btnAnalizar" data-accion="analizar">
       <span class="accion__icono" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
       </span>
       <span class="accion__texto">
-        <b>Analizar con calma</b>
-        <small>Código, alimento fresco, texto pegado o fotos</small>
+        <b>Escaneo</b>
+        <small>Análisis completo</small>
       </span>
     </button>
 
-    <div id="ultimosAnalisis" class="recientes">
-      ${vacio('Todavía no hay nada aquí', 'Los productos que analices aparecerán aquí y en la Despensa.')}
-    </div>
+    <section class="grupo">
+      <h2 class="grupo__titulo">Tus alimentos</h2>
+      <div class="grupo__pastillas">
+        <button class="pastilla${ultima === 'tendencia' ? ' pastilla--reciente' : ''}"
+                id="btnTendencia" data-accion="tendencia">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 6-8"/><path d="M15 6h4v4"/></svg></span>
+          Tendencia
+        </button>
+        <button class="pastilla${ultima === 'combinar' ? ' pastilla--reciente' : ''}"
+                id="btnCombinarInicio" data-accion="combinar">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg></span>
+          Qué juntar
+        </button>
+        <button class="pastilla${ultima === 'recetas' ? ' pastilla--reciente' : ''}"
+                id="btnRecetas" data-accion="recetas">
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3c0 2-1.5 2.5-1.5 4.5S8 10 8 12"/><path d="M12 3c0 2-1.5 2.5-1.5 4.5S12 10 12 12"/><path d="M16 3c0 2-1.5 2.5-1.5 4.5S16 10 16 12"/><path d="M4 15h16a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6Z"/></svg></span>
+          Recetas
+        </button>
+      </div>
+    </section>
 
-    <div class="atajos">
-      <button class="atajo" id="btnTendencia">
-        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 6-8"/><path d="M15 6h4v4"/></svg></span>
-        Tu tendencia
-      </button>
-      <button class="atajo" id="btnCombinarInicio">
-        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg></span>
-        Qué juntar
-      </button>
-      <button class="atajo" id="btnAcerca">
-        <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>
-        Qué es y qué no es
-      </button>
-    </div>
+    <div id="ultimosAnalisis" class="recientes"></div>
 
     <details class="ajustes" id="panelAjustes">
-      <summary>Ajustes</summary>
+      <summary>
+        <span class="ajustes__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2M12 18.5v2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M3.5 12h2M18.5 12h2M5.2 18.8l1.4-1.4M17.4 6.6l1.4-1.4"/></svg>
+        </span>
+        <span class="ajustes__nombre">Preferencias</span>
+        <span class="ajustes__mas" aria-hidden="true">+</span>
+      </summary>
 
       <h2 class="rotulo">Aspecto</h2>
       <div class="escala">
@@ -91,6 +136,9 @@ export function inicio({ irA }) {
         </button>
       </div>
 
+      <h2 class="rotulo">Qué es y qué no es</h2>
+      <button class="boton" id="btnAcerca" style="width:100%">Leer de dónde salen las valoraciones</button>
+
       <h2 class="rotulo">Estado de la instalación</h2>
       <div class="tarjeta">
         <ul class="diagnostico" id="listaDiagnostico"></ul>
@@ -107,8 +155,20 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
   raiz.querySelector('#btnAcerca')?.addEventListener('click', () => irA('acerca'));
   // Había dos botones de Ajustes: el atajo y el desplegable de abajo. Sobraba
   // el atajo, así que su sitio lo ocupa "Qué juntar", que no tenía ninguno.
-  raiz.querySelector('#btnCombinarInicio')?.addEventListener('click',
-    () => irA('combinar'));
+  // Cada acción se recuerda antes de navegar, para marcarla al volver.
+  raiz.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-accion]');
+    if (b) recordar(b.dataset.accion);
+  });
+
+  raiz.querySelector('#btnCombinarInicio')?.addEventListener('click', () => {
+    reiniciarCombinar('juntar');
+    irA('combinar');
+  });
+  raiz.querySelector('#btnRecetas')?.addEventListener('click', () => {
+    reiniciarCombinar('recetas');
+    irA('combinar');
+  });
 
   const control = raiz.querySelector('#controlEscala');
   if (control) {

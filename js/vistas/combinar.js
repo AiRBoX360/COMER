@@ -1,4 +1,5 @@
 import { esc } from '../ui.js';
+import { nombrePantalla } from './inicio.js';
 import { listar } from '../almacen.js';
 import { combinacionesEntre, queAnadir, FRESCOS } from '../motor.js';
 
@@ -19,16 +20,26 @@ let extras = [];
 let guardados = [];
 let cargado = false;
 
-export function reiniciarCombinar() {
+/**
+ * `modo` decide con qué cara se abre la pantalla.
+ *
+ * Es la misma: eliges alimentos de tu despensa. Lo que cambia es a qué vas.
+ * Con 'juntar' se destacan las interacciones entre nutrientes; con 'recetas',
+ * el botón de buscar recetas de verdad. Los dos siguen estando en las dos.
+ */
+let modo = 'juntar';
+
+export function reiniciarCombinar(comoQue = 'juntar') {
   elegidos = new Set();
   extras = [];
   cargado = false;
+  modo = comoQue;
 }
 
 export function combinar() {
   if (!cargado) {
     return `
-      <h1 class="titulo">Qué juntar</h1>
+      ${nombrePantalla(modo === 'recetas' ? 'recetas' : 'qué juntar')}
       <p class="texto">Cargando tu despensa…</p>`;
   }
 
@@ -38,8 +49,10 @@ export function combinar() {
   const sugerencias = nombres.length >= 1 ? queAnadir(nombres) : [];
 
   return `
-    <h1 class="titulo">Qué juntar</h1>
-    <p class="texto">Elige lo que tienes a mano. Te digo qué se potencia entre sí y qué conviene separar, y por qué.</p>
+    ${nombrePantalla(modo === 'recetas' ? 'recetas' : 'qué juntar')}
+    <p class="texto">${modo === 'recetas'
+      ? 'Elige lo que tienes a mano y te llevo a recetas de verdad, escritas por personas.'
+      : 'Elige lo que tienes a mano. Te digo qué se potencia entre sí y qué conviene separar, y por qué.'}</p>
 
     <h2 class="rotulo">De tu despensa</h2>
     ${guardados.length === 0
@@ -75,8 +88,14 @@ export function combinar() {
       ? '<p class="texto" style="margin-top:24px">Elige algo de arriba para empezar.</p>'
       : ''}
 
+    ${modo === 'recetas' && nombres.length >= 2 ? `
+      <button class="boton-grande" id="btnRecetasArriba" style="margin-bottom:20px">
+        BUSCAR RECETAS CON ESTO
+        <small>Abre el buscador con tus ingredientes. Sale de la app.</small>
+      </button>` : ''}
+
     ${halladas.length > 0 ? `
-      <h2 class="subtitulo">Lo que pasa al juntarlos</h2>
+      <h2 class="subtitulo">${modo === 'recetas' ? 'Y de paso, lo que pasa al juntarlos' : 'Lo que pasa al juntarlos'}</h2>
       ${halladas.map(tarjetaCombinacion).join('')}` : ''}
 
     ${nombres.length >= 1 && halladas.length === 0 ? `
@@ -97,7 +116,7 @@ export function combinar() {
           <span><b>${esc(s.desbloquea)}.</b> ${esc(s.porQue)}</span>
         </div>`).join('')}` : ''}
 
-    ${nombres.length >= 2 ? `
+    ${nombres.length >= 2 && modo !== 'recetas' ? `
       <button class="boton-grande" id="btnRecetas" style="margin-top:20px">
         BUSCAR RECETAS CON ESTO
         <small>Abre el buscador con tus ingredientes. Sale de la app.</small>
@@ -158,12 +177,14 @@ export async function combinarActivo(raiz, { repintar }) {
     repintar();
   });
 
-  raiz.querySelector('#btnRecetas')?.addEventListener('click', () => {
+  const buscarRecetas = () => {
     const nombres = [...[...elegidos].map((id) =>
       guardados.find((p) => p.id === id)?.nombre ?? ''), ...extras].filter(Boolean);
     // Se abre el buscador con los ingredientes escritos. La app no finge saber
     // cocinar: te lleva a quien sí sabe, con recetas escritas por personas.
     const consulta = encodeURIComponent(`receta con ${nombres.join(' y ')}`);
     window.open(`https://duckduckgo.com/?q=${consulta}`, '_blank', 'noopener');
-  });
+  };
+  raiz.querySelector('#btnRecetas')?.addEventListener('click', buscarRecetas);
+  raiz.querySelector('#btnRecetasArriba')?.addEventListener('click', buscarRecetas);
 }

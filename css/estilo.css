@@ -230,35 +230,19 @@ button{touch-action:manipulation}
 /* --- Cabecera ------------------------------------------------------------- */
 /* Fija, no pegajosa: ahora que el documento no se desplaza, "sticky" no
    tendría respecto a qué pegarse. */
-.cabecera{
-  position:fixed; top:0; left:0; right:0; z-index:20;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
-  background:rgba(16,19,25,.86);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--linea);
-}
-.cabecera__marca{display:flex; align-items:center; gap:var(--e3)}
+
+
 /* El monograma: la C de Catario con la barra del veredicto saliendo por la
    boca. Sigue la regla de toda la app: gris salvo el veredicto. */
-.marca__signo{display:block; width:2.5rem; height:2.5rem; flex:none}
-.marca__signo svg{width:100%; height:100%; display:block}
-.marca__signo path{fill:var(--ceniza)}
-.marca__barra{fill:var(--verde-claro)}
+
+
+
+
 /* El nombre respira un poco más que antes: una sola palabra aguanta mejor el
    espaciado abierto que tres, y así se sostiene junto al monograma. */
-.marca__nombre{
-  font-family:var(--display); font-weight:800; font-size:var(--t6);
-  letter-spacing:-.02em; line-height:0.95;
-}
+
 /* La coletilla es la instrucción de la etiqueta: va en voz baja. */
-.marca__nombre em{
-  display:block; font-style:normal;
-  font-family:var(--datos); font-weight:400; font-size:var(--t0);
-  letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ceniza-tenue); margin-top:4px;
-}
+
 
 
 /* --- Contenido ------------------------------------------------------------ */
@@ -1837,3 +1821,145 @@ body{
   .esc-arco{stroke:var(--verde-claro); stroke-dasharray:76 100}
   .esc-linea{y:72px}
 }
+
+
+/* --- La cabecera -----------------------------------------------------------
+   Centrada, con el nombre grande y el lema en versalitas muy espaciadas
+   debajo. El monograma sale de aquí: pasa a acompañar al nombre de cada
+   pantalla, que es donde de verdad dice algo. */
+.cabecera{
+  position:fixed; top:0; left:0; right:0; z-index:20;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
+  background:var(--fondo-cabecera);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--linea);
+}
+.cabecera__nombre{
+  font-family:var(--display); font-weight:800; font-size:var(--t6);
+  letter-spacing:-.02em; line-height:1; color:var(--hueso);
+}
+.cabecera__lema{
+  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  letter-spacing:.24em; text-transform:uppercase;
+  color:var(--ceniza-tenue); line-height:1.4;
+}
+
+/* --- El nombre de la pantalla, con el monograma delante -------------------- */
+.pantalla{
+  display:flex; align-items:center; gap:var(--e2);
+  margin:0 0 var(--e5);
+}
+.pantalla__signo{flex:none; width:2.1rem; height:2.1rem; display:block}
+.pantalla__signo svg{width:100%; height:100%; display:block}
+.pantalla__signo path{fill:var(--ceniza)}
+.pantalla__signo rect{fill:var(--verde-claro)}
+.pantalla__nombre{
+  font-family:var(--display); font-weight:800; font-size:var(--t6);
+  letter-spacing:-.025em; line-height:1; color:var(--hueso);
+}
+
+/* --- Inicio: dos acciones, un grupo y las preferencias plegadas ------------
+   Calcado de la maqueta. La última acción usada se queda marcada en verde:
+   no es adorno, es una pista de por dónde ibas la última vez. */
+
+.accion{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e4);
+  padding:var(--e4);
+  border:1.5px solid var(--verde-claro);
+  border-radius:1.4rem;
+  margin:0 0 var(--e4);
+  background:var(--carbon);
+  color:var(--hueso);
+}
+.accion--reciente{background:var(--tinte-a)}
+
+.accion__icono{
+  flex:none; width:3.4rem; height:3.4rem;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%;
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.accion__icono svg{
+  width:1.8rem; height:1.8rem;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.accion__texto{flex:1; min-width:0}
+.accion__texto b{
+  display:block; font-family:var(--display); font-weight:800; font-size:var(--t5);
+  line-height:1.1; letter-spacing:-.02em;
+}
+.accion__texto small{
+  display:block; margin-top:3px;
+  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ceniza);
+}
+
+/* El grupo enmarcado, con su rótulo centrado dentro. */
+.grupo{
+  border:1.5px solid var(--linea);
+  border-radius:1.4rem;
+  padding:var(--e3) var(--e3) var(--e4);
+  margin-bottom:var(--e6);
+}
+.grupo__titulo{
+  margin:0 0 var(--e3);
+  font-family:var(--datos); font-weight:400; font-size:var(--t0);
+  letter-spacing:.2em; text-transform:uppercase; text-align:center;
+  color:var(--ceniza-tenue);
+}
+.grupo__pastillas{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2)}
+
+.pastilla{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  padding:var(--e3) var(--e1);
+  border:1.5px solid var(--linea); border-radius:1.1rem;
+  background:var(--carbon); color:var(--ceniza);
+  font-family:var(--cuerpo); font-size:var(--t1); line-height:1.2;
+  text-align:center;
+}
+.pastilla svg{
+  width:1.35rem; height:1.35rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.pastilla--reciente{
+  background:var(--tinte-a); border-color:var(--verde-claro);
+  color:var(--verde-claro-letra);
+}
+
+/* Preferencias: una pastilla con el engranaje a un lado y el más al otro. */
+.ajustes{
+  border:1.5px solid var(--linea); border-radius:1.4rem;
+  background:var(--carbon); padding:0 var(--e4);
+  margin-bottom:var(--e5);
+}
+.ajustes summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e4) 0;
+}
+.ajustes summary::-webkit-details-marker{display:none}
+.ajustes summary::after{content:none}
+.ajustes__icono{flex:none; color:var(--ceniza-tenue)}
+.ajustes__icono svg{
+  width:1.3rem; height:1.3rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.ajustes__nombre{
+  flex:1; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza);
+}
+.ajustes__mas{
+  flex:none; font-family:var(--datos); font-size:var(--t4);
+  color:var(--ceniza-tenue); line-height:1;
+}
+.ajustes[open] .ajustes__mas{transform:rotate(45deg)}
+.ajustes[open]{padding-bottom:var(--e4)}
