@@ -26,7 +26,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '2.9.0';
+export const VERSION = '3.3.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -105,6 +105,7 @@ function irA(clave, conservarScroll = false) {
   if (vista.activa) {
     vista.activa(envoltorio, {
       irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar,
+      tema, ponerTema,
       // Repintar sin perder el sitio: al volver de la cámara, saltar arriba
       // sería desconcertante.
       repintar: () => irA(clave, true),
@@ -219,6 +220,35 @@ function formatearEspacio(mb) {
 // Se registra ANTES de pintar la pantalla. Al revés, el diagnóstico preguntaba
 // por el trabajador antes de que existiera y siempre respondía que no.
 const registroSW = activarSinConexion();
+
+/**
+ * El tema: claro, oscuro o el que diga el teléfono.
+ *
+ * Se aplica ANTES de pintar nada. Al revés se vería un destello del color
+ * contrario mientras arranca.
+ */
+const CLAVE_TEMA = 'catario.tema';
+
+export function tema() {
+  try { return localStorage.getItem(CLAVE_TEMA) ?? 'sistema'; } catch { return 'sistema'; }
+}
+
+export function ponerTema(cual) {
+  try { localStorage.setItem(CLAVE_TEMA, cual); } catch { /* se aplica igual */ }
+  aplicarTema();
+}
+
+function aplicarTema() {
+  const elegido = tema();
+  const claro = elegido === 'claro' ||
+    (elegido === 'sistema' && window.matchMedia?.('(prefers-color-scheme: light)').matches);
+  document.documentElement.setAttribute('data-tema', claro ? 'claro' : 'oscuro');
+}
+
+aplicarTema();
+// Si está en "el del sistema", seguir al teléfono cuando cambie solo.
+window.matchMedia?.('(prefers-color-scheme: light)')
+  .addEventListener?.('change', () => { if (tema() === 'sistema') aplicarTema(); });
 
 ponerEscala(escala());
 

@@ -65,6 +65,15 @@ export function inicio({ irA }) {
     <details class="ajustes" id="panelAjustes">
       <summary>Ajustes</summary>
 
+      <h2 class="rotulo">Aspecto</h2>
+      <div class="escala">
+        <div class="escala__opciones" id="controlTema" role="group" aria-label="Aspecto">
+          <button class="escala__boton" data-tema="claro" aria-pressed="false">Claro</button>
+          <button class="escala__boton" data-tema="oscuro" aria-pressed="false">Oscuro</button>
+          <button class="escala__boton" data-tema="sistema" aria-pressed="false">El del móvil</button>
+        </div>
+      </div>
+
       <h2 class="rotulo">Tamaño del texto</h2>
       <div class="escala">
         <div class="escala__opciones" id="controlEscala" role="group" aria-label="Tamaño del texto">
@@ -90,7 +99,7 @@ export function inicio({ irA }) {
   `;
 }
 
-export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar }) {
+export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar, tema, ponerTema }) {
   const btn = raiz.querySelector('#btnAnalizar');
   if (btn) btn.addEventListener('click', () => irA('analizar'));
   raiz.querySelector('#btnSupermercado')?.addEventListener('click', () => irA('supermercado'));

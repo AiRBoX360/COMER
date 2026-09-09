@@ -137,7 +137,23 @@ export function supermercadoActivo(raiz, { repintar, irA }) {
     }
     estado.fase = 'escaneando';
     repintar();
-    const video = raiz.querySelector('#videoSuper') ?? document.getElementById('videoSuper');
+
+    // El vídeo se busca en el DOCUMENTO, no en `raiz`.
+    //
+    // Al repintar, la pantalla se dibuja en un envoltorio nuevo y `raiz` pasa
+    // a ser el de antes, que ya no está puesto. Buscar ahí devolvía un vídeo
+    // huérfano: el escáner arrancaba contra un elemento invisible y la cámara
+    // no se veía nunca.
+    //
+    // Se espera un instante porque el repintado acaba de ocurrir.
+    await new Promise((r) => setTimeout(r, 30));
+    const video = document.getElementById('videoSuper');
+    if (!video) {
+      estado.fase = 'inicio';
+      decir('No se ha podido abrir la cámara. Teclea el número.');
+      repintar();
+      return;
+    }
     const r = await escanear({ video, alEstado: decir });
     if (!r.ok) { estado.fase = 'inicio'; decir(r.mensaje); repintar(); return; }
     await resolver(r.codigo);

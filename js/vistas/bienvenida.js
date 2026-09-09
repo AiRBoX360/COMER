@@ -80,17 +80,20 @@ function escenaEscaneo() {
 }
 
 function escenaEscala() {
-  // Un círculo que recorre los cinco colores del semáforo, de peor a mejor,
-  // mientras el arco se va llenando. Es la escala de la app, en movimiento.
-  const VUELTA = 2 * Math.PI * 44;
+  // Un círculo que recorre los cinco colores del semáforo mientras el arco se
+  // llena.
+  //
+  // pathLength="100" es la clave: le dice al navegador que trate el contorno
+  // como si midiera 100, sea cual sea el radio. Así el trazo discontinuo se
+  // escribe con números llanos y desaparecen los cálculos con variables, que
+  // es justamente lo que no funcionaba.
   return `
     <svg viewBox="0 0 200 140" class="bien__svg" aria-hidden="true">
       <circle cx="100" cy="70" r="44" fill="none"
               stroke="var(--carbon-alto)" stroke-width="10"/>
       <circle class="esc-arco" cx="100" cy="70" r="44" fill="none"
-              stroke-width="10" stroke-linecap="round"
-              transform="rotate(-90 100 70)"
-              style="--vuelta:${VUELTA.toFixed(1)}"/>
+              stroke-width="10" stroke-linecap="round" pathLength="100"
+              transform="rotate(-90 100 70)"/>
       <text x="100" y="77" text-anchor="middle" class="bien__cifra esc-cifra">0-100</text>
     </svg>`;
 }
@@ -107,8 +110,7 @@ function escenaPorQue() {
       ${barras.map((b, i) => `
         <rect x="36" y="${b.y}" width="132" height="12" rx="6" fill="var(--carbon-alto)"/>
         <rect class="esc-barra esc-barra--${i + 1}" x="36" y="${b.y}"
-              width="${b.ancho}" height="12" rx="6" fill="${b.color}"
-              style="--ancho:${b.ancho}"/>`).join('')}
+              width="${b.ancho}" height="12" rx="6" fill="${b.color}"/>`).join('')}
     </svg>`;
 }
 
