@@ -83,10 +83,11 @@
    cansa menos la vista en sesiones largas. */
 [data-tema="claro"]{
   color-scheme:light;
-  --tinta:#FBFAF8;
+  /* Subido un 7 %: el blanco casi puro se veía lavado. */
+  --tinta:#EFEDE9;
   --carbon:#FFFFFF;
-  --carbon-alto:#F1EFEB;
-  --linea:#E6E4E0;
+  --carbon-alto:#E4E1DC;
+  --linea:#D8D5D0;
   --hueso:#1A1D24;
   --ceniza:#565D6B;
   --ceniza-tenue:#767D8B;
@@ -159,11 +160,6 @@
   --radio:0.85rem;
   --radio-s:0.5rem;
 
-  /* El alto REAL de la barra flotante: 2,9rem del botón + 0,42 de relleno
-     arriba y abajo + 0,3 de separación del borde. Estaba en 4rem, medida de
-     la barra antigua que iba de lado a lado, y sobraban casi tres rem de
-     negro entre el contenido y la barra. */
-  --alto-barra:4rem;
   /* El tema tarda un instante en aplicarse al arrancar; sin esto se ve un
      destello del color contrario. */
   color-scheme:dark;
@@ -191,10 +187,24 @@ html{
   overflow:hidden;
 }
 
+/**
+ * Tres filas: cabecera, contenido y barra. En ese orden y sin nada "fijo".
+ *
+ * La barra llevaba tres intentos quedándose flotando por encima del borde.
+ * Cada arreglo ajustaba números —el hueco reservado, el margen de abajo, la
+ * franja del sistema— y ninguno la bajaba del todo, porque el problema no
+ * era el número: era que estaba fuera del flujo y colocada a mano.
+ *
+ * Ahora es el último elemento de una columna. No puede quedarse arriba porque
+ * debajo no hay nada. Y de paso desaparecen dos apaños: medir la cabecera al
+ * arrancar y reservarle hueco a la barra.
+ */
 body{
   margin:0;
   height:100%;
   height:100dvh;
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
   background:var(--tinta);
   color:var(--hueso);
@@ -249,13 +259,8 @@ button{touch-action:manipulation}
 .principal{
   /* Este es el único elemento que se desplaza. El rebote elástico ocurre aquí
      dentro, así que la barra de abajo no se mueve con él. */
-  position:absolute;
-  /* Debajo de la cabecera fija. Su alto lo mide el propio navegador y se
-     guarda en esta variable al arrancar: depende del tamaño de letra elegido
-     y de la muesca del teléfono, así que no se puede escribir a mano. */
-  top:var(--alto-cabecera, 4.2rem);
-  left:0; right:0;
-  bottom:calc(var(--alto-barra) + env(safe-area-inset-bottom));
+  flex:1;
+  min-height:0;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
@@ -520,8 +525,11 @@ button{touch-action:manipulation}
 .escala__boton:nth-child(1){font-size:var(--t2)}
 .escala__boton:nth-child(2){font-size:var(--t4)}
 .escala__boton:nth-child(3){font-size:var(--t5)}
+/* Lo elegido, en el mismo verde que marca la pestaña activa y la última
+   acción usada. Un solo color para "esto es lo que está puesto". */
 .escala__boton[aria-pressed="true"]{
-  background:var(--hueso); color:var(--tinta); border-color:var(--hueso);
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  border-color:transparent;
 }
 
 /* --- Tomas de foto -------------------------------------------------------- */
@@ -1174,13 +1182,13 @@ button{touch-action:manipulation}
    Flotante y separada del borde, no pegada de lado a lado. La pestaña activa
    se ensancha y muestra su nombre; las demás se quedan en el icono. Así se
    sabe dónde estás sin leer nada, y caben las cinco sin apretarse. */
+/* Última fila de la columna. La franja de seguridad del teléfono va como
+   relleno debajo, no como distancia al borde: así la barra se apoya en ella
+   en vez de flotar por encima. */
 .barra{
-  position:fixed; z-index:30;
-  left:50%; transform:translateX(-50%);
-  /* El teléfono reserva abajo una franja para la barra de inicio. Sumarle
-     margin encima dejaba la barra flotando demasiado alta. Se le resta parte:
-     queda pegada al borde sin invadir esa franja. */
-  bottom:max(0.35rem, calc(env(safe-area-inset-bottom) - 0.7rem));
+  flex:none;
+  margin:0 auto;
+  margin-bottom:max(0.35rem, env(safe-area-inset-bottom));
   display:flex; align-items:center; gap:0.3rem;
   padding:0.42rem;
   background:var(--fondo-barra);
@@ -1215,9 +1223,10 @@ button{touch-action:manipulation}
 }
 
 /* La activa: pastilla clara con su nombre al lado del icono. */
+/* La pestaña donde estás, en el mismo verde que marca lo último pulsado. */
 .barra__pestana[aria-selected="true"]{
   width:auto; padding:0 0.95rem 0 0.8rem;
-  background:var(--hueso); color:var(--tinta);
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
 }
 .barra__pestana[aria-selected="true"] span{max-width:7rem; opacity:1}
 .barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
@@ -1828,7 +1837,7 @@ body{
    debajo. El monograma sale de aquí: pasa a acompañar al nombre de cada
    pantalla, que es donde de verdad dice algo. */
 .cabecera{
-  position:fixed; top:0; left:0; right:0; z-index:20;
+  flex:none;
   display:flex; flex-direction:column; align-items:center; gap:1px;
   padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
   background:var(--fondo-cabecera);
@@ -1837,11 +1846,11 @@ body{
   border-bottom:1px solid var(--linea);
 }
 .cabecera__nombre{
-  font-family:var(--display); font-weight:800; font-size:var(--t6);
+  font-family:var(--display); font-weight:800; font-size:var(--t7);
   letter-spacing:-.02em; line-height:1; color:var(--hueso);
 }
 .cabecera__lema{
-  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
   letter-spacing:.24em; text-transform:uppercase;
   color:var(--ceniza-tenue); line-height:1.4;
 }
@@ -1889,19 +1898,19 @@ body{
 }
 .accion__texto{flex:1; min-width:0}
 .accion__texto b{
-  display:block; font-family:var(--display); font-weight:800; font-size:var(--t5);
+  display:block; font-family:var(--display); font-weight:800; font-size:var(--t6);
   line-height:1.1; letter-spacing:-.02em;
 }
 .accion__texto small{
   display:block; margin-top:3px;
-  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
   letter-spacing:.14em; text-transform:uppercase;
   color:var(--ceniza);
 }
 
 /* El grupo enmarcado, con su rótulo centrado dentro. */
 .grupo{
-  border:1.5px solid var(--linea);
+  border:1.5px solid var(--verde-claro);
   border-radius:1.4rem;
   padding:var(--e3) var(--e3) var(--e4);
   margin-bottom:var(--e6);
@@ -1918,9 +1927,9 @@ body{
   appearance:none; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:var(--e2);
   padding:var(--e3) var(--e1);
-  border:1.5px solid var(--linea); border-radius:1.1rem;
+  border:1.5px solid var(--verde-claro); border-radius:1.1rem;
   background:var(--carbon); color:var(--ceniza);
-  font-family:var(--cuerpo); font-size:var(--t1); line-height:1.2;
+  font-family:var(--cuerpo); font-size:var(--t2); line-height:1.2;
   text-align:center;
 }
 .pastilla svg{
@@ -1935,7 +1944,7 @@ body{
 
 /* Preferencias: una pastilla con el engranaje a un lado y el más al otro. */
 .ajustes{
-  border:1.5px solid var(--linea); border-radius:1.4rem;
+  border:1.5px solid var(--verde-claro); border-radius:1.4rem;
   background:var(--carbon); padding:0 var(--e4);
   margin-bottom:var(--e5);
 }

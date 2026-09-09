@@ -26,7 +26,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '3.4.0';
+export const VERSION = '3.5.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -261,20 +261,8 @@ window.addEventListener('comer:combinar', () => irA('combinar'));
 
 export { irA };
 
-/**
- * Mide la cabecera y se lo dice al CSS.
- *
- * Su alto depende del tamaño de letra que se haya elegido y de la muesca del
- * teléfono, así que no se puede escribir un número fijo en la hoja de estilos.
- */
-function medirCabecera() {
-  const cab = document.querySelector('.cabecera');
-  if (!cab) return;
-  document.documentElement.style.setProperty('--alto-cabecera', `${cab.offsetHeight}px`);
-}
-medirCabecera();
-window.addEventListener('resize', medirCabecera);
-window.addEventListener('orientationchange', () => setTimeout(medirCabecera, 250));
+// Ya no hace falta medir la cabecera: con la barra dentro del flujo, cada
+// fila ocupa lo que ocupa y nadie tiene que reservarle hueco a nadie.
 
 // La bienvenida solo la primera vez. Después queda accesible desde "Qué es y
 // qué no es", por si alguien quiere volver a verla o enseñársela a otro.

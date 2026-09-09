@@ -51,7 +51,7 @@ export function inicio({ irA }) {
   return `
     ${instrucciones}
 
-    ${nombrePantalla('inicio')}
+    ${nombrePantalla('Inicio')}
 
     <button class="accion${ultima === 'supermercado' ? ' accion--reciente' : ''}"
             id="btnSupermercado" data-accion="supermercado">
@@ -104,7 +104,7 @@ export function inicio({ irA }) {
     <details class="ajustes" id="panelAjustes">
       <summary>
         <span class="ajustes__icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2M12 18.5v2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M3.5 12h2M18.5 12h2M5.2 18.8l1.4-1.4M17.4 6.6l1.4-1.4"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M10.3 2.8h3.4l.4 2.3a7.3 7.3 0 0 1 1.7 1l2.2-.8 1.7 2.9-1.8 1.5a7.3 7.3 0 0 1 0 2l1.8 1.5-1.7 2.9-2.2-.8a7.3 7.3 0 0 1-1.7 1l-.4 2.3h-3.4l-.4-2.3a7.3 7.3 0 0 1-1.7-1l-2.2.8-1.7-2.9 1.8-1.5a7.3 7.3 0 0 1 0-2L4.3 8.2 6 5.3l2.2.8a7.3 7.3 0 0 1 1.7-1Z"/><circle cx="12" cy="12" r="2.7"/></svg>
         </span>
         <span class="ajustes__nombre">Preferencias</span>
         <span class="ajustes__mas" aria-hidden="true">+</span>
@@ -115,7 +115,6 @@ export function inicio({ irA }) {
         <div class="escala__opciones" id="controlTema" role="group" aria-label="Aspecto">
           <button class="escala__boton" data-tema="claro" aria-pressed="false">Claro</button>
           <button class="escala__boton" data-tema="oscuro" aria-pressed="false">Oscuro</button>
-          <button class="escala__boton" data-tema="sistema" aria-pressed="false">El del móvil</button>
         </div>
       </div>
 
@@ -139,10 +138,7 @@ export function inicio({ irA }) {
       <h2 class="rotulo">Qué es y qué no es</h2>
       <button class="boton" id="btnAcerca" style="width:100%">Leer de dónde salen las valoraciones</button>
 
-      <h2 class="rotulo">Estado de la instalación</h2>
-      <div class="tarjeta">
-        <ul class="diagnostico" id="listaDiagnostico"></ul>
-      </div>
+
     </details>
   `;
 }
@@ -169,6 +165,29 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
     reiniciarCombinar('recetas');
     irA('combinar');
   });
+
+  // --- Aspecto: claro u oscuro -------------------------------------------
+  const grupoTema = raiz.querySelector('#controlTema');
+  if (grupoTema && tema && ponerTema) {
+    const marcarTema = () => {
+      // Ya no hay botón para "el del móvil". Si esa es la preferencia
+      // guardada de antes, se marca el que corresponde a lo que se está
+      // viendo: sin esto no se marcaría ninguno y parecería que no hay nada
+      // elegido.
+      const puesto = document.documentElement.getAttribute('data-tema') ?? 'oscuro';
+      const actual = tema() === 'sistema' ? puesto : tema();
+      for (const b of grupoTema.querySelectorAll('[data-tema]')) {
+        b.setAttribute('aria-pressed', String(b.dataset.tema === actual));
+      }
+    };
+    marcarTema();
+    grupoTema.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-tema]');
+      if (!b) return;
+      ponerTema(b.dataset.tema);
+      marcarTema();
+    });
+  }
 
   const control = raiz.querySelector('#controlEscala');
   if (control) {
