@@ -527,6 +527,12 @@ button{touch-action:manipulation}
 .escala__boton:nth-child(3){font-size:var(--t5)}
 /* Lo elegido, en el mismo verde que marca la pestaña activa y la última
    acción usada. Un solo color para "esto es lo que está puesto". */
+/* Dentro de Preferencias todo lleva el mismo perfil verde que las tarjetas de
+   fuera: sin él, los botones parecían de otra app. */
+.ajustes .escala__boton,
+.ajustes .boton,
+.ajustes .interruptor__boton{border:1.5px solid var(--verde-claro)}
+
 .escala__boton[aria-pressed="true"]{
   background:var(--verde-claro); color:var(--sobre-verde-claro);
   border-color:transparent;
@@ -1185,26 +1191,35 @@ button{touch-action:manipulation}
 /* Última fila de la columna. La franja de seguridad del teléfono va como
    relleno debajo, no como distancia al borde: así la barra se apoya en ella
    en vez de flotar por encima. */
+/* Última fila de la columna. La franja de seguridad del teléfono va como
+   relleno debajo, no como distancia al borde. */
 .barra{
   flex:none;
   margin:0 auto;
   margin-bottom:max(0.35rem, env(safe-area-inset-bottom));
-  display:flex; align-items:center; gap:0.3rem;
-  padding:0.42rem;
+  /* Con cinco pestañas y una de ellas ensanchada para mostrar su nombre, el
+     conjunto se salía del cuadro en pantallas estrechas. Ahora las cuatro sin
+     marcar pueden encogerse y la activa se queda con el espacio que necesita
+     hasta donde haya. */
+  max-width:calc(100vw - 1.2rem);
+  min-width:0;
+  display:flex; align-items:center; gap:0.22rem;
+  padding:0.36rem;
   background:var(--fondo-barra);
   backdrop-filter:blur(20px) saturate(140%);
   -webkit-backdrop-filter:blur(20px) saturate(140%);
   border:1px solid var(--borde-barra);
   border-radius:2.4rem;
   box-shadow:var(--sombra-barra);
-  max-width:calc(100vw - 1.6rem);
 }
 
 .barra__pestana{
   appearance:none; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:0.42rem;
-  flex:none;
-  width:2.9rem; height:2.9rem; padding:0;
+  /* Pueden encoger, pero nunca por debajo del mínimo que se toca con el dedo
+     menos el hueco: así el conjunto cabe sin que ninguna quede impracticable. */
+  flex:0 1 auto;
+  width:2.75rem; min-width:2.45rem; height:2.75rem; padding:0;
   background:var(--carbon-alto);
   border:0; border-radius:1.5rem;
   color:var(--ceniza);
@@ -1225,10 +1240,16 @@ button{touch-action:manipulation}
 /* La activa: pastilla clara con su nombre al lado del icono. */
 /* La pestaña donde estás, en el mismo verde que marca lo último pulsado. */
 .barra__pestana[aria-selected="true"]{
-  width:auto; padding:0 0.95rem 0 0.8rem;
+  /* La activa se queda con lo que sobre, y su nombre se recorta antes que
+     desbordar el cuadro. */
+  width:auto; min-width:0; flex:0 1 auto;
+  padding:0 0.75rem 0 0.6rem;
   background:var(--verde-claro); color:var(--sobre-verde-claro);
 }
-.barra__pestana[aria-selected="true"] span{max-width:7rem; opacity:1}
+.barra__pestana[aria-selected="true"] span{
+  max-width:7rem; opacity:1;
+  overflow:hidden; text-overflow:ellipsis;
+}
 .barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
 
 @media (prefers-reduced-motion:reduce){

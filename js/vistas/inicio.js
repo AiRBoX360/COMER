@@ -121,9 +121,9 @@ export function inicio({ irA }) {
       <h2 class="rotulo">Tamaño del texto</h2>
       <div class="escala">
         <div class="escala__opciones" id="controlEscala" role="group" aria-label="Tamaño del texto">
-          <button class="escala__boton" data-escala="1" aria-pressed="false">Normal</button>
-          <button class="escala__boton" data-escala="1.15" aria-pressed="false">Grande</button>
-          <button class="escala__boton" data-escala="1.32" aria-pressed="false">Mayor</button>
+          <button class="escala__boton" data-escala="1" aria-pressed="false">Pequeño</button>
+          <button class="escala__boton" data-escala="1.15" aria-pressed="false">Normal</button>
+          <button class="escala__boton" data-escala="1.32" aria-pressed="false">Grande</button>
         </div>
       </div>
 
