@@ -9,6 +9,12 @@
 export const enCurso = {
   /** El código de barras, si vino de ahí. Sirve para detectar reformulaciones. */
   codigoBarras: null,
+  /** La foto del envase que trae Open Food Facts, si la hay. */
+  fotoUrl: null,
+  /** Las categorías de Open Food Facts, para buscar alternativas parecidas. */
+  categoriasTags: null,
+  marca: null,
+  tiendas: null,
   nombre: '',
   categoria: 'general',
   racionGramos: null,

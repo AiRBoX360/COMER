@@ -1,6 +1,5 @@
 import { vacio, pendiente, esc } from '../ui.js';
 import { estadoInstalacion } from '../diagnostico.js';
-import { ultimos } from './despensa.js';
 import { reiniciarCombinar } from './combinar.js';
 
 /**
@@ -53,6 +52,7 @@ export function inicio({ irA }) {
 
     ${nombrePantalla('Inicio')}
 
+    <div class="acciones">
     <button class="accion${ultima === 'supermercado' ? ' accion--reciente' : ''}"
             id="btnSupermercado" data-accion="supermercado">
       <span class="accion__icono" aria-hidden="true">
@@ -70,13 +70,16 @@ export function inicio({ irA }) {
     <button class="accion${ultima === 'analizar' ? ' accion--reciente' : ''}"
             id="btnAnalizar" data-accion="analizar">
       <span class="accion__icono" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+        <svg viewBox="0 0 24 24" stroke-linecap="butt">
+          <path d="M4 5v14M7.2 5v14M10 5v10M12.8 5v14M16 5v10M18.6 5v14M21 5v14"/>
+        </svg>
       </span>
       <span class="accion__texto">
         <b>Escaneo</b>
         <small>Análisis completo</small>
       </span>
     </button>
+    </div>
 
     <section class="grupo">
       <h2 class="grupo__titulo">Tus alimentos</h2>
@@ -98,8 +101,6 @@ export function inicio({ irA }) {
         </button>
       </div>
     </section>
-
-    <div id="ultimosAnalisis" class="recientes"></div>
 
     <details class="ajustes" id="panelAjustes">
       <summary>
@@ -218,20 +219,6 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
   const lista = raiz.querySelector('#listaDiagnostico');
   if (lista) pintarDiagnostico(lista);
 
-  // Los últimos análisis se piden después de pintar: la pantalla aparece
-  // enseguida y la lista entra cuando la base responde.
-  const hueco = raiz.querySelector('#ultimosAnalisis');
-  if (hueco) {
-    ultimos(4).then((productos) => {
-      if (!productos.length) return;
-      hueco.innerHTML = productos.map((p) => `
-        <button class="ultimo" data-ver="${p.id}">
-          <span class="ultimo__nota cifra" data-nivel="${p.semaforo ?? 'rojo'}">${p.puntuacion ?? '—'}</span>
-          <span class="ultimo__nombre">${esc(p.nombre)}</span>
-        </button>`).join('');
-      hueco.addEventListener('click', (e) => {
-        if (e.target.closest('[data-ver]')) irA('despensa');
-      });
-    }).catch(() => { /* sin base de datos, se queda el estado vacío */ });
-  }
+  // Inicio ya no lista alimentos: es la pantalla para elegir qué hacer, y
+  // nada más. Los productos guardados están en la Despensa, que es su sitio.
 }

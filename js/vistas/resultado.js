@@ -4,6 +4,9 @@ import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe, buscarAlternat
 import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
+import { descargarFotoProducto } from '../fotoproducto.js';
+import { alternativasDeFuera } from '../alternativasfuera.js';
+import { dondeComprarlo, textoDondeComprarlo } from '../donde.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
@@ -288,7 +291,20 @@ async function pintarAlternativas(raiz, v) {
     nombre: v.nombre, puntuacion: v.puntuacion, categoria: v.categoria,
     veredicto: v, ingredientes: enCurso.ingredientes,
   }, guardados);
-  if (alt.length === 0) return;
+  if (alt.length > 0) pintarDeLaDespensa(hueco, alt);
+
+  // Y las de fuera, que tardan más porque salen a internet. Se piden después
+  // para que lo que ya se sabe aparezca enseguida.
+  const fuera = await alternativasDeFuera({
+    puntuacion: v.puntuacion, codigo: enCurso.codigoBarras,
+    categoriasTags: enCurso.categoriasTags,
+    limitar: v.limitar, favorables: v.favorables, nova: v.nova,
+  }).catch(() => []);
+  if (fuera.length > 0) pintarDeFuera(raiz, fuera);
+  return;
+}
+
+function pintarDeLaDespensa(hueco, alt) {
 
   hueco.innerHTML = `
     <h2 class="subtitulo">Mejor esto, de tu despensa</h2>
@@ -324,6 +340,14 @@ export function resultadoActivo(raiz, { irA }) {
         if (!c?.preparada) continue;
         fotos.push({ tipo, bytes: await aBytes(c.original ?? c.preparada, 0.7) });
       }
+
+      // Si el producto vino de un código de barras y no hiciste foto del
+      // frontal, se guarda la del envase que trae Open Food Facts. La tuya
+      // manda siempre: esta solo entra donde no hay ninguna.
+      if (enCurso.fotoUrl && !fotos.some((f) => f.tipo === 'frontal')) {
+        const bytes = await descargarFotoProducto(enCurso.fotoUrl);
+        if (bytes) fotos.push({ tipo: 'frontal', bytes });
+      }
       await guardarAnalisis({
         veredicto: enCurso.veredicto,
         entrada: {
@@ -351,4 +375,47 @@ export function resultadoActivo(raiz, { irA }) {
       estado.textContent = `No se ha podido guardar. ${err.message}`;
     }
   });
+}
+
+
+/**
+ * Alternativas encontradas en Open Food Facts.
+ *
+ * Van con foto, marca, nuestra nota y dónde comprarlo. Y con un aviso de por
+ * qué merecen menos confianza que las de tu despensa: esas las analizaste tú
+ * con la etiqueta delante; estas vienen de datos que subió otra persona.
+ */
+function pintarDeFuera(raiz, fuera) {
+  const hueco = raiz.querySelector('#alternativasFuera')
+    ?? (() => {
+      const d = document.createElement('div');
+      d.id = 'alternativasFuera';
+      raiz.querySelector('#alternativas')?.after(d);
+      return d;
+    })();
+
+  hueco.innerHTML = `
+    <h2 class="subtitulo">Y estas, buscadas fuera</h2>
+    <p class="texto" style="font-size:var(--t2)">
+      Productos parecidos de Open Food Facts, puntuados con el mismo criterio
+      que el tuyo. Compruébalos contra el envase antes de fiarte: sus datos los
+      subió otra persona.
+    </p>
+    ${fuera.map((a) => `
+      <div class="fuera" data-nivel="${a.semaforo ?? 'rojo'}">
+        ${a.imagenUrl
+          ? `<img class="fuera__foto" src="${esc(a.imagenUrl)}" alt="" loading="lazy">`
+          : '<div class="fuera__foto fuera__foto--sin" aria-hidden="true"></div>'}
+        <div class="fuera__texto">
+          <b class="fuera__nombre">${esc(a.nombre)}</b>
+          ${a.marca ? `<span class="fuera__marca">${esc(a.marca)}</span>` : ''}
+          <span class="fuera__veredicto">
+            <i class="fuera__punto"></i>${esc(a.etiqueta)}
+            <em class="cifra">${a.puntuacion}</em>
+          </span>
+          ${a.porQue.length
+            ? `<span class="fuera__por">${esc(a.porQue.join(' · '))}</span>` : ''}
+          <span class="fuera__donde">${esc(textoDondeComprarlo(a.donde))}</span>
+        </div>
+      </div>`).join('')}`;
 }

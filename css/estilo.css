@@ -183,7 +183,6 @@ html{
   -webkit-text-size-adjust:100%;
   font-size:calc(17px * var(--escala));
   height:100%;
-  height:100dvh;   /* el visor de verdad, que en iPhone no es el 100% */
   overflow:hidden;
 }
 
@@ -201,8 +200,18 @@ html{
  */
 body{
   margin:0;
-  height:100%;
-  height:100dvh;
+  /* Anclada a los cuatro bordes del visor, no a una altura calculada.
+     
+     Con "100dvh" la barra bajaba casi siempre y a veces no: en iPhone esa
+     medida se resuelve en el arranque y puede leerse antes de que el sistema
+     haya terminado de colocar la ventana, así que la página quedaba más alta
+     que la pantalla y la última fila se salía por abajo. Que fallara solo a
+     veces era la pista: un número mal calculado, no una regla mal escrita.
+     
+     Fijando los cuatro bordes no hay altura que calcular. La página mide
+     exactamente lo que se ve, siempre. */
+  position:fixed;
+  inset:0;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -1260,60 +1269,24 @@ button{touch-action:manipulation}
    Tarjetas que se despliegan de una en una. Antes estaban las cuatro abiertas
    a la vez, cada una con un párrafo explicando para qué servía: un muro que se
    lee una vez y estorba las otras cien. */
-.vias{margin-bottom:var(--e5)}
 
-.via{
-  background:var(--carbon);
-  border:1px solid var(--linea);
-  border-radius:var(--radio);
-  margin-bottom:var(--e3);
-  overflow:hidden;
-  transition:border-color .18s ease;
-}
-.via--abierta{border-color:rgba(233,235,239,.22)}
 
-.via__cabeza{
-  appearance:none; cursor:pointer; width:100%;
-  display:flex; align-items:center; gap:var(--e4);
-  padding:var(--e4);
-  background:none; border:0; color:inherit; text-align:left;
-}
-.via__icono{
-  flex:none; width:2.6rem; height:2.6rem;
-  display:flex; align-items:center; justify-content:center;
-  background:var(--carbon-alto); border-radius:var(--radio-s);
-  color:var(--ceniza);
-}
-.via--abierta .via__icono{background:var(--hueso); color:var(--tinta)}
-.via__icono svg{
-  width:1.35rem; height:1.35rem;
-  fill:none; stroke:currentColor; stroke-width:1.8;
-  stroke-linecap:round; stroke-linejoin:round;
-}
-.via__texto{flex:1; min-width:0}
-.via__texto b{
-  display:block; font-family:var(--display); font-weight:600; font-size:var(--t4);
-  color:var(--hueso); line-height:1.2;
-}
-.via__texto small{
-  display:block; margin-top:2px;
-  font-size:var(--t1); color:var(--ceniza-tenue);
-}
-.via__flecha{flex:none; color:var(--ceniza-tenue)}
-.via__flecha svg{
-  width:1.1rem; height:1.1rem; display:block;
-  fill:none; stroke:currentColor; stroke-width:2;
-  stroke-linecap:round; stroke-linejoin:round;
-  transition:transform .2s ease;
-}
-.via--abierta .via__flecha svg{transform:rotate(90deg)}
 
-.via__cuerpo{
-  padding:0 var(--e4) var(--e4);
-  border-top:1px solid var(--linea);
-  padding-top:var(--e4);
-}
-.via__cuerpo > .boton-grande{margin-bottom:var(--e3)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* La letra pequeña de cada vía: una sola línea, y en voz baja. */
 .apunte-via{
@@ -1993,3 +1966,137 @@ body{
 }
 .ajustes[open] .ajustes__mas{transform:rotate(45deg)}
 .ajustes[open]{padding-bottom:var(--e4)}
+
+/* Las dos acciones, en rejilla para que midan exactamente lo mismo aunque una
+   parta el título en dos líneas y la otra no. */
+.acciones{
+  display:grid; grid-auto-rows:1fr; gap:var(--e4);
+  margin-bottom:var(--e4);
+}
+.acciones .accion{margin:0; height:100%}
+
+/* --- Alternativas buscadas fuera ------------------------------------------
+   Con foto, marca, nuestra nota y dónde comprarlo. Van después de las de tu
+   despensa porque merecen menos confianza: esas las analizaste tú con la
+   etiqueta delante. */
+.fuera{
+  display:flex; gap:var(--e4);
+  padding:var(--e3) var(--e4);
+  border:1px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
+  margin-bottom:var(--e3);
+}
+.fuera[data-nivel="verde_parchis"]{border-left-color:var(--verde-parchis)}
+.fuera[data-nivel="verde_claro"]{border-left-color:var(--verde-claro)}
+.fuera[data-nivel="amarillo"]{border-left-color:var(--amarillo)}
+
+.fuera__foto{
+  flex:none; width:4.4rem; height:4.4rem;
+  object-fit:contain; border-radius:var(--radio-s);
+  background:var(--carbon-alto);
+}
+.fuera__foto--sin{border:1px dashed var(--linea)}
+.fuera__texto{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.fuera__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25; color:var(--hueso);
+}
+.fuera__marca{font-size:var(--t1); color:var(--ceniza-tenue)}
+.fuera__veredicto{
+  display:flex; align-items:center; gap:0.4rem;
+  font-size:var(--t2); color:var(--ceniza);
+}
+.fuera__punto{width:0.6rem; height:0.6rem; border-radius:50%; flex:none; background:currentColor}
+.fuera[data-nivel="verde_parchis"] .fuera__veredicto{color:var(--verde-parchis-letra)}
+.fuera[data-nivel="verde_claro"] .fuera__veredicto{color:var(--verde-claro-letra)}
+.fuera[data-nivel="amarillo"] .fuera__veredicto{color:var(--amarillo-letra)}
+.fuera__veredicto em{font-style:normal; font-weight:600; margin-left:auto}
+.fuera__por{font-size:var(--t1); color:var(--ceniza-tenue); line-height:1.4}
+.fuera__donde{
+  margin-top:var(--e2); font-size:var(--t1); line-height:1.4;
+  color:var(--ceniza);
+}
+
+/* --- Analizar: cuatro vías, una a la vez -----------------------------------
+   Cerrada, se ven las cuatro para elegir. Abierta, las otras tres desaparecen
+   y la pantalla se dedica a lo que estás haciendo. */
+.vias{margin-bottom:var(--e5)}
+
+.via{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e4);
+  padding:var(--e3) var(--e4);
+  border:1.5px solid var(--verde-claro);
+  border-radius:1.4rem;
+  margin-bottom:var(--e3);
+  background:var(--carbon);
+  color:var(--hueso);
+}
+.via--abierta{background:var(--tinte-a); margin-bottom:0}
+
+.via__icono{
+  flex:none; width:2.9rem; height:2.9rem;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%;
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.via__icono svg{
+  width:1.5rem; height:1.5rem;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.via__nombre{
+  flex:1; min-width:0;
+  font-family:var(--display); font-weight:700; font-size:var(--t4);
+  line-height:1.2; letter-spacing:-.015em;
+}
+
+.via__cuerpo{
+  border:1.5px solid var(--verde-claro);
+  border-top:0;
+  border-radius:0 0 1.4rem 1.4rem;
+  padding:var(--e4);
+}
+
+/* Las cajas de dentro comparten perfil con todo lo demás. */
+.caja-accion{
+  appearance:none; cursor:pointer; width:100%;
+  padding:var(--e4);
+  border:1.5px solid var(--linea); border-radius:1.1rem;
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--display); font-weight:600; font-size:var(--t4);
+  line-height:1.25; text-align:center;
+  margin-bottom:var(--e3);
+}
+.via__cuerpo .campo__entrada input,
+.via__cuerpo .pegar{
+  border:1.5px solid var(--linea); border-radius:1.1rem;
+}
+.via__cuerpo .rotulo{text-align:center}
+
+/* El botón de acción: el mismo en las cuatro vías. */
+.buscar{
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  margin:var(--e5) 0 var(--e3);
+}
+.buscar__boton{
+  appearance:none; cursor:pointer;
+  width:3.4rem; height:3.4rem; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:50%;
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.buscar__boton svg{
+  width:1.7rem; height:1.7rem;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.buscar__boton:disabled{
+  background:var(--carbon-alto); color:var(--ceniza-tenue); cursor:default;
+}
+.buscar__rotulo{
+  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza-tenue);
+}

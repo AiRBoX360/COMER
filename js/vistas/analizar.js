@@ -3,7 +3,9 @@ import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO, analizarProducto } from '../motor.js';
 import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
+import { nombrePantalla } from './inicio.js';
 import { buscarPorCodigo } from '../codigobarras.js';
+import { descargarFotoProducto } from '../fotoproducto.js';
 import { buscarFresco, frescoAEntrada, compararConAnterior,
          buscarPorCodigoGuardado } from '../motor.js';
 import { listar } from '../almacen.js';
@@ -148,133 +150,53 @@ function barraEnCurso() {
  * servía cada una: un muro de texto que se lee una vez y estorba las otras
  * cien. Ahora son cuatro tarjetas y se abre la que se toca.
  */
-let abierta = 'codigo';
+let abierta = '';
 
 const VIAS = [
-  { clave: 'codigo', titulo: 'Escanear el código', pista: 'Lo más rápido',
-    icono: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9v6M10 9v6M13 9v6M17 9v6"/>' },
-  { clave: 'fresco', titulo: 'Alimento fresco', pista: 'Sin etiqueta: fruta, pescado, legumbre',
+  { clave: 'codigo', titulo: 'Escanear código',
+    icono: '<path d="M4 5v14M7.2 5v14M10 5v10M12.8 5v14M16 5v10M18.6 5v14M21 5v14" stroke-linecap="butt"/>' },
+  { clave: 'fresco', titulo: 'Alimentos frescos',
     icono: '<path d="M12 20c4.5 0 8-3.6 8-8 0-4-3-8-8-8s-8 4-8 8c0 4.4 3.5 8 8 8Z"/><path d="M12 20V9"/>' },
-  { clave: 'texto', titulo: 'Pegar el texto', pista: 'Lo más fiable',
+  { clave: 'texto', titulo: 'Pegar texto',
     icono: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>' },
-  { clave: 'fotos', titulo: 'Hacer fotos', pista: 'Funciona sin internet',
+  { clave: 'fotos', titulo: 'Hacer fotos',
     icono: '<path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/>' },
 ];
 
-function tarjeta(via, cuerpo) {
-  const esta = abierta === via.clave;
+/** La tarjeta de una vía: círculo verde, nombre, y nada más. */
+function tarjetaVia(via, abiertaAhora) {
   return `
-    <section class="via${esta ? ' via--abierta' : ''}">
-      <button class="via__cabeza" data-via="${via.clave}" aria-expanded="${esta}">
-        <span class="via__icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24">${via.icono}</svg>
-        </span>
-        <span class="via__texto">
-          <b>${esc(via.titulo)}</b>
-          <small>${esc(via.pista)}</small>
-        </span>
-        <span class="via__flecha" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
-      </button>
-      ${esta ? `<div class="via__cuerpo">${cuerpo}</div>` : ''}
-    </section>`;
+    <button class="via${abiertaAhora ? ' via--abierta' : ''}"
+            data-via="${via.clave}" aria-expanded="${abiertaAhora}">
+      <span class="via__icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">${via.icono}</svg>
+      </span>
+      <span class="via__nombre">${esc(via.titulo)}</span>
+    </button>`;
 }
 
 /**
- * Lleva la vista a lo que se acaba de entender.
+ * El botón de acción, igual en las cuatro vías.
  *
- * Sin esto, al pulsar un botón la pantalla se quedaba donde estaba y el
- * resultado aparecía abajo del todo, fuera de la vista. Daba la impresión de
- * que no había encontrado nada cuando en realidad sí.
+ * Antes cada una tenía el suyo con su rótulo: "Buscar el producto",
+ * "Interpretar el texto pegado", "Leer las fotos". Tres nombres para la misma
+ * intención. Ahora es un solo botón redondo y siempre dice lo mismo, así que
+ * no hay que leerlo: se reconoce por la forma.
  *
- * Se espera un instante porque la pantalla se repinta antes: buscar el destino
- * demasiado pronto encuentra el elemento viejo, que ya no está en el documento.
+ * El identificador sí cambia según la vía, porque cada una hace algo distinto
+ * por dentro. Eso no se ve y no tiene por qué unificarse.
  */
-function irAlResumen() {
-  setTimeout(() => {
-    const destino = document.querySelector('#resumenLectura');
-    if (!destino || !destino.innerHTML.trim()) return;
-    // Se desplaza el contenedor, que es lo único que se mueve ahora. Antes se
-    // usaba scrollIntoView, que actúa sobre la ventana y ya no vale.
-    const zona = document.querySelector('.principal');
-    if (!zona) { destino.scrollIntoView({ block: 'start' }); return; }
-    const arriba = destino.getBoundingClientRect().top - zona.getBoundingClientRect().top;
-    zona.scrollTo({ top: zona.scrollTop + arriba - 12, behavior: 'smooth' });
-  }, 60);
-}
-
-export function analizar() {
-  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
-
-  const cuerpoCodigo = `
-    <div class="escaner" id="zonaEscaner" hidden>
-      <video id="videoEscaner" muted playsinline></video>
-      <div class="escaner__mira"></div>
-      <button class="boton" id="btnCancelarEscaner">Cancelar</button>
-    </div>
-    <button class="boton-grande" id="btnEscanear">
-      ESCANEAR CON LA CÁMARA
-      <small>Apunta al código de barras</small>
-    </button>
-    <div class="campo">
-      <label class="campo__nombre" for="codigoBarras">O tecléalo</label>
-      <div class="campo__entrada">
-        <input id="codigoBarras" type="text" inputmode="numeric"
-               value="${esc(ultimoCodigo)}"
-               placeholder="los 13 dígitos de debajo del código"
-               autocomplete="off">
-      </div>
-    </div>
-    <button class="boton" id="btnBuscarCodigo" style="width:100%">Buscar el producto</button>
-    <p class="texto" id="estadoCodigo" role="status" aria-live="polite"></p>
-    <p class="apunte-via">Consulta Open Food Facts. Es la única parte de la app que sale a internet, y solo viaja el número.</p>`;
-
-  const cuerpoFresco = `
-    <div class="campo">
-      <div class="campo__entrada">
-        <input id="buscaFresco" type="search" placeholder="plátano, salmón, lentejas…" autocomplete="off">
-      </div>
-    </div>
-    <div id="resultadosFresco"></div>
-    <p class="apunte-via">Valores por 100 g de tablas de composición, no de un envase. Sirven para situar el alimento, no para contar gramos.</p>`;
-
-  const cuerpoTexto = `
-    <label class="rotulo" for="pegaTabla">Tabla nutricional</label>
-    <textarea id="pegaTabla" class="pegar pegar--alta" rows="10" placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
-    <label class="rotulo" for="pegaIng" style="margin-top:16px">Lista de ingredientes</label>
-    <textarea id="pegaIng" class="pegar pegar--alta" rows="8" placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
-    <button class="boton" id="btnPegado" style="margin-top:12px; width:100%">Interpretar el texto pegado</button>
-    <p class="apunte-via">Copia el texto con el reconocimiento del iPhone: lee mejor que ningún programa.</p>`;
-
-  const cuerpoFotos = `
-    <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
-    <button class="boton-grande" id="btnLeer" ${listo ? '' : 'disabled'} style="margin-top:16px">
-      ${listo ? 'LEER LAS FOTOS' : 'FALTAN FOTOS'}
-      <small>${listo ? 'Se lee aquí dentro, sin enviar nada' : 'Hacen falta la tabla y los ingredientes'}</small>
-    </button>
-    <p class="texto" id="estadoLectura" role="status" aria-live="polite"></p>
-    <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
-    <div id="diagLector"></div>`;
-
+function botonBuscar(id, desactivado = false) {
   return `
-    <h1 class="titulo">Analizar</h1>
-    ${barraEnCurso()}
-
-    <div class="vias">
-      ${tarjeta(VIAS[0], cuerpoCodigo)}
-      ${tarjeta(VIAS[1], cuerpoFresco)}
-      ${tarjeta(VIAS[2], cuerpoTexto)}
-      ${tarjeta(VIAS[3], cuerpoFotos)}
-    </div>
-
-    ${bloqueCambio()}
-    <div id="resumenLectura"></div>
-    <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
-      REVISAR Y CORREGIR
-      <small>Comprueba las cifras antes de analizar</small>
-    </button>
-  `;
+    <div class="buscar">
+      <button class="buscar__boton" id="${id}" ${desactivado ? 'disabled' : ''}
+              aria-label="Buscar alimento">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
+        </svg>
+      </button>
+      <span class="buscar__rotulo">Buscar alimento</span>
+    </div>`;
 }
 
 /**
@@ -331,6 +253,80 @@ function bloqueCambio() {
         : ''}
       <p class="apunte-via">El análisis anterior no se borra: los dos quedan en la Despensa.</p>
     </div>`;
+}
+
+export function analizar() {
+  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
+
+  // Con una vía abierta, las otras tres desaparecen: la pantalla se dedica a
+  // lo que estás haciendo. Cerrada, se ven las cuatro para elegir.
+  const cuerpo = {
+    codigo: `
+      <div class="escaner" id="zonaEscaner" hidden>
+        <video id="videoEscaner" muted playsinline></video>
+        <div class="escaner__mira"></div>
+        <button class="boton" id="btnCancelarEscaner">Cancelar</button>
+      </div>
+      <button class="caja-accion" id="btnEscanear">Escanea con la cámara</button>
+      <div class="campo">
+        <div class="campo__entrada">
+          <input id="codigoBarras" type="text" inputmode="numeric"
+                 value="${esc(ultimoCodigo)}"
+                 placeholder="Pega o escribe el número" autocomplete="off">
+        </div>
+      </div>
+      ${botonBuscar('btnBuscarCodigo')}
+      <p class="texto" id="estadoCodigo" role="status" aria-live="polite"></p>
+      <p class="apunte-via">Consulta Open Food Facts. Es la única parte de la app que sale a internet, y solo viaja el número.</p>`,
+
+    fresco: `
+      <div class="campo">
+        <div class="campo__entrada">
+          <input id="buscaFresco" type="search"
+                 placeholder="Pega o escribe el alimento" autocomplete="off">
+        </div>
+      </div>
+      <div id="resultadosFresco"></div>
+      ${botonBuscar('btnBuscarFresco')}
+      <p class="apunte-via">Valores por 100 g de tablas de composición, no de un envase. Sirven para situar el alimento, no para contar gramos.</p>`,
+
+    texto: `
+      <h3 class="rotulo">Tabla nutricional</h3>
+      <textarea id="pegaTabla" class="pegar" rows="7"
+                placeholder="Valor energético 467 kcal&#10;Grasas 20 g&#10;..."></textarea>
+      <h3 class="rotulo">Lista de ingredientes</h3>
+      <textarea id="pegaIng" class="pegar" rows="6"
+                placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
+      ${botonBuscar('btnPegado')}
+      <p class="apunte-via">Copia el texto con el reconocimiento del iPhone: lee mejor que ningún programa.</p>`,
+
+    fotos: `
+      <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
+      ${botonBuscar('btnLeer', !listo)}
+      <p class="texto" id="estadoLectura" role="status" aria-live="polite"></p>
+      <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
+      <div id="diagLector"></div>`,
+  };
+
+  const abiertaVia = VIAS.find((v) => v.clave === abierta);
+
+  return `
+    ${nombrePantalla('Analizar')}
+    ${barraEnCurso()}
+
+    <div class="vias">
+      ${abiertaVia
+        ? tarjetaVia(abiertaVia, true) + `<div class="via__cuerpo">${cuerpo[abierta]}</div>`
+        : VIAS.map((v) => tarjetaVia(v, false)).join('')}
+    </div>
+
+    ${bloqueCambio()}
+    <div id="resumenLectura"></div>
+    <button class="boton-grande" id="btnRevisar" style="margin-top:16px; display:none">
+      REVISAR Y CORREGIR
+      <small>Comprueba las cifras antes de analizar</small>
+    </button>
+  `;
 }
 
 export function analizarActivo(raiz, { repintar, irA }) {
@@ -594,6 +590,14 @@ export function analizarActivo(raiz, { repintar, irA }) {
     // como dato leído, no como dato confirmado, y va a la pantalla de revisión.
     enCurso.nombre = p.nombre;
     enCurso.codigoBarras = p.codigo ?? ultimoCodigo;
+    // La foto del envase viene en la ficha de Open Food Facts. Se descarga en
+    // segundo plano: si tarda o falla, el análisis sigue su curso sin ella.
+    enCurso.fotoUrl = p.imagenUrl ?? null;
+    // Las categorías de Open Food Facts hacen falta para buscar alternativas:
+    // sin ellas no hay con qué comparar.
+    enCurso.categoriasTags = p.categoriasTags ?? null;
+    enCurso.marca = p.marca ?? null;
+    enCurso.tiendas = p.tiendas ?? null;
     enCurso.categoria = p.categoria;
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
     for (const [k, d] of Object.entries(p.nutrientes)) {
@@ -689,6 +693,13 @@ export function analizarActivo(raiz, { repintar, irA }) {
       avisos: ['Valores por 100 g de porción comestible, tomados de tablas de composición de alimentos y no de un envase. Un alimento fresco varía con la madurez, la variedad y la procedencia.'] };
     repintar();
     irAlResumen();
+  });
+
+  raiz.querySelector('#btnBuscarFresco')?.addEventListener('click', () => {
+    // La búsqueda ya ocurre al escribir. El botón está para quien prefiere
+    // pulsar algo, que es mucha gente, y para que las cuatro vías acaben
+    // igual: escribir, pulsar, resultado.
+    raiz.querySelector('#buscaFresco')?.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
   raiz.querySelector('#btnDiagLector')?.addEventListener('click', async (e) => {

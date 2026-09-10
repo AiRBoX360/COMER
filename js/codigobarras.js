@@ -69,7 +69,20 @@ export async function buscarPorCodigo(codigoCrudo) {
         mensaje: `La base ha respondido con un error (${resp.status}). Inténtalo más tarde o usa la foto.`,
       };
     }
-    return traducirProducto(await resp.json(), codigo);
+    const crudo = await resp.json();
+    const r = traducirProducto(crudo, codigo);
+
+    // El motor traduce lo que necesita para puntuar. Estos tres campos no le
+    // hacen falta a él pero sí a la app: las categorías para buscar
+    // alternativas parecidas, y las tiendas para decir dónde comprarlo. Se
+    // cogen de la respuesta original en vez de tocar el motor, que no tiene
+    // por qué enterarse de esto.
+    if (r.ok) {
+      const p = crudo?.product ?? {};
+      r.producto.categoriasTags = Array.isArray(p.categories_tags) ? p.categories_tags : null;
+      r.producto.tiendas = p.stores_tags ?? p.stores ?? null;
+    }
+    return r;
   } catch (err) {
     clearTimeout(reloj);
     if (err.name === 'AbortError') {
