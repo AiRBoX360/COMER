@@ -2363,3 +2363,9 @@ body{
   font-size:var(--t2); line-height:1.35; color:var(--hueso);
 }
 .procedencia__linea::before{content:'· '; color:var(--ceniza-tenue)}
+.procedencia--sin{border-style:dashed}
+.procedencia__nada{font-size:var(--t2); color:var(--ceniza-tenue)}
+.procedencia__matiz{
+  font-family:var(--datos); font-size:var(--t0);
+  color:var(--ceniza-tenue); font-style:italic;
+}

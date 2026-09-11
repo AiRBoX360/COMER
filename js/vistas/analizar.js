@@ -602,6 +602,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
       origenes: p.origenes ?? null,
       envasado: p.envasado ?? null,
       codigosSanitarios: p.codigosSanitarios ?? null,
+      codigoBarras: p.codigo ?? ultimoCodigo,
     };
     enCurso.categoria = p.categoria;
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;

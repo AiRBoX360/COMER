@@ -167,7 +167,7 @@ export function provinciaDelCodigo(codigo) {
  *
  * Devuelve `{ origen, envasado, provincia }`. Cualquiera puede faltar.
  */
-export function deDondeViene({ origenes, envasado, codigosSanitarios } = {}) {
+export function deDondeViene({ origenes, envasado, codigosSanitarios, codigoBarras } = {}) {
   const lista = (x) => (Array.isArray(x) ? x : String(x ?? '').split(','))
     .map((t) => String(t).trim()).filter(Boolean);
 
@@ -179,7 +179,14 @@ export function deDondeViene({ origenes, envasado, codigosSanitarios } = {}) {
     provincia = provinciaDelCodigo(c);
     if (provincia) break;
   }
-  return { origen, envasado: lugares, provincia };
+  // El país del código de barras solo se usa cuando no hay nada mejor, y
+  // siempre diciendo qué significa: dónde se registró la empresa, no dónde se
+  // hizo la comida.
+  const registrado = (origen.length === 0 && lugares.length === 0 && !provincia)
+    ? paisDelCodigo(codigoBarras)
+    : null;
+
+  return { origen, envasado: lugares, provincia, registrado };
 }
 
 /** Cómo se le cuenta a alguien. Cadena vacía si no se sabe nada. */
@@ -189,6 +196,83 @@ export function textoDeDondeViene(d) {
   if (d.origen.length) partes.push(`Procede de ${d.origen.join(', ')}`);
   if (d.provincia) partes.push(`envasado en ${d.provincia}, según su código sanitario`);
   else if (d.envasado.length) partes.push(`envasado en ${d.envasado.join(', ')}`);
-  if (partes.length === 0) return '';
-  return `${partes.join(' y ')}.`;
+  if (partes.length) return `${partes.join(' y ')}.`;
+
+  if (d.registrado === 'BALANZA') {
+    return 'Este código lo ha generado la balanza de la tienda al pesarlo, así que '
+      + 'no dice nada del fabricante ni del origen.';
+  }
+  if (d.registrado) {
+    return `Su código de barras está registrado en ${d.registrado}. Eso dice dónde `
+      + 'se dio de alta la empresa, no dónde se hizo la comida.';
+  }
+  return '';
+}
+
+/** Por qué no consta de dónde viene, para poder decirlo en vez de callarse. */
+export function porQueNoConstaOrigen(d) {
+  if (!d) return 'No se ha podido consultar el producto.';
+  if (d.origen.length || d.envasado.length || d.provincia) return '';
+  if (d.registrado) return '';
+  return 'Nadie ha rellenado el origen de este producto en Open Food Facts, y su '
+    + 'código de barras no permite deducirlo.';
+}
+
+
+/**
+ * De dónde es el código de barras.
+ *
+ * Los tres primeros dígitos de un EAN-13 dicen qué organización nacional lo
+ * asignó. El 84 es España, por AECOC.
+ *
+ * OJO CON LO QUE SIGNIFICA, y la app lo dice con todas las letras: indica
+ * dónde se registró la EMPRESA que puso el producto en el mercado, no dónde se
+ * hizo la comida. Un 84 puede llevar tomate de Marruecos envasado en Portugal.
+ *
+ * Aun así vale la pena: no depende de que nadie rellene nada, va en el propio
+ * código y sirve siempre. Cuando no hay otra cosa, es mejor que nada mientras
+ * se diga qué es exactamente.
+ */
+const PREFIJOS = [
+  [[0, 19], 'Estados Unidos o Canadá'], [[30, 37], 'Francia'], [[380, 380], 'Bulgaria'],
+  [[385, 385], 'Croacia'], [[387, 387], 'Bosnia'], [[400, 440], 'Alemania'],
+  [[45, 49], 'Japón'], [[460, 469], 'Rusia'], [[471, 471], 'Taiwán'],
+  [[489, 489], 'Hong Kong'], [[50, 50], 'Reino Unido'], [[520, 521], 'Grecia'],
+  [[528, 528], 'Líbano'], [[529, 529], 'Chipre'], [[539, 539], 'Irlanda'],
+  [[54, 54], 'Bélgica o Luxemburgo'], [[560, 560], 'Portugal'], [[569, 569], 'Islandia'],
+  [[57, 57], 'Dinamarca'], [[590, 590], 'Polonia'], [[594, 594], 'Rumanía'],
+  [[599, 599], 'Hungría'], [[64, 64], 'Finlandia'], [[70, 70], 'Noruega'],
+  [[729, 729], 'Israel'], [[73, 73], 'Suecia'], [[750, 750], 'México'],
+  [[759, 759], 'Venezuela'], [[76, 76], 'Suiza'], [[770, 771], 'Colombia'],
+  [[773, 773], 'Uruguay'], [[775, 775], 'Perú'], [[779, 779], 'Argentina'],
+  [[780, 780], 'Chile'], [[784, 784], 'Paraguay'], [[786, 786], 'Ecuador'],
+  [[789, 790], 'Brasil'], [[80, 83], 'Italia'], [[84, 84], 'España'],
+  [[850, 850], 'Cuba'], [[859, 859], 'Chequia'], [[860, 860], 'Serbia'],
+  [[867, 867], 'Corea del Norte'], [[87, 87], 'Países Bajos'], [[880, 880], 'Corea del Sur'],
+  [[885, 885], 'Tailandia'], [[888, 888], 'Singapur'], [[890, 890], 'India'],
+  [[893, 893], 'Vietnam'], [[90, 91], 'Austria'], [[93, 93], 'Australia'],
+  [[94, 94], 'Nueva Zelanda'], [[955, 955], 'Malasia'],
+  [[690, 699], 'China'], [[471, 471], 'Taiwán'],
+  // Códigos que no son de ningún país: la balanza del súper los genera para
+  // pesar fruta o embutido. Decir que son de Estados Unidos sería mentir.
+  [[20, 29], 'BALANZA'],
+];
+
+export function paisDelCodigo(codigo) {
+  const c = String(codigo ?? '').replace(/\D/g, '');
+  if (c.length < 8) return null;
+
+  // De tres cifras a una: el prefijo más largo manda.
+  //
+  // Comprobándolos en el orden de la lista, el rango [0,19] de Estados Unidos
+  // casaba con TODO: con una sola cifra, cualquier código empieza por algo
+  // entre 0 y 19 si se lee mal. Un 8480000123456 salía como estadounidense.
+  for (const cifras of [3, 2, 1]) {
+    const n = Number(c.slice(0, cifras));
+    for (const [[desde, hasta], pais] of PREFIJOS) {
+      if (String(desde).length !== cifras) continue;
+      if (n >= desde && n <= hasta) return pais;
+    }
+  }
+  return null;
 }

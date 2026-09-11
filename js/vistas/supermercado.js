@@ -36,12 +36,13 @@ function tarjetaRapida(p, v) {
 
   // Aquí el producto trae los tres campos sueltos, tal como llegan de Open
   // Food Facts, en vez de agrupados. Se le pasan como están.
-  const d = p ? deDondeViene(p) : null;
+  const d = p ? deDondeViene({ ...p, codigoBarras: p.codigo }) : null;
   const lineas = [];
   if (d) {
     if (d.origen.length) lineas.push(...d.origen);
     if (d.provincia) lineas.push(d.provincia);
     else if (d.envasado.length) lineas.push(...d.envasado);
+    else if (d.registrado && d.registrado !== 'BALANZA') lineas.push(d.registrado);
   }
 
   return `

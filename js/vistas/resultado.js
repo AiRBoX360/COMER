@@ -7,7 +7,8 @@ import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas } from '../alternativasfuera.js';
 import { dondeComprarlo, textoDondeComprarlo,
-         deDondeViene, textoDeDondeViene } from '../donde.js';
+         deDondeViene, textoDeDondeViene,
+         porQueNoConstaOrigen } from '../donde.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
@@ -103,7 +104,17 @@ function procedenciaCompacta() {
   if (d.origen.length) lineas.push(...d.origen);
   if (d.provincia) lineas.push(d.provincia);
   else if (d.envasado.length) lineas.push(...d.envasado);
-  if (lineas.length === 0) return '';
+  // Cuando no consta, se dice. Callarse hace que un fallo del código y un dato
+  // que nadie ha rellenado se vean exactamente igual.
+  if (lineas.length === 0) {
+    const motivo = porQueNoConstaOrigen(d);
+    return motivo
+      ? `<div class="procedencia procedencia--sin">
+           <span class="procedencia__rotulo">Procedencia</span>
+           <span class="procedencia__nada">No consta</span>
+         </div>`
+      : '';
+  }
   return `
     <div class="procedencia">
       <span class="procedencia__rotulo">Procedencia</span>
