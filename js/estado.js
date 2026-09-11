@@ -15,6 +15,8 @@ export const enCurso = {
   categoriasTags: null,
   marca: null,
   tiendas: null,
+  /** De dónde viene: origen, envasado y código sanitario. */
+  procedencia: null,
   nombre: '',
   categoria: 'general',
   racionGramos: null,

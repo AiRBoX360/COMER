@@ -598,6 +598,11 @@ export function analizarActivo(raiz, { repintar, irA }) {
     enCurso.categoriasTags = p.categoriasTags ?? null;
     enCurso.marca = p.marca ?? null;
     enCurso.tiendas = p.tiendas ?? null;
+    enCurso.procedencia = {
+      origenes: p.origenes ?? null,
+      envasado: p.envasado ?? null,
+      codigosSanitarios: p.codigosSanitarios ?? null,
+    };
     enCurso.categoria = p.categoria;
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
     for (const [k, d] of Object.entries(p.nutrientes)) {

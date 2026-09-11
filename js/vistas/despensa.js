@@ -105,7 +105,10 @@ export function despensa() {
     if (total > 0 && suyos.length === 0) return '';
     return `
       <section class="bloque" data-nivel="${n.clave}">
-        <h3 class="bloque__titulo">${esc(n.texto)} · ${suyos.length}</h3>
+        <h3 class="bloque__barra">
+          <span class="bloque__nombre">${esc(n.texto)}</span>
+          <span class="bloque__cuantos cifra">${suyos.length}</span>
+        </h3>
         ${suyos.map(ficha).join('') || '<p class="texto" style="font-size:0.9rem">Ninguno todavía.</p>'}
       </section>`;
   }).join('');

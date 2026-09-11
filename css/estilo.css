@@ -46,10 +46,12 @@
   --rojo:#C62E2E;
   --naranja:#E4771D;
   --amarillo:#E8B617;
-  --verde-claro:#78B341;
-  /* Aclarado desde #17A05A. Rojo y verde son el eje que la deuteranopia no
-     distingue, y ningún tono lo arregla: solo separarlos en claridad. */
-  --verde-parchis:#1FB868;
+  /* El nivel 5 lleva el verde de la app. Los dos verdes tuvieron que
+     reordenarse: el 4 pasa a un verde bosque más oscuro, porque aclararlo lo
+     habría pegado al amarillo y se confundirían el 3 y el 4. Con estos dos hay
+     2,01 de separación entre sí y 2,74 frente al amarillo. */
+  --verde-claro:#4E7A28;
+  --verde-parchis:#78B341;
 
   /* En oscuro, relleno y letra coinciden: sobre fondo negro un color vivo se
      lee bien de las dos maneras. */
@@ -63,7 +65,7 @@
   --sobre-rojo:#FFFFFF;
   --sobre-naranja:#101319;
   --sobre-amarillo:#101319;
-  --sobre-verde-claro:#101319;
+  --sobre-verde-claro:#FFFFFF;
   --sobre-verde-parchis:#101319;
 
   /* El tinte de fondo, muy suave, que quita la sensación de hoja de cálculo */
@@ -96,20 +98,20 @@
   --rojo:#D0392F;
   --naranja:#E07B1C;
   --amarillo:#E9B81A;
-  --verde-claro:#72AC3C;
-  --verde-parchis:#17A15F;
+  --verde-claro:#4E7A28;
+  --verde-parchis:#78B341;
 
   /* Los mismos, oscurecidos, para cuando van como letra pequeña */
   --rojo-letra:#B32B22;
   --naranja-letra:#9A5410;
   --amarillo-letra:#7A5F05;
-  --verde-claro-letra:#4C7526;
-  --verde-parchis-letra:#0F6E45;
+  --verde-claro-letra:#3F6B26;
+  --verde-parchis-letra:#4C7526;
 
   --sobre-rojo:#FFFFFF;
   --sobre-naranja:#1A1D24;
   --sobre-amarillo:#1A1D24;
-  --sobre-verde-claro:#1A1D24;
+  --sobre-verde-claro:#FFFFFF;
   --sobre-verde-parchis:#1A1D24;
 
   --tinte-a:rgba(114,172,60,.10);
@@ -1635,21 +1637,11 @@ body{
 }
 
 /* Los encabezados de cada bloque de color, con su punto delante. */
-.bloque__titulo{
-  display:flex; align-items:center; gap:var(--e3);
-  margin:var(--e5) 0 var(--e3);
-  font-family:var(--datos); font-size:var(--t0); font-weight:600;
-  letter-spacing:.09em; text-transform:uppercase; color:var(--ceniza-tenue);
-}
+
 .bloque__titulo::before{
   content:''; width:0.6rem; height:0.6rem; border-radius:50%;
   background:currentColor; flex:none;
 }
-.bloque[data-nivel="rojo"] .bloque__titulo{color:var(--rojo-letra)}
-.bloque[data-nivel="naranja"] .bloque__titulo{color:var(--naranja-letra)}
-.bloque[data-nivel="amarillo"] .bloque__titulo{color:var(--amarillo-letra)}
-.bloque[data-nivel="verde_claro"] .bloque__titulo{color:var(--verde-claro-letra)}
-.bloque[data-nivel="verde_parchis"] .bloque__titulo{color:var(--verde-parchis-letra)}
 
 /* Los filtros, como pastillas. */
 .filtro{
@@ -2266,3 +2258,47 @@ body{
 }
 .repetida__veces{flex:none; color:var(--ceniza-tenue); font-size:var(--t1)}
 .repetida__nombre{flex:1; min-width:0}
+
+
+/* --- La cabecera de cada bloque de la Despensa -----------------------------
+   El nombre dentro de una barra del color que le toca. Llegué a dejarlo como
+   texto de color con un punto delante: más elegante, sí, pero se distinguía
+   mucho menos de un vistazo, que es justamente para lo que está. */
+.bloque__barra{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--e3);
+  margin:var(--e6) 0 var(--e3);
+  padding:var(--e2) var(--e4);
+  border-radius:var(--radio-s);
+  font-family:var(--display); font-weight:600; font-size:var(--t2);
+  background:var(--carbon-alto); color:var(--hueso);
+}
+.bloque[data-nivel="rojo"] .bloque__barra{background:var(--rojo); color:var(--sobre-rojo)}
+.bloque[data-nivel="naranja"] .bloque__barra{background:var(--naranja); color:var(--sobre-naranja)}
+.bloque[data-nivel="amarillo"] .bloque__barra{background:var(--amarillo); color:var(--sobre-amarillo)}
+.bloque[data-nivel="verde_claro"] .bloque__barra{background:var(--verde-claro); color:var(--sobre-verde-claro)}
+.bloque[data-nivel="verde_parchis"] .bloque__barra{background:var(--verde-parchis); color:var(--sobre-verde-parchis)}
+.bloque__nombre{flex:1; min-width:0}
+.bloque__cuantos{
+  flex:none; font-size:var(--t1); opacity:.82;
+  font-variant-numeric:tabular-nums;
+}
+
+/* --- La barra de abajo, más pegada al borde --------------------------------
+   El teléfono reserva una franja para su barra de inicio. Dejarla entera como
+   margen subía la nuestra más de lo necesario: con algo más de la mitad se
+   despeja el indicador y la barra se apoya en el borde. */
+.barra{margin-bottom:max(0.35rem, calc(env(safe-area-inset-bottom) * 0.55))}
+
+/* --- De dónde viene -------------------------------------------------------- */
+.procede{
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon);
+  padding:var(--e4);
+  margin-bottom:var(--e4);
+}
+.procede__linea{
+  margin:0; font-size:var(--t3); line-height:1.5; color:var(--hueso);
+}
+.procede__donde{
+  margin:var(--e2) 0 0; font-size:var(--t2); line-height:1.45; color:var(--ceniza);
+}

@@ -96,3 +96,99 @@ export function textoDondeComprarlo(donde) {
     ? `${lista}. Es su marca propia, así que no falla.`
     : `${lista}. Lo ha rellenado alguien en Open Food Facts, así que puede estar desactualizado.`;
 }
+
+
+/* ===========================================================================
+   DE DÓNDE VIENE
+   ===========================================================================
+   Open Food Facts guarda tres cosas distintas que la gente confunde, y que
+   conviene separar porque no dicen lo mismo:
+
+     · origen          de dónde salió la materia prima
+     · lugar de envasado  dónde se procesó o se metió en el paquete
+     · código sanitario   el registro del establecimiento, impreso en el óvalo
+
+   Un tomate de origen Marruecos envasado en Murcia no es un tomate murciano, y
+   la etiqueta permite distinguirlo. Nosotros también.
+
+   Todo esto lo rellena quien sube el producto, así que falta a menudo. Cuando
+   falta, se dice: inventarlo sería peor que no tenerlo.
+   =========================================================================== */
+
+const PAISES = {
+  spain: 'España', france: 'Francia', portugal: 'Portugal', italy: 'Italia',
+  germany: 'Alemania', 'united-kingdom': 'Reino Unido', morocco: 'Marruecos',
+  netherlands: 'Países Bajos', belgium: 'Bélgica', poland: 'Polonia',
+  china: 'China', peru: 'Perú', ecuador: 'Ecuador', argentina: 'Argentina',
+  brazil: 'Brasil', chile: 'Chile', mexico: 'México', turkey: 'Turquía',
+  thailand: 'Tailandia', vietnam: 'Vietnam', india: 'India', norway: 'Noruega',
+  ireland: 'Irlanda', denmark: 'Dinamarca', greece: 'Grecia', 'united-states': 'Estados Unidos',
+  'european-union': 'Unión Europea', 'non-eu': 'Fuera de la Unión Europea',
+};
+
+/**
+ * El código sanitario español dice la provincia.
+ *
+ * Tiene la forma "ES 12.3456/AB CE": las dos primeras cifras son la provincia
+ * donde está registrado el establecimiento. Es el dato más fiable de los tres,
+ * porque va impreso en el envase por obligación legal y no lo rellena nadie a
+ * mano.
+ */
+const PROVINCIAS = {
+  '01': 'Álava', '02': 'Albacete', '03': 'Alicante', '04': 'Almería',
+  '05': 'Ávila', '06': 'Badajoz', '07': 'Baleares', '08': 'Barcelona',
+  '09': 'Burgos', '10': 'Cáceres', '11': 'Cádiz', '12': 'Castellón',
+  '13': 'Ciudad Real', '14': 'Córdoba', '15': 'A Coruña', '16': 'Cuenca',
+  '17': 'Girona', '18': 'Granada', '19': 'Guadalajara', '20': 'Gipuzkoa',
+  '21': 'Huelva', '22': 'Huesca', '23': 'Jaén', '24': 'León', '25': 'Lleida',
+  '26': 'La Rioja', '27': 'Lugo', '28': 'Madrid', '29': 'Málaga',
+  '30': 'Murcia', '31': 'Navarra', '32': 'Ourense', '33': 'Asturias',
+  '34': 'Palencia', '35': 'Las Palmas', '36': 'Pontevedra', '37': 'Salamanca',
+  '38': 'Santa Cruz de Tenerife', '39': 'Cantabria', '40': 'Segovia',
+  '41': 'Sevilla', '42': 'Soria', '43': 'Tarragona', '44': 'Teruel',
+  '45': 'Toledo', '46': 'Valencia', '47': 'Valladolid', '48': 'Bizkaia',
+  '49': 'Zamora', '50': 'Zaragoza', '51': 'Ceuta', '52': 'Melilla',
+};
+
+const bonito = (t) => {
+  const limpio = limpiar(String(t).replace(/^[a-z]{2}:/, ''));
+  if (PAISES[limpio]) return PAISES[limpio];
+  return limpio.replace(/(^|[\s-])\S/g, (x) => x.toUpperCase()).replace(/-/g, ' ');
+};
+
+/** Saca la provincia de un código sanitario español. */
+export function provinciaDelCodigo(codigo) {
+  const m = String(codigo ?? '').match(/es\s*[- ]?\s*(\d{2})[.\s-]?\d{3,5}/i);
+  return m ? (PROVINCIAS[m[1]] ?? null) : null;
+}
+
+/**
+ * De dónde viene el producto, separando las tres cosas.
+ *
+ * Devuelve `{ origen, envasado, provincia }`. Cualquiera puede faltar.
+ */
+export function deDondeViene({ origenes, envasado, codigosSanitarios } = {}) {
+  const lista = (x) => (Array.isArray(x) ? x : String(x ?? '').split(','))
+    .map((t) => String(t).trim()).filter(Boolean);
+
+  const origen = [...new Set(lista(origenes).map(bonito))].slice(0, 3);
+  const lugares = [...new Set(lista(envasado).map(bonito))].slice(0, 2);
+
+  let provincia = null;
+  for (const c of lista(codigosSanitarios)) {
+    provincia = provinciaDelCodigo(c);
+    if (provincia) break;
+  }
+  return { origen, envasado: lugares, provincia };
+}
+
+/** Cómo se le cuenta a alguien. Cadena vacía si no se sabe nada. */
+export function textoDeDondeViene(d) {
+  if (!d) return '';
+  const partes = [];
+  if (d.origen.length) partes.push(`Procede de ${d.origen.join(', ')}`);
+  if (d.provincia) partes.push(`envasado en ${d.provincia}, según su código sanitario`);
+  else if (d.envasado.length) partes.push(`envasado en ${d.envasado.join(', ')}`);
+  if (partes.length === 0) return '';
+  return `${partes.join(' y ')}.`;
+}

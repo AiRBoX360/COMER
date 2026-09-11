@@ -20,6 +20,10 @@ const CAMPOS = [
   'brands', 'quantity', 'serving_quantity', 'categories_tags',
   'ingredients_text', 'ingredients_text_es', 'nutriments',
   'image_front_small_url', 'image_front_url', 'nutriscore_grade', 'nova_group',
+  // De dónde viene: origen de la materia prima, dónde se envasó, y el código
+  // sanitario, que es el único de los tres que va impreso por obligación.
+  'origins', 'origins_tags', 'manufacturing_places', 'manufacturing_places_tags',
+  'emb_codes', 'emb_codes_tags', 'stores', 'stores_tags',
 ].join(',');
 
 const ESPERA_MAXIMA = 12000;
@@ -81,6 +85,9 @@ export async function buscarPorCodigo(codigoCrudo) {
       const p = crudo?.product ?? {};
       r.producto.categoriasTags = Array.isArray(p.categories_tags) ? p.categories_tags : null;
       r.producto.tiendas = p.stores_tags ?? p.stores ?? null;
+      r.producto.origenes = p.origins_tags ?? p.origins ?? null;
+      r.producto.envasado = p.manufacturing_places_tags ?? p.manufacturing_places ?? null;
+      r.producto.codigosSanitarios = p.emb_codes_tags ?? p.emb_codes ?? null;
     }
     return r;
   } catch (err) {

@@ -6,7 +6,8 @@ import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas } from '../alternativasfuera.js';
-import { dondeComprarlo, textoDondeComprarlo } from '../donde.js';
+import { dondeComprarlo, textoDondeComprarlo,
+         deDondeViene, textoDeDondeViene } from '../donde.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
@@ -88,6 +89,33 @@ function bloqueAlternativa(v) {
  * de contar como cero. Esconder ese reparto sería esconder por qué la nota
  * puede moverse sin que cambien los datos que se ven.
  */
+/**
+ * De dónde viene el producto.
+ *
+ * Tres cosas distintas que la gente confunde: el origen de la materia prima,
+ * dónde se envasó, y el código sanitario del establecimiento. Un tomate de
+ * origen Marruecos envasado en Murcia no es un tomate murciano.
+ *
+ * Solo aparece si consta algo: inventarlo sería peor que no tenerlo.
+ */
+function bloqueProcedencia() {
+  if (!enCurso.procedencia) return '';
+  const d = deDondeViene(enCurso.procedencia);
+  const texto = textoDeDondeViene(d);
+  if (!texto) return '';
+  const donde = dondeComprarlo({ marca: enCurso.marca, tiendas: enCurso.tiendas });
+  return `
+    <h2 class="subtitulo">De dónde viene</h2>
+    <div class="procede">
+      <p class="procede__linea">${esc(texto)}</p>
+      ${donde.tiendas.length
+        ? `<p class="procede__donde">${esc(textoDondeComprarlo(donde))}</p>` : ''}
+      <p class="apunte-via">${d.provincia
+        ? 'La provincia sale del código sanitario impreso en el envase, que es obligatorio. El origen lo rellena quien sube el producto a Open Food Facts.'
+        : 'Lo rellena quien sube el producto a Open Food Facts, así que puede faltar o estar desactualizado.'}</p>
+    </div>`;
+}
+
 function desglose(v) {
   if (!v.componentes?.length) return '';
   return `
@@ -232,6 +260,7 @@ export function resultado() {
     <h2 class="subtitulo">¿Por qué esta nota?</h2>
     <p class="texto">${esc(v.porQue)}</p>
 
+    ${bloqueProcedencia()}
     ${desglose(v)}
     ${topes(v)}
 
