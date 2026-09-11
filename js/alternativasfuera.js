@@ -30,6 +30,16 @@ const CANDIDATOS = 24;
 /** Por debajo de esta mejora no es una alternativa: es lo mismo de otra marca. */
 const MEJORA_MINIMA = 8;
 
+/**
+ * Por qué no hubo alternativas la última vez.
+ *
+ * Cuando algo no aparece hay que poder decir por qué. Sin esto, una consulta
+ * mal formada se comportaba igual que "no hay nada mejor": la pantalla se
+ * quedaba en blanco y nadie sabía si el fallo era del código o del catálogo.
+ */
+let ultimoMotivo = '';
+export function porQueNoHayAlternativas() { return ultimoMotivo; }
+
 const CAMPOS = [
   'code', 'product_name', 'product_name_es', 'brands', 'quantity',
   'categories_tags', 'ingredients_text', 'ingredients_text_es', 'nutriments',
@@ -40,22 +50,28 @@ const CAMPOS = [
 ].join(',');
 
 /**
- * La categoría con la que buscar.
+ * Las categorías con las que buscar, de la más concreta a la más general.
  *
- * Se coge la MÁS específica que traiga el producto, porque es la que de verdad
- * define de qué se trata. Buscar por "alimentos de origen vegetal" devolvería
- * cualquier cosa; buscar por "patés de cerdo" devuelve patés.
+ * Se devuelven VARIAS a propósito. La más concreta es la que mejor define el
+ * producto, pero puede tener cuatro entradas en España y devolver nada. Si eso
+ * pasa se prueba con la siguiente, que es más amplia. Antes se probaba solo
+ * con una y, si fallaba, no había alternativas y nadie sabía por qué.
  */
-export function categoriaParaBuscar(tags) {
-  if (!Array.isArray(tags) || tags.length === 0) return null;
-  const utiles = tags
+export function categoriasParaBuscar(tags) {
+  if (!Array.isArray(tags) || tags.length === 0) return [];
+  return tags
     .map((t) => String(t))
     .filter((t) => t.startsWith('en:'))
-    // Las genéricas no sirven para buscar: casan con medio catálogo.
-    .filter((t) => !/plant-based-foods|beverages-and|groceries|foods$/.test(t));
-  if (utiles.length === 0) return null;
-  // Open Food Facts las ordena de general a específica.
-  return utiles[utiles.length - 1];
+    // Las genéricas no sirven: casan con medio catálogo.
+    .filter((t) => !/plant-based-foods|beverages-and|groceries|foods$/.test(t))
+    // Open Food Facts las ordena de general a concreta: se invierte.
+    .reverse()
+    .slice(0, 3);
+}
+
+/** Compatibilidad con quien pedía una sola. */
+export function categoriaParaBuscar(tags) {
+  return categoriasParaBuscar(tags)[0] ?? null;
 }
 
 /**
@@ -66,30 +82,27 @@ export function categoriaParaBuscar(tags) {
  */
 export async function alternativasDeFuera(actual, limite = 3) {
   if (typeof actual?.puntuacion !== 'number') return [];
-  if (!navigator.onLine) return [];
+  if (!navigator.onLine) { ultimoMotivo = 'sin conexión'; return []; }
 
-  const categoria = categoriaParaBuscar(actual.categoriasTags);
-  if (!categoria) return [];
-
-  const url = `${BUSCADOR}?categories_tags_en=${encodeURIComponent(categoria)}`
-    + `&countries_tags_en=spain&sort_by=popularity_key`
-    + `&page_size=${CANDIDATOS}&fields=${CAMPOS}`;
-
-  let datos;
-  const control = new AbortController();
-  const reloj = setTimeout(() => control.abort(), ESPERA_MS);
-  try {
-    const resp = await fetch(url, { signal: control.signal, headers: { Accept: 'application/json' } });
-    if (!resp.ok) return [];
-    datos = await resp.json();
-  } catch {
+  const categorias = categoriasParaBuscar(actual.categoriasTags);
+  if (categorias.length === 0) {
+    ultimoMotivo = 'este producto no trae categoría en Open Food Facts, así que no hay con qué comparar';
     return [];
-  } finally {
-    clearTimeout(reloj);
   }
 
-  const productos = Array.isArray(datos?.products) ? datos.products : [];
+  // Se prueba de la categoría más concreta a la más amplia hasta que alguna
+  // devuelva productos.
+  let productos = [];
+  for (const categoria of categorias) {
+    productos = await pedirCandidatos(categoria);
+    if (productos.length > 0) break;
+  }
+  if (productos.length === 0) {
+    ultimoMotivo = 'no hay productos de esa categoría en España en Open Food Facts';
+    return [];
+  }
   const salida = [];
+  ultimoMotivo = '';
 
   for (const crudo of productos) {
     if (String(crudo.code) === String(actual.codigo)) continue;
@@ -127,6 +140,10 @@ export async function alternativasDeFuera(actual, limite = 3) {
     });
   }
 
+  if (salida.length === 0) {
+    ultimoMotivo = `se han mirado ${productos.length} productos parecidos y ninguno mejora lo bastante o le faltan datos`;
+  }
+
   // De mejor a peor, y sin repetir marca: tres patés de la misma casa no son
   // tres alternativas.
   const vistas = new Set();
@@ -139,6 +156,34 @@ export async function alternativasDeFuera(actual, limite = 3) {
       return true;
     })
     .slice(0, limite);
+}
+
+/**
+ * Pide candidatos de una categoría.
+ *
+ * Los parámetros van con el prefijo de idioma DENTRO del valor
+ * ("categories_tags=en:pates"), no en el nombre del parámetro. Estaba escrito
+ * al revés ("categories_tags_en=en:pates"), que hace buscar una categoría
+ * llamada literalmente "en:pates": no existe, así que devolvía cero productos
+ * siempre y el bloque de alternativas no aparecía nunca.
+ */
+async function pedirCandidatos(categoria) {
+  const url = `${BUSCADOR}?categories_tags=${encodeURIComponent(categoria)}`
+    + `&countries_tags=${encodeURIComponent('en:spain')}`
+    + `&sort_by=popularity_key&page_size=${CANDIDATOS}&fields=${CAMPOS}`;
+
+  const control = new AbortController();
+  const reloj = setTimeout(() => control.abort(), ESPERA_MS);
+  try {
+    const resp = await fetch(url, { signal: control.signal, headers: { Accept: 'application/json' } });
+    if (!resp.ok) return [];
+    const datos = await resp.json();
+    return Array.isArray(datos?.products) ? datos.products : [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(reloj);
+  }
 }
 
 /** En qué mejora, en palabras. Como mucho tres razones. */

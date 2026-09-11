@@ -1,6 +1,7 @@
 import { esc, vacio } from '../ui.js';
 import { listar } from '../almacen.js';
 import { comparar, queBuscarEnLugarDe, normalizarNutrientes } from '../motor.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * Comparar dos productos de la despensa.
@@ -52,7 +53,7 @@ function filaDif(d, nombreA, nombreB) {
 export function vistaComparar() {
   if (disponibles.length < 2) {
     return `
-      <h1 class="titulo">Comparar</h1>
+      ${nombrePantalla('Comparar')}
       ${vacio('Hacen falta al menos dos productos',
         'Analiza y guarda dos productos parecidos, dos yogures o dos panes, y aquí te diré cuál conviene y por qué.')}`;
   }

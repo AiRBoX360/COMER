@@ -1,6 +1,7 @@
 import { esc, vacio } from '../ui.js';
 import { listar } from '../almacen.js';
 import { calcularTendencia, VIGILABLES, sugerirVigilancia } from '../motor.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * Tu tendencia y tu lista de vigilancia.
@@ -99,7 +100,7 @@ export function tendencia() {
           </div>` : ''}`;
 
   return `
-    <h1 class="titulo">Tu tendencia</h1>
+    ${nombrePantalla('Tu tendencia')}
     ${bloqueTendencia}
 
     <h2 class="subtitulo">Qué quieres que te avise</h2>

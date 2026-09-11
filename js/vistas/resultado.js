@@ -1,17 +1,18 @@
-import { banda, marcador, esc, vacio, nivelDeNota } from '../ui.js';
+import { nivelSolo, marcador, esc, vacio, nivelDeNota } from '../ui.js';
 import { enCurso, reiniciar } from '../estado.js';
 import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe, buscarAlternativas } from '../motor.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
-import { alternativasDeFuera } from '../alternativasfuera.js';
+import { alternativasDeFuera, porQueNoHayAlternativas } from '../alternativasfuera.js';
 import { dondeComprarlo, textoDondeComprarlo } from '../donde.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
 import { refrescarDespensa } from './despensa.js';
 import { refrescarConocimiento } from './conocimiento.js';
 import { refrescarComparador } from './comparar.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * El veredicto.
@@ -167,7 +168,7 @@ function tarjetaVeredicto(v) {
         <p class="veredicto__nivel">${esc(nivel.texto)}</p>
       </div>
     </div>
-    ${banda(v.puntuacion)}`;
+    ${nivelSolo(v.puntuacion)}`;
 }
 
 function bloqueVigilancia(v) {
@@ -190,7 +191,7 @@ function bloqueVigilancia(v) {
 export function resultado() {
   const hayDatos = Object.keys(enCurso.nutrientes).length > 0 || enCurso.ingredientes.length > 0;
   if (!hayDatos) {
-    return `<h1 class="titulo">Resultado</h1>
+    return `${nombrePantalla('Resultado')}
       ${vacio('Todavía no has analizado nada', 'Ve a Analizar, lee una etiqueta, revísala y vuelve aquí.')}`;
   }
 
@@ -301,6 +302,7 @@ async function pintarAlternativas(raiz, v) {
     limitar: v.limitar, favorables: v.favorables, nova: v.nova,
   }).catch(() => []);
   if (fuera.length > 0) pintarDeFuera(raiz, fuera);
+  else if (v.puntuacion < 70) pintarSinAlternativas(raiz);
   return;
 }
 
@@ -418,4 +420,26 @@ function pintarDeFuera(raiz, fuera) {
           <span class="fuera__donde">${esc(textoDondeComprarlo(a.donde))}</span>
         </div>
       </div>`).join('')}`;
+}
+
+
+/**
+ * Cuando no hay alternativas, se dice por qué.
+ *
+ * Solo aparece si el producto es mejorable: para uno bueno, que no salgan
+ * alternativas no es información, es lo esperable.
+ */
+function pintarSinAlternativas(raiz) {
+  const motivo = porQueNoHayAlternativas();
+  if (!motivo) return;
+  const hueco = raiz.querySelector('#alternativasFuera')
+    ?? (() => {
+      const d = document.createElement('div');
+      d.id = 'alternativasFuera';
+      raiz.querySelector('#alternativas')?.after(d);
+      return d;
+    })();
+  hueco.innerHTML = `
+    <h2 class="subtitulo">No he encontrado alternativas</h2>
+    <p class="texto" style="font-size:var(--t2)">${esc(motivo.charAt(0).toUpperCase() + motivo.slice(1))}.</p>`;
 }

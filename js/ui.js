@@ -43,6 +43,28 @@ export function esc(s) {
  * La banda de veredicto: los cinco tramos, con el del producto expandido.
  * Es el elemento con el que se reconoce la aplicación.
  */
+/**
+ * El nivel que te ha tocado, en una sola barra.
+ *
+ * Antes se pintaban los cinco tramos con uno destacado. La escala completa
+ * está bien para explicarla una vez, no en cada resultado: los otros cuatro no
+ * dicen nada del producto que tienes en la mano, y compiten con el que sí.
+ *
+ * Se conserva el número de nivel, que es una señal que no depende del color:
+ * quien no distinga el rojo del verde ve igualmente que el 1 está abajo.
+ */
+export function nivelSolo(nota) {
+  const actual = nivelDeNota(nota);
+  const posicion = NIVELES.findIndex((n) => n.clave === actual.clave) + 1;
+  return `
+    <div class="nivel" data-nivel="${actual.clave}"
+         role="img" aria-label="Nivel ${posicion} de 5: ${esc(actual.texto)}, ${Math.round(nota)} sobre 100">
+      <b class="nivel__pos">${posicion}</b>
+      <span class="nivel__texto">${esc(actual.texto)}</span>
+      <span class="nivel__de">de 5</span>
+    </div>`;
+}
+
 export function banda(nota) {
   const actual = nivelDeNota(nota);
   const tramos = NIVELES

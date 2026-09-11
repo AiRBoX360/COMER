@@ -1,9 +1,10 @@
-import { banda, marcador, esc } from '../ui.js';
+import { nivelSolo, marcador, esc } from '../ui.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { analizarProducto, analizarIngredientesTexto, revisarVigilancia } from '../motor.js';
 import { enCurso, reiniciar } from '../estado.js';
 import { vigilanciaActiva } from './tendencia.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * Modo supermercado.
@@ -24,7 +25,7 @@ export function supermercado() {
 
   if (fase === 'resultado' && v) {
     return `
-      <h1 class="titulo">${esc(v.nombre)}</h1>
+      ${nombrePantalla('Escaneo rápido')}
       ${p?.marca ? `<p class="texto">${esc(p.marca)}</p>` : ''}
 
       <div class="sin-revisar">
@@ -41,7 +42,7 @@ export function supermercado() {
 
       ${v.puntuacion === null
         ? `<div class="pendiente" style="border-left-color:var(--naranja)"><div><b>Sin datos suficientes para dar nota.</b> Faltan: ${esc(v.datosFaltantes.join(', '))}.</div></div>`
-        : `${marcador(v.puntuacion)}${banda(v.puntuacion)}`}
+        : `${marcador(v.puntuacion)}${nivelSolo(v.puntuacion)}`}
 
       <h2 class="subtitulo">Lo que más pesa</h2>
       ${v.limitar.slice(0, 3).map((f) => `
@@ -63,28 +64,51 @@ export function supermercado() {
     `;
   }
 
+  // La misma cara que la vía del código en Analizar: hacen lo mismo, así que
+  // no tiene sentido que se vean distintas. Aquí solo cambia que no se revisa
+  // nada antes de dar la nota, porque es para decidir en el pasillo.
   return `
-    <h1 class="titulo">En el supermercado</h1>
-    <p class="texto">Apunta al código de barras y sale la nota. Sin revisar nada, para decidir en el pasillo.</p>
+    <div class="vias">
+      <div class="via via--abierta">
+        <span class="via__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 5v14M7.2 5v14M10 5v10M12.8 5v14M16 5v10M18.6 5v14M21 5v14"
+                  stroke-linecap="butt"/>
+          </svg>
+        </span>
+        <span class="via__nombre">Escaneo rápido</span>
+      </div>
 
-    <div class="escaner" id="zonaSuper" ${fase === 'escaneando' ? '' : 'hidden'}>
-      <video id="videoSuper" muted playsinline></video>
-      <div class="escaner__mira"></div>
-    </div>
+      <div class="via__cuerpo">
+        <div class="escaner" id="zonaSuper" ${fase === 'escaneando' ? '' : 'hidden'}>
+          <video id="videoSuper" muted playsinline></video>
+          <div class="escaner__mira"></div>
+        </div>
 
-    <button class="boton-grande" id="btnEscanearSuper" style="margin:16px 0">
-      ${fase === 'escaneando' ? 'BUSCANDO…' : 'ESCANEAR'}
-      <small>${fase === 'escaneando' ? 'Apunta al código' : 'Un código de barras, un veredicto'}</small>
-    </button>
+        <button class="caja-accion" id="btnEscanearSuper">
+          ${fase === 'escaneando' ? 'Buscando…' : 'Escanea con la cámara'}
+        </button>
 
-    <div class="campo">
-      <label class="campo__nombre" for="codigoSuper">O tecléalo</label>
-      <div class="campo__entrada">
-        <input id="codigoSuper" type="text" inputmode="numeric" placeholder="8480000123456" autocomplete="off">
+        <div class="campo">
+          <div class="campo__entrada">
+            <input id="codigoSuper" type="text" inputmode="numeric"
+                   placeholder="Pega o escribe el número" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="buscar">
+          <button class="buscar__boton" id="btnBuscarSuper" aria-label="Buscar alimento">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
+            </svg>
+          </button>
+          <span class="buscar__rotulo">Buscar alimento</span>
+        </div>
+
+        <p class="texto" id="estadoSuper" role="status" aria-live="polite">${esc(mensaje)}</p>
+        <p class="apunte-via">Apunta al código y sale la nota, sin revisar nada. Para decidir en el pasillo.</p>
       </div>
     </div>
-    <button class="boton" id="btnBuscarSuper" style="width:100%">Buscar</button>
-    <p class="texto" id="estadoSuper" role="status" aria-live="polite" style="margin-top:12px">${esc(mensaje)}</p>
   `;
 }
 

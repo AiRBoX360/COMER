@@ -12,6 +12,7 @@
  * original porque nadie vuelve a mirarlo.
  */
 
+import { nombrePantalla } from './inicio.js';
 import { esc } from '../ui.js';
 import { CAMPOS, CATEGORIAS, corregir, enCurso, resumenEnCurso } from '../estado.js';
 import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista,
@@ -132,7 +133,7 @@ export function revisar() {
 
   if (!hayDatos) {
     return `
-      <h1 class="titulo">Revisar</h1>
+      ${nombrePantalla('Revisar')}
       <div class="vacio">
         <h3>No hay nada que revisar todavía</h3>
         <p>Ve a Analizar, haz las fotos o pega el texto de la etiqueta, y vuelve aquí.</p>

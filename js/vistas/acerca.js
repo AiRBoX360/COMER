@@ -1,6 +1,7 @@
 import { reiniciarBienvenida } from './bienvenida.js';
 import { esc } from '../ui.js';
 import { CATALOGO, FUENTES, VERSION_ALGORITMO } from '../motor.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * Qué es y qué no es esta app.
@@ -21,7 +22,7 @@ export function acerca() {
     <div class="toma__botones" style="margin-bottom:20px">
       <button class="boton" id="btnVerBienvenida">Ver la presentación</button>
     </div>
-    <h1 class="titulo">Qué es y qué no es</h1>
+    ${nombrePantalla('Qué es y qué no es')}
 
     <div class="aviso-fuerte">
       <h2>Lo que esta app NO es</h2>

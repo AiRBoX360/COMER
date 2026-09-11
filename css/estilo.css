@@ -157,8 +157,17 @@
   /* Ritmo, en rem para que crezca junto con el texto */
   --e1:0.25rem; --e2:0.5rem; --e3:0.7rem; --e4:1rem;
   --e5:1.4rem; --e6:1.9rem; --e7:2.8rem;
-  --radio:0.85rem;
-  --radio-s:0.5rem;
+  /* Tres radios y ninguno escrito a mano.
+     
+     Había 0,85 y 0,5 rem de la etapa anterior, y encima once componentes con
+     1,4 o 1,1 escritos directamente en la regla: los del diseño nuevo. Con dos
+     juegos conviviendo, la app se veía cosida de dos telas distintas. */
+  --radio:1.4rem;
+  --radio-s:1.1rem;
+  --radio-xs:0.6rem;
+  /* Para las formas de pastilla: la barra de pestañas, los filtros, el
+     interruptor. No son tarjetas y no comparten su radio. */
+  --radio-pastilla:1.5rem;
 
   /* El tema tarda un instante en aplicarse al arrancar; sin esto se ve un
      destello del color contrario. */
@@ -231,7 +240,7 @@ button{touch-action:manipulation}
 .saltar{
   position:absolute; left:-9999px; top:0; z-index:100;
   background:var(--hueso); color:var(--tinta);
-  padding:var(--e3) var(--e4); border-radius:0 0 var(--radio-s) 0;
+  padding:var(--e3) var(--e4); border-radius:0 0 var(--radio-xs) 0;
   font-weight:600;
 }
 .saltar:focus{left:0}
@@ -295,7 +304,7 @@ button{touch-action:manipulation}
 /* --- Piezas reutilizables ------------------------------------------------- */
 .tarjeta{
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio);
   padding:var(--e5) var(--e4);
 }
@@ -356,7 +365,7 @@ button{touch-action:manipulation}
 .boton{
   appearance:none; cursor:pointer;
   background:none; color:var(--hueso);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio-s);
   padding:var(--e3) var(--e4);
   font-family:var(--cuerpo); font-weight:600; font-size:var(--t3);
@@ -367,7 +376,7 @@ button{touch-action:manipulation}
 .vacio{
   text-align:center;
   padding:var(--e7) var(--e4);
-  border:1px dashed var(--linea);
+  border:1.5px dashed var(--linea);
   border-radius:var(--radio);
 }
 .vacio h3{
@@ -380,7 +389,7 @@ button{touch-action:manipulation}
 .pendiente{
   display:flex; gap:var(--e3); align-items:flex-start;
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--ceniza-tenue);
   border-radius:var(--radio-s);
   padding:var(--e4);
@@ -456,7 +465,7 @@ button{touch-action:manipulation}
 /* --- Instrucciones de instalación en iPhone ------------------------------- */
 .instalar{
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio);
   padding:var(--e4);
   margin-bottom:var(--e5);
@@ -476,7 +485,7 @@ button{touch-action:manipulation}
 /* La barra mide el peso del factor. Es lo que ordena la tabla, no una opinión. */
 .factor{
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio-s);
   padding:var(--e4);
   margin-bottom:var(--e2);
@@ -504,7 +513,7 @@ button{touch-action:manipulation}
   margin-top:var(--e5);
 }
 .resumen div{
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s);
   padding:var(--e3); text-align:center;
 }
@@ -526,7 +535,7 @@ button{touch-action:manipulation}
 .escala__boton{
   appearance:none; cursor:pointer; flex:1;
   background:var(--carbon); color:var(--ceniza);
-  border:1px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e3) var(--e2);
   font-family:var(--display); font-weight:600;
   transition:background-color .15s ease, color .15s ease, border-color .15s ease;
@@ -551,7 +560,7 @@ button{touch-action:manipulation}
 .toma{
   display:block; width:100%;
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio);
   padding:var(--e4);
   margin-bottom:var(--e3);
@@ -628,7 +637,7 @@ button{touch-action:manipulation}
 .pegar{
   width:100%; display:block;
   background:var(--carbon); color:var(--hueso);
-  border:1px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e3);
   font-family:var(--datos); font-size:var(--t2); line-height:1.5;
   resize:vertical;
@@ -648,7 +657,7 @@ button{touch-action:manipulation}
   padding:var(--e3) var(--e4);
   margin-bottom:var(--e2);
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--amarillo);
   border-radius:var(--radio-s);
   font-size:var(--t3); color:var(--ceniza); line-height:1.45;
@@ -680,7 +689,7 @@ button{touch-action:manipulation}
 .campo__entrada select{
   flex:1; min-width:0;
   background:var(--carbon); color:var(--hueso);
-  border:1px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e3);
   font-family:var(--datos); font-size:var(--t4);
   font-variant-numeric:tabular-nums;
@@ -707,7 +716,7 @@ button{touch-action:manipulation}
   appearance:none; cursor:pointer;
   margin-top:var(--e2);
   background:none; color:var(--verde-claro-letra);
-  border:1px solid var(--verde-claro); border-radius:var(--radio-s);
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
   padding:var(--e2) var(--e3);
   font-family:var(--datos); font-size:var(--t2); font-weight:600;
 }
@@ -789,7 +798,7 @@ button{touch-action:manipulation}
 .fichas{margin-top:var(--e3)}
 .ficha{
   background:var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--ceniza-tenue);
   border-radius:var(--radio-s);
   margin-bottom:var(--e2);
@@ -838,7 +847,7 @@ button{touch-action:manipulation}
 /* --- Interruptor ---------------------------------------------------------- */
 .interruptor{
   display:flex; align-items:center; gap:var(--e4);
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio); padding:var(--e4);
   margin-bottom:var(--e5);
 }
@@ -846,8 +855,8 @@ button{touch-action:manipulation}
 .interruptor__boton{
   appearance:none; cursor:pointer; flex:none;
   width:3.4rem; height:2rem; padding:0;
-  background:var(--carbon-alto); border:1px solid var(--linea);
-  border-radius:1rem; position:relative;
+  background:var(--carbon-alto); border:1.5px solid var(--linea);
+  border-radius:var(--radio-pastilla); position:relative;
   transition:background-color .18s ease, border-color .18s ease;
 }
 .interruptor__boton span{
@@ -863,7 +872,7 @@ button{touch-action:manipulation}
 .bloque{margin-bottom:var(--e6)}
 .producto{
   display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s);
   padding:var(--e3);
   margin-bottom:var(--e2);
@@ -905,7 +914,7 @@ button{touch-action:manipulation}
 .ultimo{
   appearance:none; cursor:pointer; width:100%;
   display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s); padding:var(--e3);
   margin-bottom:var(--e2); text-align:left;
 }
@@ -929,7 +938,7 @@ button{touch-action:manipulation}
 .filtro{
   appearance:none; cursor:pointer;
   background:var(--carbon); color:var(--ceniza);
-  border:1px solid var(--linea); border-radius:1.2rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e2) var(--e4);
   font-family:var(--cuerpo); font-weight:600; font-size:var(--t2);
 }
@@ -956,7 +965,7 @@ button{touch-action:manipulation}
 /* --- Duelo entre dos productos -------------------------------------------- */
 .duelo{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2); margin:var(--e5) 0}
 .duelo__lado{
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio); padding:var(--e4);
   text-align:center;
 }
@@ -965,7 +974,7 @@ button{touch-action:manipulation}
 .duelo__lado span:last-child{font-size:var(--t2); color:var(--ceniza); line-height:1.3}
 
 .dif{
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s); padding:var(--e4);
   margin-bottom:var(--e2);
 }
@@ -996,7 +1005,7 @@ button{touch-action:manipulation}
 .en-curso{
   display:flex; align-items:center; gap:var(--e3);
   background:var(--carbon-alto);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--hueso);
   border-radius:var(--radio-s);
   padding:var(--e3) var(--e4);
@@ -1037,7 +1046,7 @@ button{touch-action:manipulation}
 /* --- Qué es y qué no es --------------------------------------------------- */
 .aviso-fuerte{
   background:var(--carbon);
-  border:1px solid var(--naranja);
+  border:1.5px solid var(--naranja);
   border-radius:var(--radio);
   padding:var(--e5) var(--e4);
   margin-bottom:var(--e6);
@@ -1053,7 +1062,7 @@ button{touch-action:manipulation}
 .aviso-fuerte b{color:var(--hueso)}
 
 .nivel{
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-left:3px solid var(--ceniza-tenue);
   border-radius:var(--radio-s);
   padding:var(--e4); margin-bottom:var(--e3);
@@ -1074,7 +1083,7 @@ button{touch-action:manipulation}
 .evolucion{
   display:flex; align-items:center; justify-content:center; gap:var(--e4);
   flex-wrap:wrap;
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio); padding:var(--e5) var(--e4);
   margin:var(--e4) 0;
 }
@@ -1102,7 +1111,7 @@ button{touch-action:manipulation}
 
 /* --- Avisos de tu lista de vigilancia ------------------------------------- */
 .vigila{
-  background:var(--carbon); border:1px solid var(--naranja);
+  background:var(--carbon); border:1.5px solid var(--naranja);
   border-radius:var(--radio); padding:var(--e4); margin-bottom:var(--e4);
 }
 .vigila h3{
@@ -1118,13 +1127,13 @@ button{touch-action:manipulation}
 /* El segundo botón grande pesa menos: hay una acción principal, no dos. */
 .boton-grande--suave{
   background:var(--carbon); color:var(--hueso);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
 }
 .boton-grande--suave small{color:var(--ceniza-tenue)}
 
 /* --- Modo supermercado ---------------------------------------------------- */
 .sin-revisar{
-  background:var(--carbon); border:1px dashed var(--amarillo);
+  background:var(--carbon); border:1.5px dashed var(--amarillo);
   border-radius:var(--radio-s); padding:var(--e4);
   margin-bottom:var(--e4);
   font-size:var(--t3); color:var(--ceniza); line-height:1.5;
@@ -1133,7 +1142,7 @@ button{touch-action:manipulation}
 
 .rapido{
   display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-left:3px solid var(--linea);
   border-radius:var(--radio-s); padding:var(--e3) var(--e4);
   margin-bottom:var(--e2);
@@ -1149,7 +1158,7 @@ button{touch-action:manipulation}
 
 /* --- De qué se compone la nota -------------------------------------------- */
 .parte{
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s); padding:var(--e3) var(--e4);
   margin-bottom:var(--e2);
 }
@@ -1179,7 +1188,7 @@ button{touch-action:manipulation}
 /* --- Alimentos frescos ---------------------------------------------------- */
 .fresco{
   appearance:none; cursor:pointer; width:100%; text-align:left;
-  background:var(--carbon); border:1px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s); padding:var(--e3) var(--e4);
   margin-bottom:var(--e2);
 }
@@ -1212,13 +1221,13 @@ button{touch-action:manipulation}
      hasta donde haya. */
   max-width:calc(100vw - 1.2rem);
   min-width:0;
-  display:flex; align-items:center; gap:0.22rem;
-  padding:0.36rem;
+  display:flex; align-items:center; gap:0.24rem;
+  padding:0.38rem;
   background:var(--fondo-barra);
   backdrop-filter:blur(20px) saturate(140%);
   -webkit-backdrop-filter:blur(20px) saturate(140%);
   border:1px solid var(--borde-barra);
-  border-radius:2.4rem;
+  border-radius:var(--radio-pastilla);
   box-shadow:var(--sombra-barra);
 }
 
@@ -1228,9 +1237,9 @@ button{touch-action:manipulation}
   /* Pueden encoger, pero nunca por debajo del mínimo que se toca con el dedo
      menos el hueco: así el conjunto cabe sin que ninguna quede impracticable. */
   flex:0 1 auto;
-  width:2.75rem; min-width:2.45rem; height:2.75rem; padding:0;
+  width:2.75rem; min-width:2.6rem; height:2.75rem; padding:0;
   background:var(--carbon-alto);
-  border:0; border-radius:1.5rem;
+  border:0; border-radius:var(--radio-pastilla);
   color:var(--ceniza);
   transition:width .22s ease, background-color .22s ease, color .22s ease;
   overflow:hidden;
@@ -1251,13 +1260,25 @@ button{touch-action:manipulation}
 .barra__pestana[aria-selected="true"]{
   /* La activa se queda con lo que sobre, y su nombre se recorta antes que
      desbordar el cuadro. */
-  width:auto; min-width:0; flex:0 1 auto;
+  /* La activa no encoge: su nombre es lo que dice dónde estás, y salía
+     cortado como "Analiz…". */
+  width:auto; min-width:0; flex:0 0 auto;
   padding:0 0.75rem 0 0.6rem;
   background:var(--verde-claro); color:var(--sobre-verde-claro);
 }
-.barra__pestana[aria-selected="true"] span{
-  max-width:7rem; opacity:1;
-  overflow:hidden; text-overflow:ellipsis;
+.barra__pestana[aria-selected="true"] span{max-width:8rem; opacity:1}
+
+/**
+ * Cuando no cabe, el nombre desaparece: no se corta.
+ *
+ * Salía "Analiz…" y eso no dice nada. La medida va en rem, así que el umbral
+ * crece con el tamaño de letra elegido: con el texto en grande, la barra pasa
+ * a mostrar solo iconos, que es lo correcto. La pastilla verde sigue diciendo
+ * dónde estás.
+ */
+@media (max-width:20.5rem){
+  .barra__pestana[aria-selected="true"]{width:2.75rem; padding:0}
+  .barra__pestana[aria-selected="true"] span{max-width:0; opacity:0}
 }
 .barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
 
@@ -1333,7 +1354,7 @@ body{
 .veredicto{
   display:flex; align-items:center; gap:var(--e5);
   padding:var(--e5) var(--e4);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio);
   margin-bottom:var(--e4);
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
@@ -1404,7 +1425,7 @@ body{
 .resumen{gap:var(--e2)}
 .resumen > div{
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
-  border:1px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e4) var(--e2);
 }
 
@@ -1413,7 +1434,7 @@ body{
    borrar el producto entero y rehacerlo solo para ponerle una foto. */
 .producto__foto--vacia{
   appearance:none; cursor:pointer; padding:0;
-  border:1px dashed var(--linea);
+  border:1.5px dashed var(--linea);
   background:var(--carbon-alto);
   color:var(--ceniza-tenue);
 }
@@ -1429,7 +1450,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e3);
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--verde-claro);
   border-radius:var(--radio-s);
   padding:var(--e3) var(--e4);
@@ -1461,7 +1482,7 @@ body{
    Las marcas reformulan en silencio. Este bloque es la única forma que tiene
    la app de decírtelo, y aparece antes que nada. */
 .cambio{
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--amarillo);
   border-radius:var(--radio);
   background:linear-gradient(180deg, rgba(232,182,23,.07), rgba(255,255,255,0) 50%), var(--carbon);
@@ -1496,7 +1517,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e4);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-radius:var(--radio);
   margin:var(--e3) 0;
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 55%), var(--carbon);
@@ -1508,7 +1529,7 @@ body{
 .accion__icono{
   flex:none; width:3rem; height:3rem;
   display:flex; align-items:center; justify-content:center;
-  border-radius:1.5rem;
+  border-radius:var(--radio-pastilla);
   background:var(--carbon-alto); color:var(--ceniza);
 }
 .accion--principal .accion__icono{background:var(--tinta); color:var(--hueso)}
@@ -1539,7 +1560,7 @@ body{
   appearance:none; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:var(--e2);
   padding:var(--e4) var(--e2);
-  border:1px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   background:var(--carbon); color:var(--ceniza);
   font-size:var(--t1); line-height:1.25; text-align:center;
 }
@@ -1552,7 +1573,7 @@ body{
 
 /* Los ajustes, plegados. Se tocan una vez y no se vuelven a mirar. */
 .ajustes{
-  border:1px solid var(--linea); border-radius:var(--radio);
+  border:1.5px solid var(--linea); border-radius:var(--radio);
   background:var(--carbon); padding:0 var(--e4);
   margin-bottom:var(--e5);
 }
@@ -1585,7 +1606,7 @@ body{
 .ficha__sello{
   font-family:var(--datos); font-size:var(--t0); font-weight:600;
   letter-spacing:.07em; text-transform:uppercase;
-  padding:0.24rem 0.6rem; border-radius:1rem;
+  padding:0.24rem 0.6rem; border-radius:var(--radio-pastilla);
   border:1px solid currentColor;
   white-space:nowrap;
 }
@@ -1632,10 +1653,10 @@ body{
 
 /* Los filtros, como pastillas. */
 .filtro{
-  border-radius:1.4rem;
+  border-radius:var(--radio);
   padding:0.42rem 0.9rem;
   font-size:var(--t1);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   background:var(--carbon);
   color:var(--ceniza);
 }
@@ -1709,14 +1730,14 @@ body{
 .elegible{
   appearance:none; cursor:pointer;
   padding:0.45rem 0.85rem;
-  border:1px solid var(--linea); border-radius:1.4rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio);
   background:var(--carbon); color:var(--ceniza);
   font-size:var(--t2); line-height:1.2; text-align:left;
 }
 .elegible.es-elegido{background:var(--hueso); color:var(--tinta); border-color:transparent}
 
 .combi{
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--ceniza-tenue);
   border-radius:var(--radio);
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
@@ -1732,7 +1753,7 @@ body{
 }
 .combi summary::-webkit-details-marker{display:none}
 .combi__signo{
-  flex:none; width:2.1rem; height:2.1rem; border-radius:1.05rem;
+  flex:none; width:2.1rem; height:2.1rem; border-radius:var(--radio-s);
   display:flex; align-items:center; justify-content:center;
   font-family:var(--datos); font-size:var(--t4); font-weight:600;
   background:var(--carbon-alto);
@@ -1756,7 +1777,7 @@ body{
 
 .sugerencia{
   display:flex; flex-direction:column; gap:2px;
-  border:1px dashed var(--linea); border-radius:var(--radio-s);
+  border:1.5px dashed var(--linea); border-radius:var(--radio-s);
   padding:var(--e3) var(--e4); margin-bottom:var(--e2);
 }
 .sugerencia b{font-family:var(--display); font-weight:600; color:var(--hueso)}
@@ -1872,7 +1893,7 @@ body{
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e4);
   border:1.5px solid var(--verde-claro);
-  border-radius:1.4rem;
+  border-radius:var(--radio);
   margin:0 0 var(--e4);
   background:var(--carbon);
   color:var(--hueso);
@@ -1905,7 +1926,7 @@ body{
 /* El grupo enmarcado, con su rótulo centrado dentro. */
 .grupo{
   border:1.5px solid var(--verde-claro);
-  border-radius:1.4rem;
+  border-radius:var(--radio);
   padding:var(--e3) var(--e3) var(--e4);
   margin-bottom:var(--e6);
 }
@@ -1921,7 +1942,7 @@ body{
   appearance:none; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:var(--e2);
   padding:var(--e3) var(--e1);
-  border:1.5px solid var(--verde-claro); border-radius:1.1rem;
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
   background:var(--carbon); color:var(--ceniza);
   font-family:var(--cuerpo); font-size:var(--t2); line-height:1.2;
   text-align:center;
@@ -1938,7 +1959,7 @@ body{
 
 /* Preferencias: una pastilla con el engranaje a un lado y el más al otro. */
 .ajustes{
-  border:1.5px solid var(--verde-claro); border-radius:1.4rem;
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
   background:var(--carbon); padding:0 var(--e4);
   margin-bottom:var(--e5);
 }
@@ -1982,7 +2003,7 @@ body{
 .fuera{
   display:flex; gap:var(--e4);
   padding:var(--e3) var(--e4);
-  border:1px solid var(--linea);
+  border:1.5px solid var(--linea);
   border-left:3px solid var(--ceniza-tenue);
   border-radius:var(--radio);
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
@@ -1997,7 +2018,7 @@ body{
   object-fit:contain; border-radius:var(--radio-s);
   background:var(--carbon-alto);
 }
-.fuera__foto--sin{border:1px dashed var(--linea)}
+.fuera__foto--sin{border:1.5px dashed var(--linea)}
 .fuera__texto{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
 .fuera__nombre{
   font-family:var(--display); font-weight:600; font-size:var(--t3);
@@ -2029,7 +2050,7 @@ body{
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e3) var(--e4);
   border:1.5px solid var(--verde-claro);
-  border-radius:1.4rem;
+  border-radius:var(--radio);
   margin-bottom:var(--e3);
   background:var(--carbon);
   color:var(--hueso);
@@ -2056,7 +2077,7 @@ body{
 .via__cuerpo{
   border:1.5px solid var(--verde-claro);
   border-top:0;
-  border-radius:0 0 1.4rem 1.4rem;
+  border-radius:0 0 var(--radio) var(--radio);
   padding:var(--e4);
 }
 
@@ -2064,7 +2085,7 @@ body{
 .caja-accion{
   appearance:none; cursor:pointer; width:100%;
   padding:var(--e4);
-  border:1.5px solid var(--linea); border-radius:1.1rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
   background:var(--carbon); color:var(--hueso);
   font-family:var(--display); font-weight:600; font-size:var(--t4);
   line-height:1.25; text-align:center;
@@ -2072,7 +2093,7 @@ body{
 }
 .via__cuerpo .campo__entrada input,
 .via__cuerpo .pegar{
-  border:1.5px solid var(--linea); border-radius:1.1rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
 }
 .via__cuerpo .rotulo{text-align:center}
 
@@ -2100,3 +2121,148 @@ body{
   font-family:var(--datos); font-size:var(--t0); font-weight:400;
   letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza-tenue);
 }
+
+/* --- El nivel, en una sola barra -------------------------------------------
+   Antes se pintaban los cinco tramos con uno destacado. Los otros cuatro no
+   dicen nada del producto que tienes en la mano y competían con el que sí. */
+.nivel{
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e3) var(--e4);
+  border-radius:var(--radio);
+  margin-bottom:var(--e5);
+  color:var(--sobre-verde-claro);
+  background:var(--verde-claro);
+}
+.nivel[data-nivel="rojo"]{background:var(--rojo); color:var(--sobre-rojo)}
+.nivel[data-nivel="naranja"]{background:var(--naranja); color:var(--sobre-naranja)}
+.nivel[data-nivel="amarillo"]{background:var(--amarillo); color:var(--sobre-amarillo)}
+.nivel[data-nivel="verde_claro"]{background:var(--verde-claro); color:var(--sobre-verde-claro)}
+.nivel[data-nivel="verde_parchis"]{background:var(--verde-parchis); color:var(--sobre-verde-parchis)}
+
+/* El número va en un círculo del color del papel, no sobre un velo del propio
+   color. Con velo, sobre el naranja daba 4,29 y sobre el verde parchís 3,84,
+   por debajo del mínimo. Así siempre se lee, sea cual sea el nivel. */
+.nivel__pos{
+  flex:none;
+  width:1.9rem; height:1.9rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--datos); font-size:var(--t2); font-weight:600;
+  background:var(--carbon); color:var(--hueso);
+}
+.nivel__texto{
+  flex:1; min-width:0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25;
+}
+.nivel__de{
+  flex:none;
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.12em; text-transform:uppercase; opacity:.72;
+}
+
+/* --- La tarjeta del veredicto, con el perfil de la app --------------------- */
+.veredicto{
+  border:1.5px solid var(--verde-claro);
+  border-radius:var(--radio);
+  background:var(--carbon);
+  padding:var(--e5) var(--e4);
+}
+.veredicto[data-nivel="rojo"]{border-color:var(--rojo)}
+.veredicto[data-nivel="naranja"]{border-color:var(--naranja)}
+.veredicto[data-nivel="amarillo"]{border-color:var(--amarillo)}
+.veredicto[data-nivel="verde_claro"]{border-color:var(--verde-claro)}
+.veredicto[data-nivel="verde_parchis"]{border-color:var(--verde-parchis)}
+
+/* Las tres casillas de debajo, con el mismo perfil. */
+.resumen > div{
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  background:var(--carbon);
+}
+
+/* Y el desglose y los topes, igual. */
+.parte, .alterna, .fuera, .combi, .cambio{
+  border-width:1.5px;
+  border-radius:var(--radio);
+}
+.parte{border-color:var(--linea)}
+
+/* --- Saber: seis puertas y un buscador ------------------------------------
+   La pantalla arranca sin resultados. Los filtros y los órdenes solo aparecen
+   cuando hay algo que filtrar: antes estaban siempre, aunque no hubiera nada
+   debajo. */
+.puertas{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e3);
+  margin-top:var(--e4);
+}
+.puerta{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:flex-start; gap:var(--e2);
+  padding:var(--e4);
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
+  background:var(--carbon); color:var(--hueso);
+  text-align:left;
+}
+.puerta__icono{
+  width:2.4rem; height:2.4rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.puerta__icono svg{
+  width:1.3rem; height:1.3rem;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.puerta__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.2;
+}
+.puerta__cuenta{font-size:var(--t1); color:var(--ceniza-tenue)}
+
+.resultados__cabeza{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--e3);
+  margin:var(--e4) 0 var(--e3);
+}
+.volver{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; gap:0.2rem;
+  padding:0.4rem 0.8rem 0.4rem 0.5rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon); color:var(--ceniza);
+  font-size:var(--t1);
+}
+.volver svg{
+  width:1.1rem; height:1.1rem;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.resultados__cuenta{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ceniza-tenue);
+  text-align:right;
+}
+
+/* Lo de la despensa, plegado: es interesante pero no es lo que vienes a hacer. */
+.repetidas-panel{
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon); padding:0 var(--e4);
+  margin-top:var(--e6);
+}
+.repetidas-panel summary{
+  cursor:pointer; list-style:none; padding:var(--e4) 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso);
+}
+.repetidas-panel summary::-webkit-details-marker{display:none}
+.repetidas-panel summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.repetidas-panel[open] summary::after{content:'  −'}
+.repetidas-panel[open]{padding-bottom:var(--e4)}
+.repetida{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0;
+  background:none; border:0; border-top:1px solid var(--linea);
+  color:var(--hueso); font-size:var(--t2);
+}
+.repetida__veces{flex:none; color:var(--ceniza-tenue); font-size:var(--t1)}
+.repetida__nombre{flex:1; min-width:0}

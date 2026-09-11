@@ -5,6 +5,7 @@ import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
 import { enCurso } from '../estado.js';
 import { pedirFichero, pedirFoto, capturar, aBytes } from '../camara.js';
 import { reiniciarCombinar } from './combinar.js';
+import { nombrePantalla } from './inicio.js';
 
 /**
  * La Despensa.
@@ -112,7 +113,7 @@ export function despensa() {
   const sinNota = visibles.filter((p) => p.semaforo === null);
 
   return `
-    <h1 class="titulo">Despensa</h1>
+    ${nombrePantalla('Despensa')}
     <p class="texto">Todo lo que has analizado, de lo que menos conviene a lo que más.</p>
 
     ${bloqueRecalculo()}

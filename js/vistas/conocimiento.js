@@ -1,3 +1,4 @@
+import { nombrePantalla } from './inicio.js';
 import { esc, vacio } from '../ui.js';
 import { buscar, resumenCatalogo, CATALOGO } from '../motor.js';
 import { sustanciasMasVistas } from '../almacen.js';
@@ -71,44 +72,46 @@ function fichaHTML(f) {
     </details>`;
 }
 
+/**
+ * Las seis puertas de entrada al catálogo.
+ *
+ * Antes la pantalla soltaba de golpe doce sustancias de la despensa, dos
+ * párrafos, un buscador, seis filtros, un interruptor, cuatro órdenes y
+ * sesenta fichas. Todo a la vez y sin que nadie lo hubiera pedido.
+ *
+ * Un catálogo es un buscador, no una lista. Ahora arranca sin resultados: o
+ * buscas algo, o entras por una familia.
+ */
+const FAMILIAS = [
+  { clave: 'aditivo', nombre: 'Aditivos',
+    icono: '<circle cx="12" cy="12" r="8"/><path d="M9 12h6M12 9v6"/>' },
+  { clave: 'ingrediente', nombre: 'Ingredientes',
+    icono: '<path d="M12 20c4.4 0 8-3.6 8-8 0-4-3-8-8-8s-8 4-8 8c0 4.4 3.6 8 8 8Z"/><path d="M12 20V9"/>' },
+  { clave: 'azucar', nombre: 'Azúcares',
+    icono: '<rect x="4" y="8" width="7" height="7" rx="1"/><rect x="13" y="11" width="7" height="7" rx="1"/>' },
+  { clave: 'grasa', nombre: 'Grasas',
+    icono: '<path d="M12 3s5 5.5 5 9a5 5 0 0 1-10 0c0-3.5 5-9 5-9Z"/>' },
+  { clave: 'alergeno', nombre: 'Alérgenos',
+    icono: '<path d="M12 3l9 16H3l9-16Z"/><path d="M12 10v4M12 17h.01"/>' },
+  { clave: 'nutriente', nombre: 'Nutrientes',
+    icono: '<path d="M4 17l5-6 4 3 6-8"/><path d="M15 6h4v4"/>' },
+];
+
 export function conocimiento() {
   const r = resumenCatalogo();
-  const resultados = buscar(termino, {
-    tipos: tipoActivo ? [tipoActivo] : undefined,
-    soloLimitar: soloLimitar || undefined,
-    orden,
-    limite: 60,
-  });
+  const buscando = termino.trim().length > 0 || tipoActivo !== '';
 
-  const enTuDespensa = recuento === null ? '<p class="texto">Cargando…</p>'
-    : recuento.length === 0
-      ? vacio('Todavía no hay nada', 'Cuando analices y guardes productos, aquí verás qué sustancias se repiten en lo que comes.')
-      : recuento.slice(0, 12).map((s) => `
-          <div class="repetida">
-            <span class="repetida__veces cifra">${s.veces}×</span>
-            <span class="repetida__nombre">${esc(s.nombre)}</span>
-            <span class="repetida__donde">${esc(s.ejemplos.slice(0, 2).join(', '))}</span>
-          </div>`).join('');
+  const resultados = buscando
+    ? buscar(termino, {
+        tipos: tipoActivo ? [tipoActivo] : undefined,
+        soloLimitar: soloLimitar || undefined,
+        orden,
+        limite: 60,
+      })
+    : [];
 
   return `
-    <h1 class="titulo">Saber</h1>
-
-    <h2 class="subtitulo">Lo que más se repite en tu despensa</h2>
-    <p class="texto" style="font-size:0.92rem">De lo que tú has analizado y guardado. Un producto no cuenta dos veces la misma sustancia.</p>
-    <div class="repetidas">${enTuDespensa}</div>
-
-    <h2 class="subtitulo">Buscar en el catálogo</h2>
-    <p class="texto" style="font-size:0.92rem">
-      ${CATALOGO.length} fichas: ${r.aditivo} aditivos, ${r.alergeno} alérgenos,
-      ${r.ingrediente} ingredientes, ${r.azucar} formas de azúcar, ${r.grasa} grasas
-      y ${r.nutriente} nutrientes. Cada una con su fuente.
-    </p>
-    <p class="texto" style="font-size:0.9rem">
-      <strong>Este catálogo no crece cuando escaneas.</strong> Va escrito dentro de
-      la app y es el mismo para todo el mundo. Lo que sí sale de lo que tú analizas
-      es la lista de aquí arriba. Si te encuentras algo que no está, mándalo y se
-      le escribe ficha.
-    </p>
+    ${nombrePantalla('Saber')}
 
     <div class="campo">
       <div class="campo__entrada">
@@ -117,32 +120,73 @@ export function conocimiento() {
       </div>
     </div>
 
-    <div class="filtros">
-      ${TIPOS.map((t) => `
-        <button class="filtro${t.clave === tipoActivo ? ' es-activo' : ''}" data-tipo="${t.clave}">
-          ${t.nombre}
-        </button>`).join('')}
-    </div>
-    <div class="filtros">
-      <button class="filtro${soloLimitar ? ' es-activo' : ''}" data-solo="limitar">
-        Solo lo que conviene limitar
-      </button>
-    </div>
-
-    <h3 class="rotulo" style="margin-top:16px">Ordenar por</h3>
-    <div class="filtros">
-      ${ORDENES.map((o) => `
-        <button class="filtro${o.clave === orden ? ' es-activo' : ''}" data-orden="${o.clave}">
-          ${o.nombre}
-        </button>`).join('')}
-    </div>
-
-    <p class="texto" style="font-size:0.9rem; margin-top:16px">
-      ${resultados.length === 0 ? 'Nada encontrado con ese criterio.'
-        : `${resultados.length} resultado(s)${resultados.length === 60 ? ', se muestran los 60 primeros' : ''}.`}
-    </p>
-    <div class="fichas">${resultados.map(fichaHTML).join('')}</div>
+    ${buscando ? bloqueResultados(resultados) : bloquePuertas(r) + bloqueDespensa()}
   `;
+}
+
+/** Las seis familias, cada una con cuántas fichas tiene. */
+function bloquePuertas(r) {
+  return `
+    <div class="puertas">
+      ${FAMILIAS.map((f) => `
+        <button class="puerta" data-tipo="${f.clave}">
+          <span class="puerta__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24">${f.icono}</svg>
+          </span>
+          <span class="puerta__nombre">${esc(f.nombre)}</span>
+          <span class="puerta__cuenta cifra">${r[f.clave] ?? 0}</span>
+        </button>`).join('')}
+    </div>
+
+    <p class="apunte-via" style="margin-top:var(--e4)">
+      ${CATALOGO.length} fichas, cada una con su fuente. Este catálogo no crece
+      cuando escaneas: va escrito dentro de la app. Si te encuentras algo que no
+      está, cópialo y mándalo.
+    </p>`;
+}
+
+/** Los resultados, con los filtros solo cuando hay algo que filtrar. */
+function bloqueResultados(resultados) {
+  const familia = FAMILIAS.find((f) => f.clave === tipoActivo);
+  return `
+    <div class="resultados__cabeza">
+      <button class="volver" data-tipo="">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        Todo
+      </button>
+      <span class="resultados__cuenta">
+        ${familia ? esc(familia.nombre) + ' · ' : ''}${resultados.length} ficha(s)
+      </span>
+    </div>
+
+    ${resultados.length === 0
+      ? vacio('Nada con ese nombre', 'Prueba con menos letras, o con el código E si es un aditivo.')
+      : `
+        <div class="filtros" style="margin-bottom:var(--e4)">
+          <button class="filtro${soloLimitar ? ' es-activo' : ''}" data-solo="limitar">
+            Solo lo que conviene limitar
+          </button>
+          ${ORDENES.map((o) => `
+            <button class="filtro${o.clave === orden ? ' es-activo' : ''}" data-orden="${o.clave}">
+              ${o.nombre}
+            </button>`).join('')}
+        </div>
+        ${resultados.map(fichaHTML).join('')}`}`;
+}
+
+/** Lo que más se repite en tu despensa: plegado y en voz baja. */
+function bloqueDespensa() {
+  if (recuento === null || recuento.length === 0) return '';
+  return `
+    <details class="repetidas-panel">
+      <summary>Lo que más se repite en tu despensa</summary>
+      <p class="apunte-via">De lo que tú has analizado y guardado. Un producto no cuenta dos veces la misma sustancia.</p>
+      ${recuento.slice(0, 10).map((s) => `
+        <button class="repetida" data-buscar="${esc(s.nombre)}">
+          <span class="repetida__veces cifra">${s.veces}×</span>
+          <span class="repetida__nombre">${esc(s.nombre)}</span>
+        </button>`).join('')}
+    </details>`;
 }
 
 export async function conocimientoActivo(raiz, { repintar }) {
@@ -164,13 +208,25 @@ export async function conocimientoActivo(raiz, { repintar }) {
       const pos = caja.selectionStart;
       repintar();
       const nueva = raiz.querySelector('#buscarFicha');
-      if (nueva) { nueva.focus(); nueva.setSelectionRange(pos, pos); }
+      if (!nueva) return;
+      nueva.focus();
+      // No todos los tipos de campo admiten colocar el cursor. Si no se puede,
+      // se deja donde caiga: perder la posición del cursor es un incordio;
+      // que reviente la pantalla, no.
+      try { nueva.setSelectionRange(pos, pos); } catch { /* da igual */ }
     });
   }
 
   raiz.addEventListener('click', (e) => {
     const t = e.target.closest('[data-tipo]');
     if (t) { tipoActivo = t.dataset.tipo; repintar(); return; }
+    const rep = e.target.closest('[data-buscar]');
+    if (rep) {
+      termino = rep.dataset.buscar;
+      tipoActivo = '';
+      repintar();
+      return;
+    }
     const o = e.target.closest('[data-orden]');
     if (o) { orden = o.dataset.orden; repintar(); return; }
     const s = e.target.closest('[data-solo]');
