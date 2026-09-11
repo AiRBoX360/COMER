@@ -90,7 +90,29 @@ function bloqueAlternativa(v) {
  * puede moverse sin que cambien los datos que se ven.
  */
 /**
- * De dónde viene el producto.
+ * La procedencia, en pequeño y al lado del nombre.
+ *
+ * Va dentro de la tarjeta del veredicto porque es parte de qué es el producto,
+ * no un dato más de los de abajo: saber que un tomate viene de Marruecos
+ * cambia la decisión tanto como saber su nota.
+ */
+function procedenciaCompacta() {
+  if (!enCurso.procedencia) return '';
+  const d = deDondeViene(enCurso.procedencia);
+  const lineas = [];
+  if (d.origen.length) lineas.push(...d.origen);
+  if (d.provincia) lineas.push(d.provincia);
+  else if (d.envasado.length) lineas.push(...d.envasado);
+  if (lineas.length === 0) return '';
+  return `
+    <div class="procedencia">
+      <span class="procedencia__rotulo">Procedencia</span>
+      ${lineas.slice(0, 3).map((l) => `<span class="procedencia__linea">${esc(l)}</span>`).join('')}
+    </div>`;
+}
+
+/**
+ * De dónde viene el producto, con todo el detalle.
  *
  * Tres cosas distintas que la gente confunde: el origen de la materia prima,
  * dónde se envasó, y el código sanitario del establecimiento. Un tomate de
@@ -114,6 +136,56 @@ function bloqueProcedencia() {
         ? 'La provincia sale del código sanitario impreso en el envase, que es obligatorio. El origen lo rellena quien sube el producto a Open Food Facts.'
         : 'Lo rellena quien sube el producto a Open Food Facts, así que puede faltar o estar desactualizado.'}</p>
     </div>`;
+}
+
+/**
+ * Una sección plegable.
+ *
+ * Resultado era un rollo de scroll interminable: todo desplegado a la vez, y
+ * la mayoría de las veces solo vas a mirar una cosa. Ahora cada bloque se abre
+ * si lo pides. Las que no tienen nada que contar no se pintan: una pestaña
+ * vacía es una promesa incumplida.
+ */
+function seccion(titulo, cuerpo) {
+  if (!cuerpo || !String(cuerpo).trim()) return '';
+  return `
+    <details class="seccion">
+      <summary>
+        <span class="seccion__nombre">${esc(titulo)}</span>
+        <span class="seccion__flecha" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </summary>
+      <div class="seccion__cuerpo">${cuerpo}</div>
+    </details>`;
+}
+
+function bloqueAlergenos(v) {
+  if (!v.alergenos.length) return '';
+  return `
+    <h3 class="rotulo">Alérgenos detectados</h3>
+    <p class="texto">${v.alergenos.map((a) => esc(a.nombre) + (a.esTraza ? ' (trazas)' : '')).join(', ')}.</p>
+    <p class="apunte-via">${esc(v.avisoAlergenos)}</p>`;
+}
+
+function bloqueTabla(v) {
+  if (!v.porRacion) return '';
+  return `
+    <h3 class="rotulo">Por ración de ${v.porRacion.gramos} g</h3>
+    <div class="resumen">
+      <div><b class="cifra">${v.porRacion.kcal ?? '—'}</b><span>kcal</span></div>
+      <div><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}%</b><span>del azúcar diario</span></div>
+      <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
+    </div>`;
+}
+
+function bloqueAvisos(v) {
+  if (!v.avisos.length) return '';
+  return `
+    <h3 class="rotulo">Avisos</h3>
+    <ul class="incidencias">
+      ${v.avisos.map((a) => `<li class="incidencia">${esc(a)}</li>`).join('')}
+    </ul>`;
 }
 
 function desglose(v) {
@@ -193,7 +265,7 @@ function tarjetaVeredicto(v) {
       <div class="veredicto__texto">
         <h1>${esc(v.nombre)}</h1>
         ${v.marca ? `<p class="veredicto__marca">${esc(v.marca)}</p>` : ''}
-        <p class="veredicto__nivel">${esc(nivel.texto)}</p>
+        ${procedenciaCompacta()}
       </div>
     </div>
     ${nivelSolo(v.puntuacion)}`;
@@ -257,43 +329,29 @@ export function resultado() {
         ${v.confianza.comoMejorarla.map((c) => esc(c)).join(' ')}</div>
       </div>` : ''}
 
-    <h2 class="subtitulo">¿Por qué esta nota?</h2>
-    <p class="texto">${esc(v.porQue)}</p>
+    <div class="secciones">
+      ${seccion('Ingredientes', listaExplicada(enCurso.ingredientes) + bloqueAlergenos(v))}
+      ${seccion('Tabla nutricional', bloqueTabla(v))}
+      ${seccion('De qué se compone', desglose(v) + topes(v))}
+      ${seccion('Conviene limitar',
+        bloque('', 'Ordenado de más a menos relevante.', v.limitar, 'malo'))}
+      ${seccion('Lo mejor', bloque('', 'Ordenado de más a menos relevante.', v.favorables, 'bueno'))}
+      ${seccion('Alternativas',
+        '<div id="alternativas"></div>' + bloqueAlternativa(v))}
+      ${seccion('Por qué esta nota',
+        `<p class="texto">${esc(v.porQue)}</p>` + bloqueAvisos(v))}
+    </div>
 
-    ${bloqueProcedencia()}
-    ${desglose(v)}
-    ${topes(v)}
-
-    ${bloque('Lo que conviene limitar', 'Ordenado de más a menos relevante.', v.limitar, 'malo')}
-    ${bloque('Lo mejor del producto', 'Ordenado de más a menos relevante.', v.favorables, 'bueno')}
-
-    ${listaExplicada(enCurso.ingredientes)}
-
-    ${v.alergenos.length ? `
-      <h2 class="subtitulo">Alérgenos detectados</h2>
-      <p class="texto">${v.alergenos.map((a) => esc(a.nombre) + (a.esTraza ? ' (trazas)' : '')).join(', ')}.</p>
-      <p class="texto" style="font-size:0.9rem">${esc(v.avisoAlergenos)}</p>` : ''}
-
-    ${v.porRacion ? `
-      <h2 class="subtitulo">Por ración de ${v.porRacion.gramos} g</h2>
-      <div class="resumen">
-        <div><b class="cifra">${v.porRacion.kcal ?? '—'}</b><span>kcal</span></div>
-        <div><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}%</b><span>del azúcar diario</span></div>
-        <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
-      </div>` : ''}
-
-    <div id="alternativas"></div>
-    ${bloqueAlternativa(v)}
-
-    ${v.avisos.length ? `
-      <h2 class="subtitulo">Avisos</h2>
-      <ul class="incidencias">
-        ${v.avisos.map((a) => `<li class="incidencia">${esc(a)}</li>`).join('')}
-      </ul>` : ''}
-
-    <button class="boton-grande" id="btnGuardar" style="margin-top:24px">
-      GUARDAR EN LA DESPENSA
-      <small>Con sus fotos, para poder volver a verlo</small>
+    <button class="accion" id="btnGuardar" style="margin-top:var(--e5)">
+      <span class="accion__icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>
+        </svg>
+      </span>
+      <span class="accion__texto">
+        <b>Guardar en despensa</b>
+        <small>Con sus fotos, para volver a verlo</small>
+      </span>
     </button>
     <p class="texto" id="estadoGuardar" role="status" aria-live="polite" style="margin-top:12px"></p>
 

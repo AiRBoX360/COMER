@@ -2302,3 +2302,64 @@ body{
 .procede__donde{
   margin:var(--e2) 0 0; font-size:var(--t2); line-height:1.45; color:var(--ceniza);
 }
+
+/* --- Las secciones plegables del resultado ---------------------------------
+   Resultado era un scroll interminable con todo desplegado a la vez, y la
+   mayoría de las veces solo vas a mirar una cosa. Las que no tienen nada que
+   contar ni se pintan: una pestaña vacía es una promesa incumplida. */
+.secciones{margin-top:var(--e4)}
+
+.seccion{
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  background:var(--carbon);
+  margin-bottom:var(--e2);
+  overflow:hidden;
+}
+.seccion[open]{border-color:var(--verde-claro)}
+.seccion summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e3) var(--e4);
+}
+.seccion summary::-webkit-details-marker{display:none}
+.seccion__nombre{
+  flex:1; min-width:0;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza);
+}
+.seccion[open] .seccion__nombre{color:var(--hueso)}
+.seccion__flecha{flex:none; color:var(--ceniza-tenue)}
+.seccion__flecha svg{
+  width:1.2rem; height:1.2rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .18s ease;
+}
+.seccion[open] .seccion__flecha svg{transform:rotate(180deg)}
+.seccion__cuerpo{
+  padding:0 var(--e4) var(--e4);
+  border-top:1px solid var(--linea);
+  padding-top:var(--e4);
+}
+.seccion__cuerpo > .subtitulo:first-child{margin-top:0}
+
+@media (prefers-reduced-motion:reduce){
+  .seccion__flecha svg{transition:none}
+}
+
+/* --- La procedencia, al lado del nombre ------------------------------------ */
+.procedencia{
+  display:inline-flex; flex-direction:column; gap:1px;
+  margin-top:var(--e2);
+  padding:var(--e2) var(--e3);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+}
+.procedencia__rotulo{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.procedencia__linea{
+  font-size:var(--t2); line-height:1.35; color:var(--hueso);
+}
+.procedencia__linea::before{content:'· '; color:var(--ceniza-tenue)}

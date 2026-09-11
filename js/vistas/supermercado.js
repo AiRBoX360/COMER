@@ -1,4 +1,5 @@
-import { nivelSolo, marcador, esc } from '../ui.js';
+import { nivelSolo, marcador, esc, nivelDeNota } from '../ui.js';
+import { deDondeViene } from '../donde.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { analizarProducto, analizarIngredientesTexto, revisarVigilancia } from '../motor.js';
@@ -20,13 +21,59 @@ import { nombrePantalla } from './inicio.js';
 
 let estado = { fase: 'inicio', mensaje: '', veredicto: null, producto: null, avisos: [] };
 
+/**
+ * La tarjeta del veredicto rápido, con la procedencia dentro.
+ *
+ * Es la misma pieza que en Resultado: nota en el anillo, nombre al lado y de
+ * dónde viene debajo. En el pasillo esa información vale tanto como la nota:
+ * saber que un tomate viene de Marruecos cambia la decisión.
+ */
+function tarjetaRapida(p, v) {
+  const n = Math.max(0, Math.min(100, v.puntuacion ?? 0));
+  const nivel = nivelDeNota(n);
+  const VUELTA = 2 * Math.PI * 52;
+  const lleno = (n / 100) * VUELTA;
+
+  // Aquí el producto trae los tres campos sueltos, tal como llegan de Open
+  // Food Facts, en vez de agrupados. Se le pasan como están.
+  const d = p ? deDondeViene(p) : null;
+  const lineas = [];
+  if (d) {
+    if (d.origen.length) lineas.push(...d.origen);
+    if (d.provincia) lineas.push(d.provincia);
+    else if (d.envasado.length) lineas.push(...d.envasado);
+  }
+
+  return `
+    <div class="veredicto" data-nivel="${nivel.clave}">
+      <div class="veredicto__anillo">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="veredicto__pista" cx="60" cy="60" r="52"/>
+          <circle class="veredicto__arco" cx="60" cy="60" r="52"
+                  stroke-dasharray="${lleno.toFixed(1)} ${(VUELTA - lleno).toFixed(1)}"/>
+        </svg>
+        <div class="veredicto__cifra">
+          <b class="cifra">${n}</b><small>de 100</small>
+        </div>
+      </div>
+      <div class="veredicto__texto">
+        <h1>${esc(p?.nombre ?? v.nombre ?? '')}</h1>
+        ${p?.marca ? `<p class="veredicto__marca">${esc(p.marca)}</p>` : ''}
+        ${lineas.length ? `
+          <div class="procedencia">
+            <span class="procedencia__rotulo">Procedencia</span>
+            ${lineas.slice(0, 3).map((l) => `<span class="procedencia__linea">${esc(l)}</span>`).join('')}
+          </div>` : ''}
+      </div>
+    </div>`;
+}
+
 export function supermercado() {
   const { fase, mensaje, veredicto: v, producto: p, avisos } = estado;
 
   if (fase === 'resultado' && v) {
     return `
       ${nombrePantalla('Escaneo rápido')}
-      ${p?.marca ? `<p class="texto">${esc(p.marca)}</p>` : ''}
 
       <div class="sin-revisar">
         <b>Sin revisar.</b> Estos datos vienen de Open Food Facts y pueden ser
@@ -42,7 +89,7 @@ export function supermercado() {
 
       ${v.puntuacion === null
         ? `<div class="pendiente" style="border-left-color:var(--naranja)"><div><b>Sin datos suficientes para dar nota.</b> Faltan: ${esc(v.datosFaltantes.join(', '))}.</div></div>`
-        : `${marcador(v.puntuacion)}${nivelSolo(v.puntuacion)}`}
+        : `${tarjetaRapida(p, v)}${nivelSolo(v.puntuacion)}`}
 
       <h2 class="subtitulo">Lo que más pesa</h2>
       ${v.limitar.slice(0, 3).map((f) => `
