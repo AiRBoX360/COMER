@@ -2369,3 +2369,13 @@ body{
   font-family:var(--datos); font-size:var(--t0);
   color:var(--ceniza-tenue); font-style:italic;
 }
+
+/* --- La lupa dentro del campo de búsqueda ---------------------------------- */
+.campo__entrada:has(.campo__lupa){display:flex; align-items:center; gap:var(--e2)}
+.campo__lupa{flex:none; display:flex; color:var(--ceniza-tenue); padding-left:var(--e2)}
+.campo__lupa svg{
+  width:1.15rem; height:1.15rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.campo__entrada:has(.campo__lupa) input{flex:1; min-width:0; border:0; background:none; padding-left:0}

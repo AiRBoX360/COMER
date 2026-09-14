@@ -70,6 +70,40 @@ function coincide(p, termino) {
   return limpiar([...ingredientes, ...aditivos, ...alergenos].join(' | ')).includes(t);
 }
 
+/**
+ * La parte que cambia al escribir en el buscador.
+ *
+ * Va aparte para poder refrescarla sola. Antes se repintaba la pantalla entera
+ * con cada letra, y eso destruye el campo donde estás escribiendo: el teclado
+ * se cerraba al segundo carácter.
+ */
+/**
+ * Carga las fotos de los productos que se acaban de pintar.
+ *
+ * Se extrajo para poder llamarla también al refrescar solo la lista: si no,
+ * al escribir en el buscador los productos salían sin foto.
+ */
+function pintarFotos(zona) {
+  for (const hueco of zona.querySelectorAll('[data-foto]')) {
+    urlDeFoto(hueco.dataset.foto).then((url) => {
+      if (url) hueco.style.backgroundImage = `url(${url})`;
+    });
+  }
+}
+
+function listado(visibles, total, bloques, sinNota) {
+  return `
+    ${filtro ? `<p class="texto" style="font-size:var(--t2); margin-top:10px">
+      ${visibles.length} de ${total} producto(s)${buscarDentro ? ` llevan "${esc(filtro)}"` : ''}.
+    </p>` : ''}
+    ${bloques}
+    ${sinNota.length ? `
+      <section class="bloque">
+        <h2 class="rotulo">Sin nota, por datos incompletos</h2>
+        ${sinNota.map(ficha).join('')}
+      </section>` : ''}`;
+}
+
 function ficha(p) {
   const fecha = new Date(p.fechaAnalisis).toLocaleDateString('es-ES',
     { day: 'numeric', month: 'short', year: 'numeric' });
@@ -130,7 +164,10 @@ export function despensa() {
       'Analiza un producto y pulsa "Guardar en la despensa". Aparecerá aquí.') : `
       <div class="campo">
         <div class="campo__entrada">
-          <input type="search" id="buscarDespensa" value="${esc(filtro)}"
+          <span class="campo__lupa" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+        </span>
+        <input type="search" id="buscarDespensa" value="${esc(filtro)}"
                  placeholder="${buscarDentro ? 'aceite de palma, E250, gluten…' : 'Buscar por nombre'}"
                  autocomplete="off">
         </div>
@@ -139,15 +176,7 @@ export function despensa() {
         <button class="filtro${buscarDentro ? '' : ' es-activo'}" data-donde="nombre">Por nombre</button>
         <button class="filtro${buscarDentro ? ' es-activo' : ''}" data-donde="dentro">Por lo que lleva dentro</button>
       </div>
-      ${filtro ? `<p class="texto" style="font-size:0.9rem; margin-top:10px">
-        ${visibles.length} de ${total} producto(s)${buscarDentro ? ` llevan "${esc(filtro)}"` : ''}.
-      </p>` : ''}
-      ${bloques}
-      ${sinNota.length ? `
-        <section class="bloque">
-          <h2 class="rotulo">Sin nota, por datos incompletos</h2>
-          ${sinNota.map(ficha).join('')}
-        </section>` : ''}`}
+      <div id="zonaDespensa">${listado(visibles, total, bloques, sinNota)}</div>`}
 
     ${total >= 2 ? `
       <button class="boton-grande" id="btnComparar" style="margin:24px 0 12px">
@@ -187,20 +216,15 @@ export async function despensaActivo(raiz, { repintar }) {
 
   // Las fotos se piden después de pintar: así la lista aparece enseguida y las
   // imágenes van entrando, en vez de esperar a que estén todas.
-  for (const hueco of raiz.querySelectorAll('[data-foto]')) {
-    urlDeFoto(hueco.dataset.foto).then((url) => {
-      if (url) hueco.style.backgroundImage = `url(${url})`;
-    });
-  }
+  pintarFotos(raiz);
 
   const buscador = raiz.querySelector('#buscarDespensa');
   if (buscador) {
+    // Se refresca SOLO la lista: así el campo donde escribes no se destruye y
+    // el teclado se queda abierto.
     buscador.addEventListener('input', () => {
       filtro = buscador.value;
-      const pos = buscador.selectionStart;
-      repintar();
-      const nuevo = raiz.querySelector('#buscarDespensa');
-      if (nuevo) { nuevo.focus(); nuevo.setSelectionRange(pos, pos); }
+      refrescarLista();
     });
   }
 
@@ -224,12 +248,37 @@ export async function despensaActivo(raiz, { repintar }) {
   });
 
   // --- Poner foto a un producto que no la tiene ---------------------------
+  /** Vuelve a dibujar solo los bloques de productos. */
+  function refrescarLista() {
+    const zona = raiz.querySelector('#zonaDespensa');
+    if (!zona) return;
+    const visibles = filtro ? cache.filter((p) => coincide(p, filtro)) : cache;
+    const total = cache.length;
+    const bloques = NIVELES.slice().reverse().map((n) => {
+      const suyos = visibles.filter((p) => p.semaforo === n.clave);
+      if (total > 0 && suyos.length === 0) return '';
+      return `
+        <section class="bloque" data-nivel="${n.clave}">
+          <h3 class="bloque__barra">
+            <span class="bloque__nombre">${esc(n.texto)}</span>
+            <span class="bloque__cuantos cifra">${suyos.length}</span>
+          </h3>
+          ${suyos.map(ficha).join('') || '<p class="texto" style="font-size:var(--t2)">Ninguno todavía.</p>'}
+        </section>`;
+    }).join('');
+    const sinNota = visibles.filter((p) => p.semaforo === null);
+    zona.innerHTML = listado(visibles, total, bloques, sinNota);
+    pintarFotos(zona);
+  }
+
   raiz.addEventListener('click', (e) => {
     const d = e.target.closest('[data-donde]');
     if (!d) return;
     buscarDentro = d.dataset.donde === 'dentro';
-    repintar();
-    raiz.querySelector('#buscarDespensa')?.focus();
+    for (const b of raiz.querySelectorAll('[data-donde]')) {
+      b.classList.toggle('es-activo', b.dataset.donde === d.dataset.donde);
+    }
+    refrescarLista();
   });
 
   raiz.addEventListener('click', async (e) => {

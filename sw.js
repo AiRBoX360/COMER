@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'catario-v4.9.0';
+const CACHE = 'catario-v4.11.0';
 
 const ARCHIVOS = [
   './',
@@ -45,6 +45,9 @@ const ARCHIVOS = [
   './iconos/icono-180.png',
   './iconos/icono-192.png',
   './iconos/icono-512.png',
+  // Está en el manifiesto: si no se guarda, al instalarla sin cobertura el
+  // sistema se queda sin icono.
+  './iconos/icono-maskable-512.png',
   './iconos/favicon.png'
 ];
 

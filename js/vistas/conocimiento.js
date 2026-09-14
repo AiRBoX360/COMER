@@ -115,12 +115,15 @@ export function conocimiento() {
 
     <div class="campo">
       <div class="campo__entrada">
+        <span class="campo__lupa" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+        </span>
         <input type="search" id="buscarFicha" value="${esc(termino)}"
                placeholder="E-250, palma, gluten, maltodextrina…" autocomplete="off">
       </div>
     </div>
 
-    ${buscando ? bloqueResultados(resultados) : bloquePuertas(r) + bloqueDespensa()}
+    <div id="zonaSaber">${buscando ? bloqueResultados(resultados) : bloquePuertas(r) + bloqueDespensa()}</div>
   `;
 }
 
@@ -150,7 +153,7 @@ function bloqueResultados(resultados) {
   const familia = FAMILIAS.find((f) => f.clave === tipoActivo);
   return `
     <div class="resultados__cabeza">
-      <button class="volver" data-tipo="">
+      <button class="volver" data-tipo="" aria-label="Volver a todas las familias">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
         Todo
       </button>
@@ -203,34 +206,57 @@ export async function conocimientoActivo(raiz, { repintar }) {
 
   const caja = raiz.querySelector('#buscarFicha');
   if (caja) {
+    /**
+     * Al escribir se refresca SOLO la lista, no la pantalla.
+     *
+     * Antes se repintaba todo con cada letra, y eso destruye el campo donde
+     * estás escribiendo: el teclado se cerraba al segundo carácter. Se
+     * intentaba devolver el foco después, pero el campo al que se apuntaba ya
+     * no estaba puesto, así que no servía de nada.
+     *
+     * No hay que devolver el foco: hay que no quitarlo.
+     */
     caja.addEventListener('input', () => {
       termino = caja.value;
-      const pos = caja.selectionStart;
-      repintar();
-      const nueva = raiz.querySelector('#buscarFicha');
-      if (!nueva) return;
-      nueva.focus();
-      // No todos los tipos de campo admiten colocar el cursor. Si no se puede,
-      // se deja donde caiga: perder la posición del cursor es un incordio;
-      // que reviente la pantalla, no.
-      try { nueva.setSelectionRange(pos, pos); } catch { /* da igual */ }
+      refrescarZona();
     });
+  }
+
+  /** Vuelve a dibujar solo la lista de abajo. */
+  function refrescarZona() {
+    const zona = raiz.querySelector('#zonaSaber');
+    if (!zona) return;
+    const r = resumenCatalogo();
+    const buscando = termino.trim().length > 0 || tipoActivo !== '';
+    const resultados = buscando
+      ? buscar(termino, {
+          tipos: tipoActivo ? [tipoActivo] : undefined,
+          soloLimitar: soloLimitar || undefined,
+          orden,
+          limite: 60,
+        })
+      : [];
+    zona.innerHTML = buscando
+      ? bloqueResultados(resultados)
+      : bloquePuertas(r) + bloqueDespensa();
   }
 
   raiz.addEventListener('click', (e) => {
     const t = e.target.closest('[data-tipo]');
-    if (t) { tipoActivo = t.dataset.tipo; repintar(); return; }
+    if (t) { tipoActivo = t.dataset.tipo; refrescarZona(); return; }
     const rep = e.target.closest('[data-buscar]');
     if (rep) {
       termino = rep.dataset.buscar;
       tipoActivo = '';
-      repintar();
+      const caja2 = raiz.querySelector('#buscarFicha');
+      if (caja2) caja2.value = termino;
+      refrescarZona();
       return;
     }
     const o = e.target.closest('[data-orden]');
-    if (o) { orden = o.dataset.orden; repintar(); return; }
+    if (o) { orden = o.dataset.orden; refrescarZona(); return; }
     const s = e.target.closest('[data-solo]');
-    if (s) { soloLimitar = !soloLimitar; repintar(); }
+    if (s) { soloLimitar = !soloLimitar; refrescarZona(); }
   });
 }
 

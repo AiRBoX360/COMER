@@ -69,6 +69,9 @@ export function combinar() {
     <p class="texto" style="font-size:0.9rem">Cosas que no tienes guardadas pero podrías comprar.</p>
     <div class="campo">
       <div class="campo__entrada">
+        <span class="campo__lupa" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+        </span>
         <input id="extraCombinar" type="search" list="listaFrescos"
                placeholder="pimiento, limón, aceite de oliva…" autocomplete="off"
                ${extras.length >= 3 ? 'disabled' : ''}>

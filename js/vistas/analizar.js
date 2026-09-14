@@ -282,7 +282,10 @@ export function analizar() {
     fresco: `
       <div class="campo">
         <div class="campo__entrada">
-          <input id="buscaFresco" type="search"
+          <span class="campo__lupa" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+        </span>
+        <input id="buscaFresco" type="search"
                  placeholder="Pega o escribe el alimento" autocomplete="off">
         </div>
       </div>
