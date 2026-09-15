@@ -179,15 +179,59 @@ function bloqueAlergenos(v) {
     <p class="apunte-via">${esc(v.avisoAlergenos)}</p>`;
 }
 
+/** Lo que hay en la etiqueta, por 100 g, en casillas. */
+const FILAS_TABLA = [
+  { clave: 'energia_kcal', nombre: 'Energía', unidad: 'kcal' },
+  { clave: 'grasas_g', nombre: 'Grasas', unidad: 'g' },
+  { clave: 'saturadas_g', nombre: 'De ellas saturadas', unidad: 'g' },
+  { clave: 'hidratos_g', nombre: 'Hidratos', unidad: 'g' },
+  { clave: 'azucares_g', nombre: 'De ellos azúcares', unidad: 'g' },
+  { clave: 'fibra_g', nombre: 'Fibra', unidad: 'g' },
+  { clave: 'proteinas_g', nombre: 'Proteínas', unidad: 'g' },
+  { clave: 'sal_g', nombre: 'Sal', unidad: 'g' },
+];
+
+/**
+ * La tabla nutricional, entera.
+ *
+ * Antes salían tres casillas —kilocalorías y dos porcentajes— bajo un título
+ * que prometía "tabla nutricional". Faltaba justo lo que hay en la etiqueta:
+ * grasas, saturadas, hidratos, azúcares, fibra, proteínas y sal.
+ *
+ * Cada valor dice de dónde sale: leído de la etiqueta, calculado a partir de
+ * otros, o ausente. Eso ya estaba en Revisar y aquí faltaba.
+ */
 function bloqueTabla(v) {
-  if (!v.porRacion) return '';
+  const n = enCurso.nutrientes ?? {};
+  const hay = FILAS_TABLA.filter((f) => typeof n[f.clave]?.valor === 'number');
+  if (hay.length === 0) return '';
+
   return `
-    <h3 class="rotulo">Por ración de ${v.porRacion.gramos} g</h3>
-    <div class="resumen">
-      <div><b class="cifra">${v.porRacion.kcal ?? '—'}</b><span>kcal</span></div>
-      <div><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}%</b><span>del azúcar diario</span></div>
-      <div><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}%</b><span>de la sal diaria</span></div>
-    </div>`;
+    <h3 class="rotulo">Por 100 g</h3>
+    <div class="tabla-nut">
+      ${hay.map((f) => {
+        const d = n[f.clave];
+        const calculado = d.estado === 'calculado';
+        return `
+          <div class="casilla${calculado ? ' casilla--calc' : ''}">
+            <b class="cifra">${Number(d.valor.toFixed(1))}<small>${esc(f.unidad)}</small></b>
+            <span>${esc(f.nombre)}</span>
+            ${calculado ? '<i>calculado</i>' : ''}
+          </div>`;
+      }).join('')}
+    </div>
+
+    ${v.porRacion ? `
+      <h3 class="rotulo" style="margin-top:var(--e5)">Por ración de ${v.porRacion.gramos} g</h3>
+      <div class="tabla-nut">
+        <div class="casilla"><b class="cifra">${v.porRacion.kcal ?? '—'}</b><span>kcal</span></div>
+        <div class="casilla"><b class="cifra">${v.porRacion.pctAzucarOMS ?? '—'}<small>%</small></b><span>del azúcar diario</span></div>
+        <div class="casilla"><b class="cifra">${v.porRacion.pctSalOMS ?? '—'}<small>%</small></b><span>de la sal diaria</span></div>
+      </div>` : ''}
+
+    ${hay.some((f) => n[f.clave].estado === 'calculado')
+      ? '<p class="apunte-via">Lo marcado como calculado no estaba en la etiqueta: sale de los demás valores.</p>'
+      : ''}`;
 }
 
 function bloqueAvisos(v) {
@@ -199,28 +243,86 @@ function bloqueAvisos(v) {
     </ul>`;
 }
 
+/**
+ * De qué se compone la nota.
+ *
+ * Aquí había un problema de redacción serio: ponía "Aditivos · 96" y eso se
+ * lee como "lleva 96 aditivos", cuando significa lo contrario: que en aditivos
+ * sale muy bien. El número era una VALORACIÓN y parecía una CANTIDAD.
+ *
+ * Se arregla diciéndolo con palabras además del número. Un 96 en aditivos pasa
+ * a ser "casi ninguno que preocupe", y un 30 a "lleva varios de los que
+ * conviene limitar". El número se queda para quien lo quiera, pero ya no tiene
+ * que interpretarlo nadie.
+ */
+const LECTURA = {
+  nutriScore: [
+    [85, 'muy buena para lo que es'],
+    [70, 'buena'],
+    [50, 'regular'],
+    [30, 'floja'],
+    [0, 'mala'],
+  ],
+  nova: [
+    [85, 'sin procesar o casi'],
+    [70, 'poco procesado'],
+    [50, 'procesado'],
+    [30, 'muy procesado'],
+    [0, 'ultraprocesado'],
+  ],
+  aditivos: [
+    [95, 'no lleva ninguno'],
+    [80, 'lleva alguno, y ninguno preocupante'],
+    [55, 'lleva varios que conviene limitar'],
+    [30, 'lleva alguno de los peores'],
+    [0, 'lleva de los que más conviene evitar'],
+  ],
+  ingredientes: [
+    [85, 'lista corta y reconocible'],
+    [70, 'lista razonable'],
+    [50, 'lista larga o poco clara'],
+    [0, 'lista larga y difícil de reconocer'],
+  ],
+};
+
+function leerNota(clave, nota) {
+  const tabla = LECTURA[clave];
+  if (!tabla || nota === null) return '';
+  for (const [desde, texto] of tabla) if (nota >= desde) return texto;
+  return '';
+}
+
 function desglose(v) {
   if (!v.componentes?.length) return '';
   return `
-    <h2 class="subtitulo">De qué se compone</h2>
-    <p class="texto" style="font-size:0.92rem">Cada parte con su nota y con lo que pesa en el total.</p>
+    <p class="texto" style="font-size:var(--t2)">
+      La nota sale de cuatro cosas. Cada una se puntúa de 0 a 100, donde
+      <b>100 es lo mejor</b>, y pesa lo que dice debajo.
+    </p>
     ${v.componentes.map((c) => {
       const pct = Math.round(c.pesoAplicado * 100);
       const nominal = Math.round((c.pesoOriginal ?? c.pesoAplicado) * 100);
       const sinCalcular = c.nota === null;
+      // El motor devuelve decimales. Una nota con coma no dice nada más y
+      // ensucia: "50,6 sobre 100" se lee peor que "51".
+      const nota = sinCalcular ? null : Math.round(c.nota);
+      const lectura = leerNota(c.clave, nota);
       return `
         <div class="parte${sinCalcular ? ' parte--sin' : ''}">
           <div class="parte__cab">
             <span class="parte__nombre">${esc(c.nombre)}</span>
-            <span class="parte__nota cifra">${sinCalcular ? '—' : c.nota}<small>/100</small></span>
+            <span class="parte__nota cifra" data-nivel="${nivelDeNota(nota ?? 0).clave}">
+              ${sinCalcular ? '—' : nota}<small>/100</small>
+            </span>
           </div>
           <div class="parte__barra">
-            <i style="width:${sinCalcular ? 0 : c.nota}%" data-nivel="${nivelDeNota(c.nota ?? 0).clave}"></i>
+            <i style="width:${sinCalcular ? 0 : nota}%" data-nivel="${nivelDeNota(nota ?? 0).clave}"></i>
           </div>
-          <p class="parte__peso cifra">
+          ${lectura ? `<p class="parte__lectura">${esc(lectura)}</p>` : ''}
+          <p class="parte__peso">
             ${sinCalcular
-              ? 'no se ha podido calcular · su peso se ha repartido entre las demás'
-              : `pesa el ${pct} % de la nota${pct !== nominal ? ` · normalmente pesa el ${nominal} %, ha subido porque otra parte no se pudo calcular` : ''}`}
+              ? 'No se ha podido calcular, así que su peso se reparte entre las demás.'
+              : `pesa el ${pct} % de la nota${pct !== nominal ? ` (de ${nominal} % habitual)` : ''}`}
           </p>
         </div>`;
     }).join('')}`;

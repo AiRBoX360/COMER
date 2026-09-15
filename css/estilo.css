@@ -50,8 +50,11 @@
      reordenarse: el 4 pasa a un verde bosque más oscuro, porque aclararlo lo
      habría pegado al amarillo y se confundirían el 3 y el 4. Con estos dos hay
      2,01 de separación entre sí y 2,74 frente al amarillo. */
-  --verde-claro:#4E7A28;
-  --verde-parchis:#78B341;
+  /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
+     tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
+     el 4, y 1,48 entre el 4 y el 5. */
+  --verde-claro:#78B341;
+  --verde-parchis:#9AD689;
 
   /* En oscuro, relleno y letra coinciden: sobre fondo negro un color vivo se
      lee bien de las dos maneras. */
@@ -65,7 +68,7 @@
   --sobre-rojo:#FFFFFF;
   --sobre-naranja:#101319;
   --sobre-amarillo:#101319;
-  --sobre-verde-claro:#FFFFFF;
+  --sobre-verde-claro:#101319;
   --sobre-verde-parchis:#101319;
 
   /* El tinte de fondo, muy suave, que quita la sensación de hoja de cálculo */
@@ -98,20 +101,25 @@
   --rojo:#D0392F;
   --naranja:#E07B1C;
   --amarillo:#E9B81A;
-  --verde-claro:#4E7A28;
-  --verde-parchis:#78B341;
+  /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
+     tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
+     el 4, y 1,48 entre el 4 y el 5. */
+  --verde-claro:#78B341;
+  --verde-parchis:#9AD689;
 
   /* Los mismos, oscurecidos, para cuando van como letra pequeña */
   --rojo-letra:#B32B22;
   --naranja-letra:#9A5410;
   --amarillo-letra:#7A5F05;
-  --verde-claro-letra:#3F6B26;
-  --verde-parchis-letra:#4C7526;
+  /* Los rellenos claros no se leen como letra pequeña sobre el fondo: hacen
+     falta versiones oscurecidas, medidas aparte. */
+  --verde-claro-letra:#4C7526;
+  --verde-parchis-letra:#3F6B26;
 
   --sobre-rojo:#FFFFFF;
   --sobre-naranja:#1A1D24;
   --sobre-amarillo:#1A1D24;
-  --sobre-verde-claro:#FFFFFF;
+  --sobre-verde-claro:#1A1D24;
   --sobre-verde-parchis:#1A1D24;
 
   --tinte-a:rgba(114,172,60,.10);
@@ -241,7 +249,7 @@ button{touch-action:manipulation}
 /* --- Accesibilidad -------------------------------------------------------- */
 .saltar{
   position:absolute; left:-9999px; top:0; z-index:100;
-  background:var(--hueso); color:var(--tinta);
+  background:var(--carbon); color:var(--hueso);
   padding:var(--e3) var(--e4); border-radius:0 0 var(--radio-xs) 0;
   font-weight:600;
 }
@@ -344,19 +352,22 @@ button{touch-action:manipulation}
 
 /* Botón principal: ocupa espacio a propósito, se pulsa con el pulgar */
 .boton-grande{
-  appearance:none; width:100%; border:0; cursor:pointer;
-  background:var(--hueso); color:var(--tinta);
+  appearance:none; cursor:pointer; width:100%;
+  display:block; text-align:center;
+  padding:var(--e4);
+  border:1.5px solid var(--verde-claro);
   border-radius:var(--radio);
-  padding:var(--e6) var(--e4);
-  font-family:var(--display); font-weight:800;
-  font-size:var(--t6); letter-spacing:-.01em;
-  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
-  transition:transform .12s ease, opacity .12s ease;
+  background:var(--carbon);
+  color:var(--hueso);
+  font-family:var(--display); font-weight:700; font-size:var(--t4);
+  line-height:1.2;
 }
 .boton-grande:active{transform:scale(.985)}
 .boton-grande small{
-  font-family:var(--cuerpo); font-weight:400; font-size:var(--t2);
-  color:rgba(16,19,25,.62); letter-spacing:0;
+  display:block; margin-top:var(--e1);
+  font-family:var(--datos); font-weight:400; font-size:var(--t0);
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ceniza);
 }
 .boton-grande:disabled{
   background:var(--carbon-alto); color:var(--ceniza);
@@ -366,11 +377,11 @@ button{touch-action:manipulation}
 
 .boton{
   appearance:none; cursor:pointer;
-  background:none; color:var(--hueso);
-  border:1.5px solid var(--linea);
-  border-radius:var(--radio-s);
   padding:var(--e3) var(--e4);
-  font-family:var(--cuerpo); font-weight:600; font-size:var(--t3);
+  border:1.5px solid var(--verde-claro);
+  border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t2); line-height:1.25;
 }
 .boton:disabled{color:var(--ceniza-tenue); cursor:not-allowed}
 
@@ -799,12 +810,14 @@ button{touch-action:manipulation}
 /* --- Ficha de cada ingrediente -------------------------------------------- */
 .fichas{margin-top:var(--e3)}
 .ficha{
-  background:var(--carbon);
   border:1.5px solid var(--linea);
-  border-left:3px solid var(--ceniza-tenue);
-  border-radius:var(--radio-s);
+  border-left-width:4px;
+  border-radius:var(--radio);
+  background:var(--carbon);
   margin-bottom:var(--e2);
+  overflow:hidden;
 }
+.ficha[open]{border-color:var(--verde-claro); border-left-width:4px}
 .ficha--favorable{border-left-color:var(--verde-claro-letra)}
 .ficha--limitar{border-left-color:var(--naranja-letra)}
 .ficha--neutro{border-left-color:var(--ceniza-tenue)}
@@ -944,7 +957,7 @@ button{touch-action:manipulation}
   padding:var(--e2) var(--e4);
   font-family:var(--cuerpo); font-weight:600; font-size:var(--t2);
 }
-.filtro.es-activo{background:var(--hueso); color:var(--tinta); border-color:var(--hueso)}
+.filtro.es-activo{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
 
 /* --- Lo que se repite en tu despensa -------------------------------------- */
 .repetidas{margin-bottom:var(--e5)}
@@ -1127,10 +1140,7 @@ button{touch-action:manipulation}
 }
 .vigila li span{font-size:var(--t1); color:var(--ceniza-tenue)}
 /* El segundo botón grande pesa menos: hay una acción principal, no dos. */
-.boton-grande--suave{
-  background:var(--carbon); color:var(--hueso);
-  border:1.5px solid var(--linea);
-}
+.boton-grande--suave{background:var(--tinte-a)}
 .boton-grande--suave small{color:var(--ceniza-tenue)}
 
 /* --- Modo supermercado ---------------------------------------------------- */
@@ -1525,9 +1535,6 @@ body{
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 55%), var(--carbon);
   color:var(--hueso);
 }
-.accion--principal{
-  background:var(--hueso); color:var(--tinta); border-color:transparent;
-}
 .accion__icono{
   flex:none; width:3rem; height:3rem;
   display:flex; align-items:center; justify-content:center;
@@ -1652,7 +1659,7 @@ body{
   background:var(--carbon);
   color:var(--ceniza);
 }
-.filtro.es-activo{background:var(--hueso); color:var(--tinta); border-color:transparent}
+.filtro.es-activo{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
 .filtros{display:flex; flex-wrap:wrap; gap:0.4rem}
 
 /* --- La bienvenida --------------------------------------------------------
@@ -1726,7 +1733,7 @@ body{
   background:var(--carbon); color:var(--ceniza);
   font-size:var(--t2); line-height:1.2; text-align:left;
 }
-.elegible.es-elegido{background:var(--hueso); color:var(--tinta); border-color:transparent}
+.elegible.es-elegido{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
 
 .combi{
   border:1.5px solid var(--linea);
@@ -2379,3 +2386,71 @@ body{
   stroke-linecap:round; stroke-linejoin:round;
 }
 .campo__entrada:has(.campo__lupa) input{flex:1; min-width:0; border:0; background:none; padding-left:0}
+
+/* --- Ordenar, en un desplegable -------------------------------------------
+   Eran cuatro pastillas siempre a la vista, de las que solo una estaba
+   elegida. Ocupaban dos líneas para decir una cosa. */
+.ordenar{
+  display:flex; align-items:center; gap:var(--e2);
+  padding:0.4rem 0.5rem 0.4rem 0.9rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio-pastilla);
+  background:var(--carbon);
+}
+.ordenar__rotulo{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.ordenar__lista{
+  appearance:none; cursor:pointer;
+  border:0; background:none; color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t1);
+  padding:0 1.1rem 0 0.2rem;
+  background-image:linear-gradient(45deg, transparent 50%, currentColor 50%),
+                   linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:right 0.35rem center, right 0.05rem center;
+  background-size:0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat:no-repeat;
+}
+.resultados__cuenta{
+  display:block; margin:0 0 var(--e3);
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+
+/* --- La tabla nutricional, en casillas ------------------------------------- */
+.tabla-nut{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e2);
+}
+@media (min-width:26rem){ .tabla-nut{grid-template-columns:repeat(3,1fr)} }
+
+.casilla{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:var(--e3) var(--e2);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon);
+  text-align:center;
+}
+.casilla b{
+  font-family:var(--datos); font-size:var(--t5); font-weight:600;
+  color:var(--hueso); line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.casilla b small{font-size:var(--t1); font-weight:400; color:var(--ceniza-tenue); margin-left:1px}
+.casilla span{font-size:var(--t1); line-height:1.3; color:var(--ceniza)}
+.casilla i{
+  font-family:var(--datos); font-style:normal; font-size:var(--t0);
+  letter-spacing:.08em; text-transform:uppercase; color:var(--amarillo-letra);
+}
+.casilla--calc{border-style:dashed}
+
+/* --- El desglose: la nota en palabras, no solo en número ------------------- */
+.parte__lectura{
+  margin:var(--e2) 0 0;
+  font-size:var(--t2); line-height:1.4; color:var(--hueso);
+}
+.parte__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
+.parte__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
+.parte__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
+.parte__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
+.parte__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
+.parte__nota small{color:var(--ceniza-tenue); font-weight:400}

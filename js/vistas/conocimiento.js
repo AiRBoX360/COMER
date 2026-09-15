@@ -171,11 +171,19 @@ function bloqueResultados(todos) {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
         Volver
       </button>
-      <span class="resultados__cuenta">
-        ${familia ? esc(familia.nombre) + ' · ' : ''}${
-          hayMas ? `${resultados.length} de ${todos.length}` : `${todos.length} ficha(s)`}
-      </span>
+      <label class="ordenar">
+        <span class="ordenar__rotulo">Ordenar</span>
+        <select class="ordenar__lista" id="ordenSaber">
+          ${ORDENES.map((o) => `
+            <option value="${o.clave}"${o.clave === orden ? ' selected' : ''}>${esc(o.nombre)}</option>`).join('')}
+        </select>
+      </label>
     </div>
+
+    <p class="resultados__cuenta">
+      ${familia ? esc(familia.nombre) + ' · ' : ''}${
+        hayMas ? `${resultados.length} de ${todos.length} fichas` : `${todos.length} ficha(s)`}
+    </p>
 
     ${resultados.length === 0
       ? vacio('Nada con ese nombre', 'Prueba con menos letras, o con el código E si es un aditivo.')
@@ -184,10 +192,6 @@ function bloqueResultados(todos) {
           <button class="filtro${soloLimitar ? ' es-activo' : ''}" data-solo="limitar">
             Solo lo que conviene limitar
           </button>
-          ${ORDENES.map((o) => `
-            <button class="filtro${o.clave === orden ? ' es-activo' : ''}" data-orden="${o.clave}">
-              ${o.nombre}
-            </button>`).join('')}
         </div>
         ${resultados.map(fichaHTML).join('')}
         ${hayMas ? `
@@ -251,6 +255,14 @@ export async function conocimientoActivo(raiz, { repintar }) {
     zona.innerHTML = buscando
       ? bloqueResultados(resultadosAhora())
       : bloquePuertas(r) + bloqueDespensa();
+    // El desplegable se rehace con la zona, así que hay que volver a
+    // engancharlo. Con un botón bastaba el oyente general del contenedor;
+    // "change" no burbujea igual de cómodo desde un select recreado.
+    zona.querySelector('#ordenSaber')?.addEventListener('change', (ev) => {
+      orden = ev.target.value;
+      tope = 60;
+      refrescarZona();
+    });
   }
 
   raiz.addEventListener('click', (e) => {
