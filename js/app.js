@@ -26,7 +26,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.11.0';
+export const VERSION = '4.12.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -74,10 +74,42 @@ const pestanas = Array.from(document.querySelectorAll('.barra__pestana'));
 
 let vistaActual = null;
 
-function irA(clave, conservarScroll = false) {
+/**
+ * Por dónde has ido, para que la flecha de atrás funcione.
+ *
+ * En Android la flecha del teléfono es la forma normal de volver. La app no
+ * guardaba ninguna entrada de historial, así que esa flecha solo podía hacer
+ * una cosa: sacarte de la aplicación. Se perdía lo que estuvieras haciendo.
+ *
+ * Se guarda una entrada por pantalla visitada. Al pulsar atrás se vuelve a la
+ * anterior, y solo cuando ya no queda ninguna se sale, que es lo esperable.
+ */
+const recorrido = [];
+/** Se levanta mientras se navega hacia atrás, para no volver a apilar. */
+let volviendo = false;
+
+window.addEventListener('popstate', (e) => {
+  const destino = e.state?.vista;
+  if (!destino || !VISTAS[destino]) return;
+  volviendo = true;
+  irA(destino, false, true);
+  volviendo = false;
+});
+
+function irA(clave, conservarScroll = false, desdeHistorial = false) {
   const vista = VISTAS[clave];
   if (!vista || (clave === vistaActual && !conservarScroll)) return;
   vistaActual = clave;
+
+  // Una entrada por pantalla. No se apila al volver atrás ni al repintar la
+  // misma pantalla, o la flecha tendría que pulsarse varias veces.
+  if (!desdeHistorial && !volviendo && !conservarScroll) {
+    recorrido.push(clave);
+    try {
+      // Sin tercer argumento: la dirección no cambia, solo se apila el estado.
+      history.pushState({ vista: clave }, '');
+    } catch { /* sin historial, la app sigue funcionando igual */ }
+  }
 
   const zona = document.querySelector('.principal');
   const y = conservarScroll ? (zona?.scrollTop ?? 0) : 0;
@@ -266,6 +298,10 @@ export { irA };
 
 // La bienvenida solo la primera vez. Después queda accesible desde "Qué es y
 // qué no es", por si alguien quiere volver a verla o enseñársela a otro.
+// La pantalla de arranque reemplaza la entrada actual en vez de añadir una:
+// si no, la primera flecha atrás no haría nada visible.
+try { history.replaceState({ vista: 'inicio' }, ''); } catch { /* da igual */ }
+
 if (bienvenidaVista()) {
   irA('inicio');
 } else {

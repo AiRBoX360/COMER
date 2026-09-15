@@ -19,6 +19,8 @@ let termino = '';
 let tipoActivo = '';
 let soloLimitar = false;
 let orden = 'alfabetico';
+/** Cuántas fichas se enseñan de golpe. Se amplía con el botón de ver todas. */
+let tope = 60;
 let recuento = null;
 
 const TIPOS = [
@@ -101,14 +103,7 @@ export function conocimiento() {
   const r = resumenCatalogo();
   const buscando = termino.trim().length > 0 || tipoActivo !== '';
 
-  const resultados = buscando
-    ? buscar(termino, {
-        tipos: tipoActivo ? [tipoActivo] : undefined,
-        soloLimitar: soloLimitar || undefined,
-        orden,
-        limite: 60,
-      })
-    : [];
+  const resultados = buscando ? resultadosAhora() : [];
 
   return `
     ${nombrePantalla('Saber')}
@@ -148,17 +143,37 @@ function bloquePuertas(r) {
     </p>`;
 }
 
+/**
+ * Todo lo que casa, sin recortar.
+ *
+ * Hace falta saber el total, no solo la página. Con 204 aditivos que conviene
+ * limitar de 300, poner el filtro dejaba el mismo número de fichas a la vista
+ * —las 60 del tope— y parecía que el botón no hacía nada. Enseñando "60 de
+ * 204" se ve que sí.
+ */
+function resultadosAhora() {
+  return buscar(termino, {
+    tipos: tipoActivo ? [tipoActivo] : undefined,
+    soloLimitar: soloLimitar || undefined,
+    orden,
+    limite: 9999,
+  });
+}
+
 /** Los resultados, con los filtros solo cuando hay algo que filtrar. */
-function bloqueResultados(resultados) {
+function bloqueResultados(todos) {
   const familia = FAMILIAS.find((f) => f.clave === tipoActivo);
+  const resultados = todos.slice(0, tope);
+  const hayMas = todos.length > tope;
   return `
     <div class="resultados__cabeza">
-      <button class="volver" data-tipo="" aria-label="Volver a todas las familias">
+      <button class="volver" id="btnVolverSaber" aria-label="Volver a las familias">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-        Todo
+        Volver
       </button>
       <span class="resultados__cuenta">
-        ${familia ? esc(familia.nombre) + ' · ' : ''}${resultados.length} ficha(s)
+        ${familia ? esc(familia.nombre) + ' · ' : ''}${
+          hayMas ? `${resultados.length} de ${todos.length}` : `${todos.length} ficha(s)`}
       </span>
     </div>
 
@@ -174,7 +189,11 @@ function bloqueResultados(resultados) {
               ${o.nombre}
             </button>`).join('')}
         </div>
-        ${resultados.map(fichaHTML).join('')}`}`;
+        ${resultados.map(fichaHTML).join('')}
+        ${hayMas ? `
+          <button class="boton" id="btnVerTodas" style="width:100%; margin-top:var(--e3)">
+            Ver las ${todos.length - tope} restantes
+          </button>` : ''}`}`;
 }
 
 /** Lo que más se repite en tu despensa: plegado y en voz baja. */
@@ -218,6 +237,7 @@ export async function conocimientoActivo(raiz, { repintar }) {
      */
     caja.addEventListener('input', () => {
       termino = caja.value;
+      tope = 60;
       refrescarZona();
     });
   }
@@ -228,22 +248,32 @@ export async function conocimientoActivo(raiz, { repintar }) {
     if (!zona) return;
     const r = resumenCatalogo();
     const buscando = termino.trim().length > 0 || tipoActivo !== '';
-    const resultados = buscando
-      ? buscar(termino, {
-          tipos: tipoActivo ? [tipoActivo] : undefined,
-          soloLimitar: soloLimitar || undefined,
-          orden,
-          limite: 60,
-        })
-      : [];
     zona.innerHTML = buscando
-      ? bloqueResultados(resultados)
+      ? bloqueResultados(resultadosAhora())
       : bloquePuertas(r) + bloqueDespensa();
   }
 
   raiz.addEventListener('click', (e) => {
+    // Volver borra TODO lo que te tiene en modo búsqueda: la familia elegida y
+    // lo escrito. Antes solo quitaba la familia, así que si habías llegado
+    // escribiendo no pasaba nada y el botón parecía muerto.
+    if (e.target.closest('#btnVerTodas')) {
+      tope = 9999;
+      refrescarZona();
+      return;
+    }
+    if (e.target.closest('#btnVolverSaber')) {
+      tipoActivo = '';
+      termino = '';
+      soloLimitar = false;
+      tope = 60;
+      const caja3 = raiz.querySelector('#buscarFicha');
+      if (caja3) caja3.value = '';
+      refrescarZona();
+      return;
+    }
     const t = e.target.closest('[data-tipo]');
-    if (t) { tipoActivo = t.dataset.tipo; refrescarZona(); return; }
+    if (t) { tipoActivo = t.dataset.tipo; tope = 60; refrescarZona(); return; }
     const rep = e.target.closest('[data-buscar]');
     if (rep) {
       termino = rep.dataset.buscar;
@@ -256,7 +286,7 @@ export async function conocimientoActivo(raiz, { repintar }) {
     const o = e.target.closest('[data-orden]');
     if (o) { orden = o.dataset.orden; refrescarZona(); return; }
     const s = e.target.closest('[data-solo]');
-    if (s) { soloLimitar = !soloLimitar; refrescarZona(); }
+    if (s) { soloLimitar = !soloLimitar; tope = 60; refrescarZona(); }
   });
 }
 
