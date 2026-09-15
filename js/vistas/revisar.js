@@ -146,7 +146,7 @@ export function revisar() {
   const errores = incidencias.filter((i) => i.gravedad === 'error').length;
 
   return `
-    <h1 class="titulo">Revisar antes de analizar</h1>
+    ${nombrePantalla('Revisar')}
     <div class="en-curso">
       <div class="en-curso__texto">
         <b>${esc(enCurso.nombre || 'Producto sin nombre')}</b>

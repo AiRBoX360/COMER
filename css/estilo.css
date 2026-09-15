@@ -53,8 +53,10 @@
   /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
      tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
      el 4, y 1,48 entre el 4 y el 5. */
-  --verde-claro:#78B341;
-  --verde-parchis:#9AD689;
+  /* El nivel 5, el mejor, lleva el verde que predomina en la app. El 4 es ese
+     mismo verde claro con un 15 % más de amarillo. */
+  --verde-claro:#B1D674;
+  --verde-parchis:#78B341;
 
   /* En oscuro, relleno y letra coinciden: sobre fondo negro un color vivo se
      lee bien de las dos maneras. */
@@ -104,8 +106,10 @@
   /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
      tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
      el 4, y 1,48 entre el 4 y el 5. */
-  --verde-claro:#78B341;
-  --verde-parchis:#9AD689;
+  /* El nivel 5, el mejor, lleva el verde que predomina en la app. El 4 es ese
+     mismo verde claro con un 15 % más de amarillo. */
+  --verde-claro:#B1D674;
+  --verde-parchis:#78B341;
 
   /* Los mismos, oscurecidos, para cuando van como letra pequeña */
   --rojo-letra:#B32B22;
@@ -113,8 +117,8 @@
   --amarillo-letra:#7A5F05;
   /* Los rellenos claros no se leen como letra pequeña sobre el fondo: hacen
      falta versiones oscurecidas, medidas aparte. */
-  --verde-claro-letra:#4C7526;
-  --verde-parchis-letra:#3F6B26;
+  --verde-claro-letra:#5F7D2C;
+  --verde-parchis-letra:#4C7526;
 
   --sobre-rojo:#FFFFFF;
   --sobre-naranja:#1A1D24;
@@ -650,7 +654,7 @@ button{touch-action:manipulation}
 .pegar{
   width:100%; display:block;
   background:var(--carbon); color:var(--hueso);
-  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
   padding:var(--e3);
   font-family:var(--datos); font-size:var(--t2); line-height:1.5;
   resize:vertical;
@@ -697,13 +701,21 @@ button{touch-action:manipulation}
   display:block; font-size:var(--t3); color:var(--ceniza);
   margin-bottom:var(--e2);
 }
-.campo__entrada{display:flex; align-items:center; gap:var(--e2)}
+.campo__entrada{
+  display:flex; align-items:center; gap:var(--e2);
+  border:1.5px solid var(--verde-claro);
+  border-radius:var(--radio-s);
+  background:var(--carbon);
+  padding:0 var(--e3);
+}
+/* El borde lo lleva el contenedor, no el campo: si lo llevan los dos se ve
+   una línea doble, que es lo que pasaba. */
 .campo__entrada input,
 .campo__entrada select{
   flex:1; min-width:0;
-  background:var(--carbon); color:var(--hueso);
-  border:1.5px solid var(--linea); border-radius:var(--radio-s);
-  padding:var(--e3);
+  background:none; color:var(--hueso);
+  border:0;
+  padding:var(--e3) 0;
   font-family:var(--datos); font-size:var(--t4);
   font-variant-numeric:tabular-nums;
 }
@@ -887,7 +899,7 @@ button{touch-action:manipulation}
 .bloque{margin-bottom:var(--e6)}
 .producto{
   display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1.5px solid var(--linea);
+  background:var(--carbon); border:1.5px solid var(--verde-claro);
   border-radius:var(--radio-s);
   padding:var(--e3);
   margin-bottom:var(--e2);
@@ -1529,7 +1541,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e4);
-  border:1.5px solid var(--linea);
+  border:1.5px solid var(--verde-claro);
   border-radius:var(--radio);
   margin:var(--e3) 0;
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 55%), var(--carbon);
@@ -1729,7 +1741,7 @@ body{
 .elegible{
   appearance:none; cursor:pointer;
   padding:0.45rem 0.85rem;
-  border:1.5px solid var(--linea); border-radius:var(--radio);
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
   background:var(--carbon); color:var(--ceniza);
   font-size:var(--t2); line-height:1.2; text-align:left;
 }
@@ -2378,14 +2390,14 @@ body{
 }
 
 /* --- La lupa dentro del campo de búsqueda ---------------------------------- */
-.campo__entrada:has(.campo__lupa){display:flex; align-items:center; gap:var(--e2)}
+
 .campo__lupa{flex:none; display:flex; color:var(--ceniza-tenue); padding-left:var(--e2)}
 .campo__lupa svg{
   width:1.15rem; height:1.15rem; display:block;
   fill:none; stroke:currentColor; stroke-width:2;
   stroke-linecap:round; stroke-linejoin:round;
 }
-.campo__entrada:has(.campo__lupa) input{flex:1; min-width:0; border:0; background:none; padding-left:0}
+
 
 /* --- Ordenar, en un desplegable -------------------------------------------
    Eran cuatro pastillas siempre a la vista, de las que solo una estaba
@@ -2454,3 +2466,42 @@ body{
 .parte__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
 .parte__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
 .parte__nota small{color:var(--ceniza-tenue); font-weight:400}
+
+/* --- Corregir lo que esté mal ---------------------------------------------
+   Lleva a Revisar, que ya existía. Lo que faltaba no era un editor: era poder
+   volver a él una vez visto el resultado. */
+.corregir{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; gap:var(--e2);
+  margin-top:var(--e4);
+  padding:var(--e2) var(--e4) var(--e2) var(--e3);
+  border:1.5px solid var(--verde-claro); border-radius:var(--radio-pastilla);
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t2);
+}
+.corregir svg{
+  width:1.1rem; height:1.1rem; flex:none;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* --- Los bloques de color, ahora plegables --------------------------------
+   Con la despensa llena, poder cerrar "Especialmente favorable" para mirar
+   solo lo que conviene limitar es justo para lo que sirve esta pantalla. */
+.bloque__barra{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+}
+.bloque__barra::-webkit-details-marker{display:none}
+.bloque__flecha{flex:none; display:flex; opacity:.72}
+.bloque__flecha svg{
+  width:1.1rem; height:1.1rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .18s ease;
+}
+.bloque[open] .bloque__flecha svg{transform:rotate(180deg)}
+
+@media (prefers-reduced-motion:reduce){
+  .bloque__flecha svg{transition:none}
+}

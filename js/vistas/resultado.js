@@ -179,6 +179,26 @@ function bloqueAlergenos(v) {
     <p class="apunte-via">${esc(v.avisoAlergenos)}</p>`;
 }
 
+/**
+ * El botón para corregir lo que esté mal.
+ *
+ * Lleva a Revisar, que es la pantalla que ya existía para esto: comprueba
+ * unidades, detecta comas perdidas y deja añadir o quitar lo que sea. Lo que
+ * faltaba no era un editor, era poder volver a él desde aquí.
+ *
+ * Los datos siguen cargados, así que se abre con lo que ya hay y se corrige
+ * encima. Al volver, la nota se recalcula con lo que hayas cambiado.
+ */
+function corregir(que) {
+  return `
+    <button class="corregir" data-corregir="${que}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="M13.5 6.5l4 4"/>
+      </svg>
+      ${que === 'tabla' ? 'Corregir la tabla' : 'Corregir los ingredientes'}
+    </button>`;
+}
+
 /** Lo que hay en la etiqueta, por 100 g, en casillas. */
 const FILAS_TABLA = [
   { clave: 'energia_kcal', nombre: 'Energía', unidad: 'kcal' },
@@ -443,8 +463,9 @@ export function resultado() {
       </div>` : ''}
 
     <div class="secciones">
-      ${seccion('Ingredientes', listaExplicada(enCurso.ingredientes) + bloqueAlergenos(v))}
-      ${seccion('Tabla nutricional', bloqueTabla(v))}
+      ${seccion('Ingredientes',
+        listaExplicada(enCurso.ingredientes) + bloqueAlergenos(v) + corregir('ingredientes'))}
+      ${seccion('Tabla nutricional', bloqueTabla(v) + corregir('tabla'))}
       ${seccion('De qué se compone', desglose(v) + topes(v))}
       ${seccion('Conviene limitar',
         bloque('', 'Ordenado de más a menos relevante.', v.limitar, 'malo'))}
@@ -467,10 +488,6 @@ export function resultado() {
       </span>
     </button>
     <p class="texto" id="estadoGuardar" role="status" aria-live="polite" style="margin-top:12px"></p>
-
-    <p class="texto" style="margin-top:24px; font-size:0.85rem">
-      Calculado con la versión ${esc(v.versionAlgoritmo)} del algoritmo.
-    </p>
   `;
 }
 
@@ -524,6 +541,12 @@ function pintarDeLaDespensa(hueco, alt) {
 
 export function resultadoActivo(raiz, { irA }) {
   pintarAlternativas(raiz, enCurso.veredicto ?? {}).catch(() => { /* sin base, sin alternativas */ });
+
+  // Corregir lleva a Revisar, que es la pantalla que ya hacía esto. Los datos
+  // siguen cargados, así que se abre con lo que hay y se corrige encima.
+  raiz.addEventListener('click', (e) => {
+    if (e.target.closest('[data-corregir]')) irA('revisar');
+  });
 
   raiz.querySelector('#alternativas')?.addEventListener('click', () => irA('despensa'));
 

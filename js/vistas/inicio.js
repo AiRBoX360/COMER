@@ -131,7 +131,8 @@ export function inicio({ irA }) {
       <h2 class="rotulo">Cambiar de pestaña deslizando</h2>
       <div class="interruptor">
         <label for="swDeslizar">Desliza el dedo a izquierda o derecha para pasar de una pestaña a otra.</label>
-        <button class="interruptor__boton" id="swDeslizar" role="switch" aria-checked="false">
+        <button class="interruptor__boton" id="swDeslizar" role="switch"
+                aria-checked="false" aria-label="Cambiar de pestaña deslizando">
           <span></span>
         </button>
       </div>

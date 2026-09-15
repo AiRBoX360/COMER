@@ -122,26 +122,15 @@ function tarjetaToma(t) {
     </div>`;
 }
 
-/**
- * Qué producto hay cargado ahora mismo.
- *
- * Sin esto, los datos de un producto se colaban en el siguiente sin que nada
- * lo delatara: si la lectura nueva no reconocía los ingredientes, quedaban los
- * del anterior y el veredicto salía mal en silencio. Un análisis a medias
- * invisible es peor que uno vacío.
- */
-function barraEnCurso() {
-  if (!hayAlgoEnCurso()) return '';
-  const r = resumenEnCurso();
-  return `
-    <div class="en-curso">
-      <div class="en-curso__texto">
-        <b>${esc(r.nombre || 'Producto sin nombre')}</b>
-        <span>${r.campos} dato(s) de la tabla · ${r.ingredientes} ingrediente(s)</span>
-      </div>
-      <button class="boton" id="btnEmpezarDeNuevo">Empezar de nuevo</button>
-    </div>`;
-}
+// La barra de "lo que tienes a medias" salió de aquí.
+//
+// Estaba para no perder un análisis empezado si te ibas de la pantalla y
+// volvías. Pero lo que se guarda casi siempre viene de escanear un código, y
+// eso se rehace en dos segundos: avisaba de algo que no costaba nada perder, y
+// ocupaba lo primero que ves al entrar.
+//
+// Lo que sí se guarda sigue guardado: si estabas a medias y vuelves, tus datos
+// están ahí. Simplemente ya no se anuncia.
 
 /**
  * Qué vía está abierta. Solo una a la vez.
@@ -315,7 +304,6 @@ export function analizar() {
 
   return `
     ${nombrePantalla('Analizar')}
-    ${barraEnCurso()}
 
     <div class="vias">
       ${abiertaVia

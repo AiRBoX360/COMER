@@ -127,31 +127,58 @@ function ficha(p) {
     </article>`;
 }
 
+/**
+ * Una sección plegable de la Despensa.
+ *
+ * `abierta` decide si arranca desplegada. La de los alimentos sí: si no,
+ * abrirías la Despensa y no verías tu despensa. Las demás no son el contenido
+ * de esta pantalla, son puertas a otras cosas.
+ */
+function seccion(clave, titulo, cuerpo, abierta = false) {
+  if (!cuerpo || !String(cuerpo).trim()) return '';
+  return `
+    <details class="seccion" data-seccion="${clave}"${abierta ? ' open' : ''}>
+      <summary>
+        <span class="seccion__nombre">${esc(titulo)}</span>
+        <span class="seccion__flecha" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </summary>
+      <div class="seccion__cuerpo">${cuerpo}</div>
+    </details>`;
+}
+
 export function despensa() {
   const total = cache.length;
   // Dos formas de buscar: por el nombre del producto, o DENTRO de él. La
   // segunda es la que convierte la despensa en algo consultable: poder
   // preguntar "¿qué tengo con aceite de palma?".
   const visibles = filtro ? cache.filter((p) => coincide(p, filtro)) : cache;
-
-  const bloques = NIVELES.slice().reverse().map((n) => {
-    const suyos = visibles.filter((p) => p.semaforo === n.clave);
-    if (total > 0 && suyos.length === 0) return '';
-    return `
-      <section class="bloque" data-nivel="${n.clave}">
-        <h3 class="bloque__barra">
-          <span class="bloque__nombre">${esc(n.texto)}</span>
-          <span class="bloque__cuantos cifra">${suyos.length}</span>
-        </h3>
-        ${suyos.map(ficha).join('') || '<p class="texto" style="font-size:0.9rem">Ninguno todavía.</p>'}
-      </section>`;
-  }).join('');
-
+  const bloques = bloquesDeColor(visibles, total);
   const sinNota = visibles.filter((p) => p.semaforo === null);
+
+  const alimentos = total === 0
+    ? vacio('Todavía no has guardado nada',
+        'Analiza un producto y pulsa "Guardar en la despensa". Aparecerá aquí.')
+    : `
+      <div class="campo">
+        <div class="campo__entrada">
+          <span class="campo__lupa" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
+          </span>
+          <input type="search" id="buscarDespensa" value="${esc(filtro)}"
+                 placeholder="${buscarDentro ? 'aceite de palma, E250, gluten…' : 'Buscar por nombre'}"
+                 autocomplete="off">
+        </div>
+      </div>
+      <div class="filtros" style="margin-bottom:var(--e4)">
+        <button class="filtro${buscarDentro ? '' : ' es-activo'}" data-donde="nombre">Por nombre</button>
+        <button class="filtro${buscarDentro ? ' es-activo' : ''}" data-donde="dentro">Por lo que lleva dentro</button>
+      </div>
+      <div id="zonaDespensa">${listado(visibles, total, bloques, sinNota)}</div>`;
 
   return `
     ${nombrePantalla('Despensa')}
-    <p class="texto">Todo lo que has analizado, de lo que menos conviene a lo que más.</p>
 
     ${bloqueRecalculo()}
 
@@ -160,53 +187,88 @@ export function despensa() {
         <div><b>Este navegador no deja guardar nada.</b> Puedes analizar productos, pero se perderán al cerrar. Suele pasar en navegación privada.</div>
       </div>` : ''}
 
-    ${total === 0 ? vacio('Todavía no has guardado nada',
-      'Analiza un producto y pulsa "Guardar en la despensa". Aparecerá aquí.') : `
-      <div class="campo">
-        <div class="campo__entrada">
-          <span class="campo__lupa" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
-        </span>
-        <input type="search" id="buscarDespensa" value="${esc(filtro)}"
-                 placeholder="${buscarDentro ? 'aceite de palma, E250, gluten…' : 'Buscar por nombre'}"
-                 autocomplete="off">
+    <div class="secciones">
+      ${seccion('alimentos', `Alimentos analizados${total ? ` · ${total}` : ''}`, alimentos, true)}
+
+      ${total >= 2 ? seccion('comparar', 'Comparar productos', `
+        <p class="texto" style="font-size:var(--t2)">Dos de los tuyos, lado a lado: cuál conviene y por qué.</p>
+        <button class="boton" id="btnComparar" style="width:100%">Elegir dos productos</button>`) : ''}
+
+      ${total >= 2 ? seccion('juntar', 'Qué juntar', `
+        <p class="texto" style="font-size:var(--t2)">Qué alimentos tuyos se potencian entre sí, y cuáles se estorban.</p>
+        <button class="boton" id="btnCombinar" style="width:100%">Ver combinaciones</button>`) : ''}
+
+      ${total >= 2 ? seccion('recetas', 'Recetas', `
+        <p class="texto" style="font-size:var(--t2)">Elige lo que tienes a mano y te llevo a recetas de verdad, escritas por personas.</p>
+        <button class="boton" id="btnRecetasDespensa" style="width:100%">Buscar recetas</button>`) : ''}
+
+      ${seccion('copia', 'Copia de seguridad', `
+        <p class="texto" style="font-size:var(--t2)">Tus datos viven solo en este teléfono. Si el navegador se queda sin espacio puede borrarlos, así que conviene guardar una copia de vez en cuando.</p>
+        <div class="toma__botones">
+          <button class="boton" id="btnExportar">Guardar copia</button>
+          <button class="boton" id="btnImportar">Restaurar copia</button>
         </div>
-      </div>
-      <div class="filtros">
-        <button class="filtro${buscarDentro ? '' : ' es-activo'}" data-donde="nombre">Por nombre</button>
-        <button class="filtro${buscarDentro ? ' es-activo' : ''}" data-donde="dentro">Por lo que lleva dentro</button>
-      </div>
-      <div id="zonaDespensa">${listado(visibles, total, bloques, sinNota)}</div>`}
-
-    ${total >= 2 ? `
-      <button class="boton-grande" id="btnComparar" style="margin:24px 0 12px">
-        COMPARAR DOS PRODUCTOS
-        <small>Cuál conviene, y por qué</small>
-      </button>` : ''}
-    ${total >= 2 ? `
-      <button class="boton-grande boton-grande--suave" id="btnCombinar" style="margin-bottom:24px">
-        QUÉ JUNTAR
-        <small>Qué alimentos tuyos se potencian entre sí, y cuáles se estorban</small>
-      </button>` : ''}
-
-    <h2 class="subtitulo">Copia de seguridad</h2>
-    <p class="texto">Tus datos viven solo en este teléfono. Si el navegador se queda sin espacio puede borrarlos, así que conviene guardar una copia de vez en cuando.</p>
-    <div class="toma__botones">
-      <button class="boton" id="btnExportar">Guardar copia</button>
-      <button class="boton" id="btnImportar">Restaurar copia</button>
+        <p class="texto" id="estadoCopia" role="status" aria-live="polite" style="margin-top:12px; font-size:var(--t2)"></p>`)}
     </div>
-    <p class="texto" id="estadoCopia" role="status" aria-live="polite" style="margin-top:12px; font-size:0.92rem"></p>
   `;
+}
+
+/**
+ * Cuántos productos se enseñan de cada color antes de pedir más.
+ *
+ * Con 200 guardados, pintarlos todos daba 25 pantallas de scroll hasta llegar
+ * al final, 137 KB de HTML y 200 fotos cargándose de golpe. La sección de
+ * copia de seguridad quedaba materialmente inalcanzable.
+ *
+ * Cerrar la sección entera lo arreglaba a medias: seguías teniendo las 25
+ * pantallas en cuanto la abrías. Con un tope por color se arregla del todo y
+ * además sigues viendo tu despensa al entrar.
+ */
+const POR_BLOQUE = 6;
+const abiertos = new Set();
+
+/** Los cinco bloques de color, cada uno plegable y con su tope. */
+function bloquesDeColor(visibles, total) {
+  return NIVELES.slice().reverse().map((n) => {
+    const suyos = visibles.filter((p) => p.semaforo === n.clave);
+    if (total > 0 && suyos.length === 0) return '';
+    const todos = abiertos.has(n.clave);
+    const mostrados = todos ? suyos : suyos.slice(0, POR_BLOQUE);
+    const faltan = suyos.length - mostrados.length;
+    return `
+      <details class="bloque" data-nivel="${n.clave}" open>
+        <summary class="bloque__barra">
+          <span class="bloque__nombre">${esc(n.texto)}</span>
+          <span class="bloque__cuantos cifra">${suyos.length}</span>
+          <span class="bloque__flecha" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </summary>
+        ${mostrados.map(ficha).join('') || '<p class="texto" style="font-size:var(--t2)">Ninguno todavía.</p>'}
+        ${faltan > 0 ? `
+          <button class="boton" data-ver-todos="${n.clave}" style="width:100%; margin-top:var(--e2)">
+            Ver ${faltan} más
+          </button>` : ''}
+      </details>`;
+  }).join('');
 }
 
 export async function despensaActivo(raiz, { repintar }) {
   soltarFotos();
 
-  // Se cargan los productos y se repinta una sola vez, para no dejar la
-  // pantalla parpadeando mientras llegan.
-  if (cache.length === 0) {
+  // Se recarga SIEMPRE al entrar, no solo la primera vez.
+  //
+  // Antes solo se pedía la lista si la copia guardada estaba vacía. Eso hacía
+  // que un producto guardado desde Resultado no apareciera hasta cerrar y
+  // volver a abrir la app: la Despensa seguía enseñando lo que tenía de antes.
+  //
+  // Se repinta solo si algo ha cambiado, para no dejar la pantalla
+  // parpadeando cada vez que entras.
+  {
     const lista = await listar({ orden: 'fecha_desc' });
-    if (lista.length > 0) {
+    const cambiado = lista.length !== cache.length
+      || lista.some((p, i) => p.id !== cache[i]?.id);
+    if (cambiado) {
       cache = lista;
       pendientes = await simularRecalculoTodo();
       repintar();
@@ -254,18 +316,7 @@ export async function despensaActivo(raiz, { repintar }) {
     if (!zona) return;
     const visibles = filtro ? cache.filter((p) => coincide(p, filtro)) : cache;
     const total = cache.length;
-    const bloques = NIVELES.slice().reverse().map((n) => {
-      const suyos = visibles.filter((p) => p.semaforo === n.clave);
-      if (total > 0 && suyos.length === 0) return '';
-      return `
-        <section class="bloque" data-nivel="${n.clave}">
-          <h3 class="bloque__barra">
-            <span class="bloque__nombre">${esc(n.texto)}</span>
-            <span class="bloque__cuantos cifra">${suyos.length}</span>
-          </h3>
-          ${suyos.map(ficha).join('') || '<p class="texto" style="font-size:var(--t2)">Ninguno todavía.</p>'}
-        </section>`;
-    }).join('');
+    const bloques = bloquesDeColor(visibles, total);
     const sinNota = visibles.filter((p) => p.semaforo === null);
     zona.innerHTML = listado(visibles, total, bloques, sinNota);
     pintarFotos(zona);
@@ -321,8 +372,20 @@ export async function despensaActivo(raiz, { repintar }) {
     window.dispatchEvent(new CustomEvent('comer:comparar'));
   });
 
+  raiz.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ver-todos]');
+    if (!b) return;
+    abiertos.add(b.dataset.verTodos);
+    refrescarLista();
+  });
+
+  raiz.querySelector('#btnRecetasDespensa')?.addEventListener('click', () => {
+    reiniciarCombinar('recetas');
+    window.dispatchEvent(new CustomEvent('comer:combinar'));
+  });
+
   raiz.querySelector('#btnCombinar')?.addEventListener('click', () => {
-    reiniciarCombinar();
+    reiniciarCombinar('juntar');
     window.dispatchEvent(new CustomEvent('comer:combinar'));
   });
 
