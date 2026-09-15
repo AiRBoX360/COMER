@@ -26,9 +26,9 @@ import { dondeComprarlo } from './donde.js';
 const BUSCADOR = 'https://world.openfoodfacts.org/api/v2/search';
 const ESPERA_MS = 9000;
 /** Cuántos candidatos se piden. Más que esto es tardar sin ganar nada. */
-const CANDIDATOS = 24;
+const CANDIDATOS = 50;
 /** Por debajo de esta mejora no es una alternativa: es lo mismo de otra marca. */
-const MEJORA_MINIMA = 8;
+const MEJORA_MINIMA = 6;
 
 /**
  * Por qué no hubo alternativas la última vez.
@@ -39,6 +39,21 @@ const MEJORA_MINIMA = 8;
  */
 let ultimoMotivo = '';
 export function porQueNoHayAlternativas() { return ultimoMotivo; }
+
+/**
+ * Qué se ha preguntado y qué ha contestado el catálogo.
+ *
+ * Sin esto, "no hay alternativas" puede significar cinco cosas distintas: que
+ * el producto no trae categoría, que la categoría está vacía, que los
+ * candidatos no mejoran, que les faltan datos o que la consulta está mal
+ * formada. Ya pasó una vez: el parámetro estaba al revés y devolvía cero
+ * siempre, y desde fuera se veía igual que "no hay nada mejor".
+ */
+const intentos = [];
+const embudo = { candidatos: 0, sinDatos: 0, sinIngredientes: 0, noMejoran: 0, salen: 0 };
+export function diagnosticoAlternativas() {
+  return { intentos: [...intentos], ...embudo };
+}
 
 const CAMPOS = [
   'code', 'product_name', 'product_name_es', 'brands', 'quantity',
@@ -90,19 +105,31 @@ export async function alternativasDeFuera(actual, limite = 3) {
     return [];
   }
 
-  // Se prueba de la categoría más concreta a la más amplia hasta que alguna
-  // devuelva productos.
+  // Se prueba de la categoría más concreta a la más amplia, y cada una primero
+  // limitando a España y luego sin limitar.
+  //
+  // Lo de España descartaba productos que se venden aquí pero que nadie ha
+  // etiquetado con el país. Como segunda pasada vale la pena: mejor una
+  // alternativa de un catálogo más amplio que ninguna.
   let productos = [];
+  intentos.length = 0;
   for (const categoria of categorias) {
-    productos = await pedirCandidatos(categoria);
+    for (const soloEspana of [true, false]) {
+      productos = await pedirCandidatos(categoria, soloEspana);
+      intentos.push({ categoria, soloEspana, devueltos: productos.length });
+      if (productos.length > 0) break;
+    }
     if (productos.length > 0) break;
   }
   if (productos.length === 0) {
-    ultimoMotivo = 'no hay productos de esa categoría en España en Open Food Facts';
+    ultimoMotivo = 'Open Food Facts no devuelve productos parecidos: '
+      + intentos.map((i) => `${i.categoria}${i.soloEspana ? ' (España)' : ''} → 0`).join(', ');
     return [];
   }
   const salida = [];
   ultimoMotivo = '';
+  Object.assign(embudo, { candidatos: productos.length, sinDatos: 0,
+    sinIngredientes: 0, noMejoran: 0, salen: 0 });
 
   for (const crudo of productos) {
     if (String(crudo.code) === String(actual.codigo)) continue;
@@ -115,8 +142,12 @@ export async function alternativasDeFuera(actual, limite = 3) {
     const p = t.producto;
     // Sin la mitad de la tabla no se puede proponer: parecería mejor solo
     // porque falta información.
-    if (p.faltan.length > 1) continue;
-    if (!p.ingredientesTexto || p.ingredientesTexto.length < 12) continue;
+    // Se admite que falten hasta dos campos. El motor ya pone un techo a la
+    // nota cuando faltan datos, así que un producto incompleto no puede salir
+    // artificialmente bien: no hace falta ser más estricto aquí, y siéndolo se
+    // descartaban candidatos buenos.
+    if (p.faltan.length > 2) { embudo.sinDatos += 1; continue; }
+    if (!p.ingredientesTexto || p.ingredientesTexto.length < 12) { embudo.sinIngredientes += 1; continue; }
 
     const v = analizarProducto({
       nombre: p.nombre, categoria: p.categoria,
@@ -124,7 +155,7 @@ export async function alternativasDeFuera(actual, limite = 3) {
       ingredientes: p.ingredientesTexto.split(',').map((x) => ({ texto: x.trim() })),
     });
     if (typeof v.puntuacion !== 'number') continue;
-    if (v.puntuacion < actual.puntuacion + MEJORA_MINIMA) continue;
+    if (v.puntuacion < actual.puntuacion + MEJORA_MINIMA) { embudo.noMejoran += 1; continue; }
 
     salida.push({
       codigo: p.codigo,
@@ -140,20 +171,26 @@ export async function alternativasDeFuera(actual, limite = 3) {
     });
   }
 
+  embudo.salen = salida.length;
   if (salida.length === 0) {
-    ultimoMotivo = `se han mirado ${productos.length} productos parecidos y ninguno mejora lo bastante o le faltan datos`;
+    ultimoMotivo = `se han mirado ${productos.length} productos parecidos: `
+      + `${embudo.sinDatos} con datos incompletos, ${embudo.sinIngredientes} sin lista de `
+      + `ingredientes y ${embudo.noMejoran} que no mejoran lo bastante`;
   }
 
   // De mejor a peor, y sin repetir marca: tres patés de la misma casa no son
   // tres alternativas.
-  const vistas = new Set();
+  // Hasta dos por marca. Antes era una, y con un catálogo donde media
+  // categoría es de la misma casa eso dejaba fuera alternativas buenas.
+  const porMarca = new Map();
   return salida
     .sort((a, b) => b.puntuacion - a.puntuacion)
     .filter((x) => {
       const marca = x.marca.toLowerCase();
-      if (marca && vistas.has(marca)) return false;
-      vistas.add(marca);
-      return true;
+      if (!marca) return true;
+      const n = (porMarca.get(marca) ?? 0) + 1;
+      porMarca.set(marca, n);
+      return n <= 2;
     })
     .slice(0, limite);
 }
@@ -167,9 +204,9 @@ export async function alternativasDeFuera(actual, limite = 3) {
  * llamada literalmente "en:pates": no existe, así que devolvía cero productos
  * siempre y el bloque de alternativas no aparecía nunca.
  */
-async function pedirCandidatos(categoria) {
+async function pedirCandidatos(categoria, soloEspana = true) {
   const url = `${BUSCADOR}?categories_tags=${encodeURIComponent(categoria)}`
-    + `&countries_tags=${encodeURIComponent('en:spain')}`
+    + (soloEspana ? `&countries_tags=${encodeURIComponent('en:spain')}` : '')
     + `&sort_by=popularity_key&page_size=${CANDIDATOS}&fields=${CAMPOS}`;
 
   const control = new AbortController();

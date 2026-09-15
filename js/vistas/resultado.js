@@ -5,7 +5,9 @@ import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
-import { alternativasDeFuera, porQueNoHayAlternativas } from '../alternativasfuera.js';
+import { contarGuardado, tocaRecordar, textoRecordatorio } from '../recordatorio.js';
+import { alternativasDeFuera, porQueNoHayAlternativas,
+         diagnosticoAlternativas } from '../alternativasfuera.js';
 import { dondeComprarlo, textoDondeComprarlo,
          deDondeViene, textoDeDondeViene,
          porQueNoConstaOrigen } from '../donde.js';
@@ -104,8 +106,25 @@ function procedenciaCompacta() {
   if (d.origen.length) lineas.push(...d.origen);
   if (d.provincia) lineas.push(d.provincia);
   else if (d.envasado.length) lineas.push(...d.envasado);
-  // Cuando no consta, se dice. Callarse hace que un fallo del código y un dato
-  // que nadie ha rellenado se vean exactamente igual.
+
+  // Sin origen rellenado queda el país del código de barras. Va con su matiz
+  // porque no dice lo mismo: es dónde se registró la empresa, no dónde se hizo
+  // la comida.
+  //
+  // Esta rama faltaba. Como el país SÍ estaba, "por qué no consta" devolvía
+  // vacío y no se pintaba nada: ni la procedencia ni el aviso de que falta.
+  // El dato se calculaba bien y no llegaba a la pantalla.
+  if (lineas.length === 0 && d.registrado && d.registrado !== 'BALANZA') {
+    return `
+      <div class="procedencia">
+        <span class="procedencia__rotulo">Procedencia</span>
+        <span class="procedencia__linea">${esc(d.registrado)}</span>
+        <span class="procedencia__matiz">registro de la empresa</span>
+      </div>`;
+  }
+
+  // Cuando no consta nada, se dice. Callarse hace que un fallo del código y un
+  // dato que nadie ha rellenado se vean exactamente igual.
   if (lineas.length === 0) {
     const motivo = porQueNoConstaOrigen(d);
     return motivo
@@ -594,6 +613,27 @@ export function resultadoActivo(raiz, { irA }) {
       reiniciar();
       capturasActuales().clear();
       estado.textContent = 'Guardado. Ya está en tu Despensa, y el análisis queda cerrado para empezar otro.';
+
+      // Los datos viven solo en este teléfono. Avisar en la Despensa no sirve
+      // de mucho: nadie mira ahí. Se dice justo después de guardar, que es
+      // cuando acabas de añadir algo que perderías.
+      contarGuardado();
+      if (tocaRecordar()) {
+        const aviso = document.createElement('div');
+        aviso.className = 'recordatorio';
+        aviso.innerHTML = `
+          <p><b>Conviene guardar una copia.</b> ${esc(textoRecordatorio())}</p>
+          <button class="boton" id="btnIrACopia">Hacer copia ahora</button>`;
+        estado.after(aviso);
+        aviso.querySelector('#btnIrACopia')?.addEventListener('click', () => {
+          irA('despensa');
+          // Se abre la sección de la copia, para no dejarte buscándola.
+          setTimeout(() => {
+            const sec = document.querySelector('[data-seccion="copia"]');
+            if (sec) { sec.open = true; sec.scrollIntoView({ block: 'center' }); }
+          }, 120);
+        });
+      }
       boton.textContent = 'GUARDADO';
     } catch (err) {
       boton.disabled = false;
@@ -662,7 +702,26 @@ function pintarSinAlternativas(raiz) {
       raiz.querySelector('#alternativas')?.after(d);
       return d;
     })();
+  const d = diagnosticoAlternativas();
   hueco.innerHTML = `
     <h2 class="subtitulo">No he encontrado alternativas</h2>
-    <p class="texto" style="font-size:var(--t2)">${esc(motivo.charAt(0).toUpperCase() + motivo.slice(1))}.</p>`;
+    <p class="texto" style="font-size:var(--t2)">${esc(motivo.charAt(0).toUpperCase() + motivo.slice(1))}.</p>
+    <details class="seccion" style="margin-top:var(--e3)">
+      <summary>
+        <span class="seccion__nombre">Qué se ha preguntado</span>
+        <span class="seccion__flecha" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </summary>
+      <div class="seccion__cuerpo">
+        <p class="apunte-via">Esto está aquí para poder contar qué ha pasado cuando no salen alternativas. Si te parece que debería haberlas, cópialo y mándalo.</p>
+        <ul class="incidencias">
+          ${d.intentos.map((i) => `
+            <li class="incidencia">${esc(i.categoria)}${i.soloEspana ? ' · solo España' : ''} → ${i.devueltos} producto(s)</li>`).join('')
+            || '<li class="incidencia">No se ha llegado a preguntar: el producto no trae categoría.</li>'}
+          ${d.candidatos ? `
+            <li class="incidencia">De ${d.candidatos} candidatos: ${d.sinDatos} con datos incompletos, ${d.sinIngredientes} sin ingredientes, ${d.noMejoran} que no mejoran</li>` : ''}
+        </ul>
+      </div>
+    </details>`;
 }

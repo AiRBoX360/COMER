@@ -45,7 +45,6 @@
      1,50), que era la pareja que más cuesta distinguir de un vistazo. */
   --rojo:#C62E2E;
   --naranja:#E4771D;
-  --amarillo:#E8B617;
   /* El nivel 5 lleva el verde de la app. Los dos verdes tuvieron que
      reordenarse: el 4 pasa a un verde bosque más oscuro, porque aclararlo lo
      habría pegado al amarillo y se confundirían el 3 y el 4. Con estos dos hay
@@ -53,17 +52,31 @@
   /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
      tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
      el 4, y 1,48 entre el 4 y el 5. */
-  /* El nivel 5, el mejor, lleva el verde que predomina en la app. El 4 es ese
-     mismo verde claro con un 15 % más de amarillo. */
-  --verde-claro:#B1D674;
+  /* ------------------------------------------------------------------------
+     EL VERDE DE LA APP VA APARTE DE LA ESCALA.
+     
+     Estaban atados: la interfaz usaba el color del nivel 4, así que al
+     reordenar la escala se movió el verde de todos los botones, círculos y
+     pestañas. Un color de marca no puede depender de dónde caiga un nivel.
+     
+     Ahora --acento es el verde de la app y no se mueve. Coincide con el del
+     nivel 5 a propósito, porque es el que se quiere ver por todas partes.
+     ------------------------------------------------------------------------ */
+  --acento:#78B341;
+  --sobre-acento:#101319;
+
+  /* El nivel 5, el mejor, lleva ese mismo verde. El 4 es un verde claro con
+     más amarillo; el 3, el amarillo con menos magenta. */
+  --verde-claro:#B1D65F;
   --verde-parchis:#78B341;
+  --amarillo:#E9C61A;
 
   /* En oscuro, relleno y letra coinciden: sobre fondo negro un color vivo se
      lee bien de las dos maneras. */
   --rojo-letra:var(--rojo);
   --naranja-letra:var(--naranja);
   --amarillo-letra:var(--amarillo);
-  --verde-claro-letra:var(--verde-claro);
+  --verde-claro-letra:var(--acento);
   --verde-parchis-letra:var(--verde-parchis);
 
   /* Qué color de letra va ENCIMA de cada relleno. */
@@ -90,6 +103,8 @@
    cansa menos la vista en sesiones largas. */
 [data-tema="claro"]{
   color-scheme:light;
+  --acento:#78B341;
+  --sobre-acento:#1A1D24;
   /* Subido un 7 %: el blanco casi puro se veía lavado. */
   --tinta:#EFEDE9;
   --carbon:#FFFFFF;
@@ -99,16 +114,13 @@
   --ceniza:#565D6B;
   --ceniza-tenue:#767D8B;
 
-  /* Rellenos vivos, para inundar */
+  /* Rellenos vivos, para inundar. El 5 lleva el mismo verde que la interfaz;
+     el 4 es un verde claro con más amarillo; el 3, el amarillo con menos
+     magenta. */
   --rojo:#D0392F;
   --naranja:#E07B1C;
-  --amarillo:#E9B81A;
-  /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
-     tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
-     el 4, y 1,48 entre el 4 y el 5. */
-  /* El nivel 5, el mejor, lleva el verde que predomina en la app. El 4 es ese
-     mismo verde claro con un 15 % más de amarillo. */
-  --verde-claro:#B1D674;
+  --amarillo:#E9C61A;
+  --verde-claro:#B1D65F;
   --verde-parchis:#78B341;
 
   /* Los mismos, oscurecidos, para cuando van como letra pequeña */
@@ -359,7 +371,7 @@ button{touch-action:manipulation}
   appearance:none; cursor:pointer; width:100%;
   display:block; text-align:center;
   padding:var(--e4);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   background:var(--carbon);
   color:var(--hueso);
@@ -382,7 +394,7 @@ button{touch-action:manipulation}
 .boton{
   appearance:none; cursor:pointer;
   padding:var(--e3) var(--e4);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio-s);
   background:var(--carbon); color:var(--hueso);
   font-family:var(--cuerpo); font-size:var(--t2); line-height:1.25;
@@ -516,7 +528,7 @@ button{touch-action:manipulation}
 .factor__medida{height:4px; border-radius:2px; background:var(--carbon-alto); overflow:hidden}
 .factor__medida i{display:block; height:100%; border-radius:2px}
 .factor--malo .factor__medida i{background:var(--rojo)}
-.factor--bueno .factor__medida i{background:var(--verde-claro)}
+.factor--bueno .factor__medida i{background:var(--acento)}
 .factor__dato{
   margin:var(--e3) 0 var(--e2);
   font-size:var(--t2); color:var(--ceniza);
@@ -566,10 +578,10 @@ button{touch-action:manipulation}
    fuera: sin él, los botones parecían de otra app. */
 .ajustes .escala__boton,
 .ajustes .boton,
-.ajustes .interruptor__boton{border:1.5px solid var(--verde-claro)}
+.ajustes .interruptor__boton{border:1.5px solid var(--acento)}
 
 .escala__boton[aria-pressed="true"]{
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
   border-color:transparent;
 }
 
@@ -654,7 +666,7 @@ button{touch-action:manipulation}
 .pegar{
   width:100%; display:block;
   background:var(--carbon); color:var(--hueso);
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
   padding:var(--e3);
   font-family:var(--datos); font-size:var(--t2); line-height:1.5;
   resize:vertical;
@@ -703,7 +715,7 @@ button{touch-action:manipulation}
 }
 .campo__entrada{
   display:flex; align-items:center; gap:var(--e2);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio-s);
   background:var(--carbon);
   padding:0 var(--e3);
@@ -741,11 +753,11 @@ button{touch-action:manipulation}
   appearance:none; cursor:pointer;
   margin-top:var(--e2);
   background:none; color:var(--verde-claro-letra);
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
   padding:var(--e2) var(--e3);
   font-family:var(--datos); font-size:var(--t2); font-weight:600;
 }
-.propuesta:active{background:var(--verde-claro); color:var(--tinta)}
+.propuesta:active{background:var(--acento); color:var(--tinta)}
 
 .apunte--ok{color:var(--verde-claro-letra)}
 
@@ -829,7 +841,7 @@ button{touch-action:manipulation}
   margin-bottom:var(--e2);
   overflow:hidden;
 }
-.ficha[open]{border-color:var(--verde-claro); border-left-width:4px}
+.ficha[open]{border-color:var(--acento); border-left-width:4px}
 .ficha--favorable{border-left-color:var(--verde-claro-letra)}
 .ficha--limitar{border-left-color:var(--naranja-letra)}
 .ficha--neutro{border-left-color:var(--ceniza-tenue)}
@@ -892,14 +904,14 @@ button{touch-action:manipulation}
   background:var(--ceniza-tenue);
   transition:transform .18s ease, background-color .18s ease;
 }
-.interruptor__boton[aria-checked="true"]{background:var(--verde-claro); border-color:var(--verde-claro-letra)}
+.interruptor__boton[aria-checked="true"]{background:var(--acento); border-color:var(--verde-claro-letra)}
 .interruptor__boton[aria-checked="true"] span{transform:translateX(1.4rem); background:var(--tinta)}
 
 /* --- Productos guardados -------------------------------------------------- */
 .bloque{margin-bottom:var(--e6)}
 .producto{
   display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1.5px solid var(--verde-claro);
+  background:var(--carbon); border:1.5px solid var(--acento);
   border-radius:var(--radio-s);
   padding:var(--e3);
   margin-bottom:var(--e2);
@@ -969,7 +981,7 @@ button{touch-action:manipulation}
   padding:var(--e2) var(--e4);
   font-family:var(--cuerpo); font-weight:600; font-size:var(--t2);
 }
-.filtro.es-activo{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
+.filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
 
 /* --- Lo que se repite en tu despensa -------------------------------------- */
 .repetidas{margin-bottom:var(--e5)}
@@ -1288,7 +1300,7 @@ button{touch-action:manipulation}
      cortado como "Analiz…". */
   width:auto; min-width:0; flex:0 0 auto;
   padding:0 0.75rem 0 0.6rem;
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
 }
 .barra__pestana[aria-selected="true"] span{max-width:8rem; opacity:1}
 
@@ -1475,7 +1487,7 @@ body{
   display:flex; align-items:center; gap:var(--e3);
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
   border:1.5px solid var(--linea);
-  border-left:3px solid var(--verde-claro);
+  border-left:3px solid var(--acento);
   border-radius:var(--radio-s);
   padding:var(--e3) var(--e4);
   margin-bottom:var(--e2);
@@ -1541,7 +1553,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e4);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   margin:var(--e3) 0;
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 55%), var(--carbon);
@@ -1671,7 +1683,7 @@ body{
   background:var(--carbon);
   color:var(--ceniza);
 }
-.filtro.es-activo{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
+.filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
 .filtros{display:flex; flex-wrap:wrap; gap:0.4rem}
 
 /* --- La bienvenida --------------------------------------------------------
@@ -1741,11 +1753,11 @@ body{
 .elegible{
   appearance:none; cursor:pointer;
   padding:0.45rem 0.85rem;
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
+  border:1.5px solid var(--acento); border-radius:var(--radio);
   background:var(--carbon); color:var(--ceniza);
   font-size:var(--t2); line-height:1.2; text-align:left;
 }
-.elegible.es-elegido{background:var(--verde-claro); color:var(--sobre-verde-claro); border-color:transparent}
+.elegible.es-elegido{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
 
 .combi{
   border:1.5px solid var(--linea);
@@ -1821,7 +1833,7 @@ body{
   0%,8%    {stroke:var(--rojo)}
   24%      {stroke:var(--naranja)}
   44%      {stroke:var(--amarillo)}
-  64%      {stroke:var(--verde-claro)}
+  64%      {stroke:var(--acento)}
   84%,94%  {stroke:var(--verde-parchis)}
   100%     {stroke:var(--rojo)}
 }
@@ -1853,7 +1865,7 @@ body{
    del móvil, no verá ninguna animación de la app, y eso es lo correcto. */
 @media (prefers-reduced-motion:reduce){
   .esc-linea, .esc-arco, .esc-cifra, .esc-barra, .esc-candado{animation:none}
-  .esc-arco{stroke:var(--verde-claro); stroke-dasharray:76 100}
+  .esc-arco{stroke:var(--acento); stroke-dasharray:76 100}
   .esc-linea{y:72px}
 }
 
@@ -1889,7 +1901,7 @@ body{
 .pantalla__signo{flex:none; width:2.1rem; height:2.1rem; display:block}
 .pantalla__signo svg{width:100%; height:100%; display:block}
 .pantalla__signo path{fill:var(--ceniza)}
-.pantalla__signo rect{fill:var(--verde-claro)}
+.pantalla__signo rect{fill:var(--acento)}
 .pantalla__nombre{
   font-family:var(--display); font-weight:800; font-size:var(--t6);
   letter-spacing:-.025em; line-height:1; color:var(--hueso);
@@ -1903,7 +1915,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e4);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   margin:0 0 var(--e4);
   background:var(--carbon);
@@ -1915,7 +1927,7 @@ body{
   flex:none; width:3.4rem; height:3.4rem;
   display:flex; align-items:center; justify-content:center;
   border-radius:50%;
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
 }
 .accion__icono svg{
   width:1.8rem; height:1.8rem;
@@ -1936,7 +1948,7 @@ body{
 
 /* El grupo enmarcado, con su rótulo centrado dentro. */
 .grupo{
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   padding:var(--e3) var(--e3) var(--e4);
   margin-bottom:var(--e6);
@@ -1953,7 +1965,7 @@ body{
   appearance:none; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:var(--e2);
   padding:var(--e3) var(--e1);
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio-s);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
   background:var(--carbon); color:var(--ceniza);
   font-family:var(--cuerpo); font-size:var(--t2); line-height:1.2;
   text-align:center;
@@ -1964,13 +1976,13 @@ body{
   stroke-linecap:round; stroke-linejoin:round;
 }
 .pastilla--reciente{
-  background:var(--tinte-a); border-color:var(--verde-claro);
+  background:var(--tinte-a); border-color:var(--acento);
   color:var(--verde-claro-letra);
 }
 
 /* Preferencias: una pastilla con el engranaje a un lado y el más al otro. */
 .ajustes{
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
+  border:1.5px solid var(--acento); border-radius:var(--radio);
   background:var(--carbon); padding:0 var(--e4);
   margin-bottom:var(--e5);
 }
@@ -2060,7 +2072,7 @@ body{
   appearance:none; cursor:pointer; width:100%; text-align:left;
   display:flex; align-items:center; gap:var(--e4);
   padding:var(--e3) var(--e4);
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   margin-bottom:var(--e3);
   background:var(--carbon);
@@ -2072,7 +2084,7 @@ body{
   flex:none; width:2.9rem; height:2.9rem;
   display:flex; align-items:center; justify-content:center;
   border-radius:50%;
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
 }
 .via__icono svg{
   width:1.5rem; height:1.5rem;
@@ -2086,7 +2098,7 @@ body{
 }
 
 .via__cuerpo{
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-top:0;
   border-radius:0 0 var(--radio) var(--radio);
   padding:var(--e4);
@@ -2118,7 +2130,7 @@ body{
   width:3.4rem; height:3.4rem; padding:0;
   display:flex; align-items:center; justify-content:center;
   border:0; border-radius:50%;
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
 }
 .buscar__boton svg{
   width:1.7rem; height:1.7rem;
@@ -2141,8 +2153,8 @@ body{
   padding:var(--e3) var(--e4);
   border-radius:var(--radio);
   margin-bottom:var(--e5);
-  color:var(--sobre-verde-claro);
-  background:var(--verde-claro);
+  color:var(--sobre-acento);
+  background:var(--acento);
 }
 .nivel[data-nivel="rojo"]{background:var(--rojo); color:var(--sobre-rojo)}
 .nivel[data-nivel="naranja"]{background:var(--naranja); color:var(--sobre-naranja)}
@@ -2173,7 +2185,7 @@ body{
 
 /* --- La tarjeta del veredicto, con el perfil de la app --------------------- */
 .veredicto{
-  border:1.5px solid var(--verde-claro);
+  border:1.5px solid var(--acento);
   border-radius:var(--radio);
   background:var(--carbon);
   padding:var(--e5) var(--e4);
@@ -2210,14 +2222,14 @@ body{
   appearance:none; cursor:pointer;
   display:flex; flex-direction:column; align-items:flex-start; gap:var(--e2);
   padding:var(--e4);
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio);
+  border:1.5px solid var(--acento); border-radius:var(--radio);
   background:var(--carbon); color:var(--hueso);
   text-align:left;
 }
 .puerta__icono{
   width:2.4rem; height:2.4rem; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  background:var(--verde-claro); color:var(--sobre-verde-claro);
+  background:var(--acento); color:var(--sobre-acento);
 }
 .puerta__icono svg{
   width:1.3rem; height:1.3rem;
@@ -2335,7 +2347,7 @@ body{
   margin-bottom:var(--e2);
   overflow:hidden;
 }
-.seccion[open]{border-color:var(--verde-claro)}
+.seccion[open]{border-color:var(--acento)}
 .seccion summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
@@ -2475,7 +2487,7 @@ body{
   display:flex; align-items:center; gap:var(--e2);
   margin-top:var(--e4);
   padding:var(--e2) var(--e4) var(--e2) var(--e3);
-  border:1.5px solid var(--verde-claro); border-radius:var(--radio-pastilla);
+  border:1.5px solid var(--acento); border-radius:var(--radio-pastilla);
   background:var(--carbon); color:var(--hueso);
   font-family:var(--cuerpo); font-size:var(--t2);
 }
@@ -2505,3 +2517,40 @@ body{
 @media (prefers-reduced-motion:reduce){
   .bloque__flecha svg{transition:none}
 }
+
+/* --- Las secciones de la Despensa, con la cara de Analizar -----------------
+   Tenían dos estilos distintos y la misma app parecía cosida de dos telas. */
+.via-seccion{margin-bottom:var(--e3)}
+.via-seccion > summary{
+  list-style:none;
+  margin-bottom:0;
+}
+.via-seccion > summary::-webkit-details-marker{display:none}
+.via-seccion[open] > summary{
+  background:var(--tinte-a);
+  border-radius:var(--radio) var(--radio) 0 0;
+}
+.via__flecha{flex:none; display:flex; color:var(--ceniza-tenue)}
+.via__flecha svg{
+  width:1.2rem; height:1.2rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .18s ease;
+}
+.via-seccion[open] .via__flecha svg{transform:rotate(180deg)}
+
+@media (prefers-reduced-motion:reduce){
+  .via__flecha svg{transition:none}
+}
+
+/* --- El recordatorio de copia ---------------------------------------------
+   Aparece justo después de guardar, que es cuando acabas de añadir algo que
+   perderías. Cada diez productos, no cada vez: avisar siempre es ruido. */
+.recordatorio{
+  margin-top:var(--e4);
+  padding:var(--e4);
+  border:1.5px solid var(--amarillo); border-radius:var(--radio);
+  background:var(--carbon);
+}
+.recordatorio p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5}
+.recordatorio .boton{width:100%}

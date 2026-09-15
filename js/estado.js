@@ -47,14 +47,24 @@ export function resumenEnCurso() {
 }
 
 export function reiniciar() {
-  enCurso.nombre = '';
-  enCurso.categoria = 'general';
-  enCurso.racionGramos = null;
-  enCurso.nutrientes = {};
-  enCurso.ingredientes = [];
-  enCurso.trazas = [];
-  enCurso.veredicto = null;
-  enCurso.avisosLectura = [];
+  // Se limpia TODO lo del análisis anterior.
+  //
+  // Faltaban cinco campos: el código de barras, la foto, la marca, las tiendas
+  // y la procedencia. Al analizar otro producto se arrastraban los del
+  // anterior, así que un pan tostado podía salir "procedente de Argentina"
+  // porque ese era el origen del pistacho de antes.
+  //
+  // Si se añade un campo a `enCurso`, hay que añadirlo también aquí. Hay una
+  // comprobación que lo vigila.
+  for (const campo of Object.keys(enCurso)) {
+    if (campo === 'categoria') { enCurso[campo] = 'general'; continue; }
+    if (campo === 'nombre') { enCurso[campo] = ''; continue; }
+    if (campo === 'nutrientes') { enCurso[campo] = {}; continue; }
+    if (campo === 'ingredientes' || campo === 'trazas' || campo === 'avisosLectura') {
+      enCurso[campo] = []; continue;
+    }
+    enCurso[campo] = null;
+  }
 }
 
 /** Marca un valor como corregido a mano. Pasa a valer confianza plena. */

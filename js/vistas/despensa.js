@@ -5,6 +5,7 @@ import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
 import { enCurso } from '../estado.js';
 import { pedirFichero, pedirFoto, capturar, aBytes } from '../camara.js';
 import { reiniciarCombinar } from './combinar.js';
+import { copiaHecha, sinCopia, textoRecordatorio } from '../recordatorio.js';
 import { nombrePantalla } from './inicio.js';
 
 /**
@@ -134,17 +135,35 @@ function ficha(p) {
  * abrirías la Despensa y no verías tu despensa. Las demás no son el contenido
  * de esta pantalla, son puertas a otras cosas.
  */
+/** Los iconos de cada sección, del mismo trazo que los de Analizar. */
+const ICONOS = {
+  alimentos: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+  comparar: '<path d="M12 4v16"/><path d="M5 8h4M5 12h4M15 10h4M15 14h4"/>',
+  juntar: '<circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/>',
+  recetas: '<path d="M8 3c0 2-1.5 2.5-1.5 4.5S8 10 8 12"/><path d="M12 3c0 2-1.5 2.5-1.5 4.5S12 10 12 12"/><path d="M16 3c0 2-1.5 2.5-1.5 4.5S16 10 16 12"/><path d="M4 15h16a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6Z"/>',
+  copia: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
+};
+
+/**
+ * Una sección de la Despensa, con la misma cara que las vías de Analizar.
+ *
+ * Tenían dos estilos distintos y se notaba: la misma app parecía cosida de dos
+ * telas. Ahora comparten círculo verde, nombre en negrita y perfil.
+ */
 function seccion(clave, titulo, cuerpo, abierta = false) {
   if (!cuerpo || !String(cuerpo).trim()) return '';
   return `
-    <details class="seccion" data-seccion="${clave}"${abierta ? ' open' : ''}>
-      <summary>
-        <span class="seccion__nombre">${esc(titulo)}</span>
-        <span class="seccion__flecha" aria-hidden="true">
+    <details class="via-seccion" data-seccion="${clave}"${abierta ? ' open' : ''}>
+      <summary class="via">
+        <span class="via__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24">${ICONOS[clave] ?? ''}</svg>
+        </span>
+        <span class="via__nombre">${esc(titulo)}</span>
+        <span class="via__flecha" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </span>
       </summary>
-      <div class="seccion__cuerpo">${cuerpo}</div>
+      <div class="via__cuerpo">${cuerpo}</div>
     </details>`;
 }
 
@@ -188,7 +207,7 @@ export function despensa() {
       </div>` : ''}
 
     <div class="secciones">
-      ${seccion('alimentos', `Alimentos analizados${total ? ` · ${total}` : ''}`, alimentos, true)}
+      ${seccion('alimentos', `Alimentos analizados${total ? ` · ${total}` : ''}`, alimentos)}
 
       ${total >= 2 ? seccion('comparar', 'Comparar productos', `
         <p class="texto" style="font-size:var(--t2)">Dos de los tuyos, lado a lado: cuál conviene y por qué.</p>
@@ -204,6 +223,7 @@ export function despensa() {
 
       ${seccion('copia', 'Copia de seguridad', `
         <p class="texto" style="font-size:var(--t2)">Tus datos viven solo en este teléfono. Si el navegador se queda sin espacio puede borrarlos, así que conviene guardar una copia de vez en cuando.</p>
+        ${sinCopia() > 0 ? `<p class="apunte-via">${esc(textoRecordatorio())}</p>` : ''}
         <div class="toma__botones">
           <button class="boton" id="btnExportar">Guardar copia</button>
           <button class="boton" id="btnImportar">Restaurar copia</button>
@@ -396,6 +416,8 @@ export async function despensaActivo(raiz, { repintar }) {
     estado.textContent = 'Preparando la copia…';
     try {
       const r = await descargarCopia();
+      // La cuenta de "cuántos llevas sin copia" vuelve a cero.
+      copiaHecha();
       estado.textContent = `Copia guardada: ${r.productos} producto(s), ${r.kb} KB.`;
     } catch (err) {
       estado.textContent = `No se ha podido guardar la copia. ${err.message}`;
