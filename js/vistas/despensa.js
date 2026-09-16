@@ -256,7 +256,7 @@ function bloquesDeColor(visibles, total) {
     const mostrados = todos ? suyos : suyos.slice(0, POR_BLOQUE);
     const faltan = suyos.length - mostrados.length;
     return `
-      <details class="bloque" data-nivel="${n.clave}" open>
+      <details class="bloque" data-nivel="${n.clave}">
         <summary class="bloque__barra">
           <span class="bloque__nombre">${esc(n.texto)}</span>
           <span class="bloque__cuantos cifra">${suyos.length}</span>

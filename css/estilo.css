@@ -725,6 +725,11 @@ button{touch-action:manipulation}
 .campo__entrada input,
 .campo__entrada select{
   flex:1; min-width:0;
+  /* Safari le pone su propio marco redondeado a los campos de búsqueda, y no
+     se quita poniendo el borde a cero: hay que desactivar su apariencia
+     nativa. Sin esto se veía un marco dentro de otro. */
+  appearance:none;
+  -webkit-appearance:none;
   background:none; color:var(--hueso);
   border:0;
   padding:var(--e3) 0;
@@ -908,7 +913,11 @@ button{touch-action:manipulation}
 .interruptor__boton[aria-checked="true"] span{transform:translateX(1.4rem); background:var(--tinta)}
 
 /* --- Productos guardados -------------------------------------------------- */
-.bloque{margin-bottom:var(--e6)}
+/* Recogidas, las barras van pegadas: el aire de antes servía para separar
+   grupos de productos, y sin productos a la vista solo deja huecos. Al abrir
+   una, se le devuelve el espacio para que su lista respire. */
+.bloque{margin-bottom:var(--e2)}
+.bloque[open]{margin-bottom:var(--e6)}
 .producto{
   display:flex; align-items:center; gap:var(--e3);
   background:var(--carbon); border:1.5px solid var(--acento);
@@ -1605,17 +1614,6 @@ body{
 .atajo:active{border-color:var(--hueso); color:var(--hueso)}
 
 /* Los ajustes, plegados. Se tocan una vez y no se vuelven a mirar. */
-.ajustes{
-  border:1.5px solid var(--linea); border-radius:var(--radio);
-  background:var(--carbon); padding:0 var(--e4);
-  margin-bottom:var(--e5);
-}
-.ajustes summary{
-  cursor:pointer; list-style:none;
-  padding:var(--e4) 0;
-  font-family:var(--display); font-weight:600; font-size:var(--t3);
-  color:var(--hueso);
-}
 .ajustes summary::-webkit-details-marker{display:none}
 .ajustes summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
 .ajustes[open] summary::after{content:'  −'}
@@ -2297,7 +2295,7 @@ body{
    mucho menos de un vistazo, que es justamente para lo que está. */
 .bloque__barra{
   display:flex; align-items:center; justify-content:space-between; gap:var(--e3);
-  margin:var(--e6) 0 var(--e3);
+  margin:0;
   padding:var(--e2) var(--e4);
   border-radius:var(--radio-s);
   font-family:var(--display); font-weight:600; font-size:var(--t2);
@@ -2340,34 +2338,15 @@ body{
    contar ni se pintan: una pestaña vacía es una promesa incumplida. */
 .secciones{margin-top:var(--e4)}
 
-.seccion{
-  border:1.5px solid var(--linea);
-  border-radius:var(--radio);
-  background:var(--carbon);
-  margin-bottom:var(--e2);
-  overflow:hidden;
-}
-.seccion[open]{border-color:var(--acento)}
-.seccion summary{
-  cursor:pointer; list-style:none;
-  display:flex; align-items:center; gap:var(--e3);
-  padding:var(--e3) var(--e4);
-}
-.seccion summary::-webkit-details-marker{display:none}
-.seccion__nombre{
-  flex:1; min-width:0;
-  font-family:var(--datos); font-size:var(--t1); font-weight:400;
-  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza);
-}
-.seccion[open] .seccion__nombre{color:var(--hueso)}
-.seccion__flecha{flex:none; color:var(--ceniza-tenue)}
-.seccion__flecha svg{
-  width:1.2rem; height:1.2rem; display:block;
-  fill:none; stroke:currentColor; stroke-width:2;
-  stroke-linecap:round; stroke-linejoin:round;
-  transition:transform .18s ease;
-}
-.seccion[open] .seccion__flecha svg{transform:rotate(180deg)}
+
+
+
+
+
+
+
+
+
 .seccion__cuerpo{
   padding:0 var(--e4) var(--e4);
   border-top:1px solid var(--linea);
@@ -2513,6 +2492,7 @@ body{
   transition:transform .18s ease;
 }
 .bloque[open] .bloque__flecha svg{transform:rotate(180deg)}
+.bloque[open] .bloque__barra{margin-bottom:var(--e3)}
 
 @media (prefers-reduced-motion:reduce){
   .bloque__flecha svg{transition:none}
@@ -2554,3 +2534,60 @@ body{
 }
 .recordatorio p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5}
 .recordatorio .boton{width:100%}
+
+
+/* Safari añade además una lupa y una equis propias dentro de los campos de
+   búsqueda. La lupa la ponemos nosotros, así que la suya sobra. */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration{
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+
+/* --- Las pestañas del resultado, con la cara de Preferencias ---------------
+   Tenían el nombre a la izquierda y una flecha, mientras Preferencias llevaba
+   icono, nombre centrado y un más. Dos formas de decir lo mismo en la misma
+   app. */
+.seccion{
+  border:1.5px solid var(--acento); border-radius:var(--radio);
+  background:var(--carbon);
+  padding:0 var(--e4);
+  margin-bottom:var(--e2);
+}
+.seccion summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e4) 0;
+}
+.seccion summary::-webkit-details-marker{display:none}
+.seccion__icono{flex:none; color:var(--ceniza-tenue); display:flex}
+.seccion__icono svg{
+  width:1.3rem; height:1.3rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.seccion__nombre{
+  flex:1; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza);
+}
+.seccion__mas{
+  flex:none; font-family:var(--datos); font-size:var(--t4);
+  color:var(--ceniza-tenue); line-height:1;
+  transition:transform .18s ease;
+}
+.seccion[open] .seccion__mas{transform:rotate(45deg)}
+.seccion[open]{padding-bottom:var(--e4)}
+.seccion[open] .seccion__nombre{color:var(--hueso)}
+.seccion__cuerpo{
+  border-top:1px solid var(--linea);
+  padding-top:var(--e4);
+}
+.seccion__cuerpo > .subtitulo:first-child{margin-top:0}
+
+@media (prefers-reduced-motion:reduce){
+  .seccion__mas{transition:none}
+}

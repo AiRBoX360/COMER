@@ -176,15 +176,35 @@ function bloqueProcedencia() {
  * si lo pides. Las que no tienen nada que contar no se pintan: una pestaña
  * vacía es una promesa incumplida.
  */
+/** El icono de cada pestaña, del mismo trazo que el resto de la app. */
+const ICONOS = {
+  'Ingredientes': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  'Tabla nutricional': '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/>',
+  'De qué se compone': '<path d="M12 3v9l7 4"/><circle cx="12" cy="12" r="9"/>',
+  'Conviene limitar': '<path d="M12 3l9 16H3l9-16Z"/><path d="M12 10v4M12 17h.01"/>',
+  'Lo mejor': '<path d="M12 3l2.6 5.6 6 .8-4.4 4.3 1.1 6.1L12 17l-5.3 2.8 1.1-6.1L3.4 9.4l6-.8Z"/>',
+  'Alternativas': '<path d="M4 8h12l-3-3M20 16H8l3 3"/>',
+  'Qué se ha preguntado': '<circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>',
+  'Por qué esta nota': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.3 2.5c-.5.2-.8.7-.8 1.2v.4M12 17h.01"/>',
+};
+
+/**
+ * Una pestaña plegable, con la misma cara que Preferencias.
+ *
+ * Tenían el nombre a la izquierda y una flecha, mientras Preferencias llevaba
+ * icono, nombre centrado y un más. Dos formas de decir lo mismo en la misma
+ * app. Ahora comparten las tres cosas.
+ */
 function seccion(titulo, cuerpo) {
   if (!cuerpo || !String(cuerpo).trim()) return '';
   return `
     <details class="seccion">
       <summary>
-        <span class="seccion__nombre">${esc(titulo)}</span>
-        <span class="seccion__flecha" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="seccion__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24">${ICONOS[titulo] ?? ''}</svg>
         </span>
+        <span class="seccion__nombre">${esc(titulo)}</span>
+        <span class="seccion__mas" aria-hidden="true">+</span>
       </summary>
       <div class="seccion__cuerpo">${cuerpo}</div>
     </details>`;
@@ -706,22 +726,13 @@ function pintarSinAlternativas(raiz) {
   hueco.innerHTML = `
     <h2 class="subtitulo">No he encontrado alternativas</h2>
     <p class="texto" style="font-size:var(--t2)">${esc(motivo.charAt(0).toUpperCase() + motivo.slice(1))}.</p>
-    <details class="seccion" style="margin-top:var(--e3)">
-      <summary>
-        <span class="seccion__nombre">Qué se ha preguntado</span>
-        <span class="seccion__flecha" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-        </span>
-      </summary>
-      <div class="seccion__cuerpo">
-        <p class="apunte-via">Esto está aquí para poder contar qué ha pasado cuando no salen alternativas. Si te parece que debería haberlas, cópialo y mándalo.</p>
-        <ul class="incidencias">
-          ${d.intentos.map((i) => `
-            <li class="incidencia">${esc(i.categoria)}${i.soloEspana ? ' · solo España' : ''} → ${i.devueltos} producto(s)</li>`).join('')
-            || '<li class="incidencia">No se ha llegado a preguntar: el producto no trae categoría.</li>'}
-          ${d.candidatos ? `
-            <li class="incidencia">De ${d.candidatos} candidatos: ${d.sinDatos} con datos incompletos, ${d.sinIngredientes} sin ingredientes, ${d.noMejoran} que no mejoran</li>` : ''}
-        </ul>
-      </div>
-    </details>`;
+    ${seccion('Qué se ha preguntado', `
+      <p class="apunte-via">Esto está aquí para poder contar qué ha pasado cuando no salen alternativas. Si te parece que debería haberlas, cópialo y mándalo.</p>
+      <ul class="incidencias">
+        ${d.intentos.map((i) => `
+          <li class="incidencia">${esc(i.categoria)}${i.soloEspana ? ' · solo España' : ''} → ${i.devueltos} producto(s)</li>`).join('')
+          || '<li class="incidencia">No se ha llegado a preguntar: el producto no trae categoría.</li>'}
+        ${d.candidatos ? `
+          <li class="incidencia">De ${d.candidatos} candidatos: ${d.sinDatos} con datos incompletos, ${d.sinIngredientes} sin ingredientes, ${d.noMejoran} que no mejoran</li>` : ''}
+      </ul>`)}`;
 }
