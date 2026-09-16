@@ -6,6 +6,7 @@ import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
 import { contarGuardado, tocaRecordar, textoRecordatorio } from '../recordatorio.js';
+import { cuantoHaceFalta, cuantoDeAditivos, riesgoMedido } from '../cuanto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas,
          diagnosticoAlternativas } from '../alternativasfuera.js';
 import { dondeComprarlo, textoDondeComprarlo,
@@ -176,6 +177,124 @@ function bloqueProcedencia() {
  * si lo pides. Las que no tienen nada que contar no se pintan: una pestaña
  * vacía es una promesa incumplida.
  */
+/**
+ * Límites y recomendaciones.
+ *
+ * Coge la ración que te vas a comer y la pone en proporción a un día. Dos
+ * mitades que no significan lo mismo:
+ *
+ *   · lo que APORTA    cuánto cubres de lo que conviene alcanzar
+ *   · lo que CONVIENE  cuánto gastas de lo que conviene no pasar
+ *     LIMITAR
+ *
+ * Y debajo lo que no es ni una cosa ni otra —energía, grasas totales,
+ * hidratos— que sirve para situarse y nada más.
+ *
+ * Cada número lleva su fuente. Un número sin fuente es una opinión.
+ */
+function bloqueLimites(v) {
+  const r = cuantoHaceFalta(enCurso.nutrientes, v.porRacion?.gramos ?? null);
+  if (r.filas.length === 0) return '';
+
+  const aporta = r.filas.filter((f) => f.clase === 'objetivo');
+  const limitar = r.filas.filter((f) => f.clase === 'limite');
+  const situar = r.filas.filter((f) => f.clase === 'referencia');
+
+  const fila = (f) => {
+    const frase = f.clase === 'objetivo'
+      ? `${redondear(f.raciones)} raciones cubrirían el día`
+      : `${redondear(f.raciones)} raciones llegarían al límite`;
+    return `
+      <div class="cuanto" data-clase="${f.clase}">
+        <div class="cuanto__cab">
+          <span class="cuanto__nombre">${esc(f.nombre)}</span>
+          <span class="cuanto__pct cifra">${f.pct}<small>% de tu día</small></span>
+        </div>
+        <div class="cuanto__barra"><i style="width:${Math.min(100, f.pct)}%"></i></div>
+        <p class="cuanto__frase">${esc(frase)}</p>
+        <p class="cuanto__fuente">${esc(f.porRacion)} ${esc(f.unidad)} por ración · ${esc(f.fuente)}: ${esc(f.nota)}</p>
+      </div>`;
+  };
+
+  // Los aditivos: solo los que tienen ingesta admisible y máximo legal
+  // conocido. Para el resto no se puede calcular sin saber la cantidad, y la
+  // etiqueta no la dice.
+  const codigos = (v.aditivos ?? []).map((a) => a.codigo).filter(Boolean);
+  const ad = cuantoDeAditivos(codigos);
+
+  const riesgo = riesgoMedido(
+    `${v.nombre ?? ''} ${(enCurso.ingredientes ?? []).map((i) => i.texto).join(' ')}`);
+
+  return `
+    <p class="texto" style="font-size:var(--t2)">
+      Sobre una ración de <b>${r.racion} ${r.esRacionDeclarada ? 'g declarados' : 'g'}</b>
+      y un adulto de referencia. Cada cifra lleva de dónde sale.
+    </p>
+
+    ${aporta.length ? `
+      <details class="sub">
+        <summary><span class="sub__signo">↑</span> Lo que aporta<span class="sub__mas">+</span></summary>
+        <div class="sub__cuerpo">${aporta.map(fila).join('')}</div>
+      </details>` : ''}
+
+    ${limitar.length ? `
+      <details class="sub">
+        <summary><span class="sub__signo">↓</span> Lo que conviene limitar<span class="sub__mas">+</span></summary>
+        <div class="sub__cuerpo">
+          ${limitar.map(fila).join('')}
+          ${ad.length ? `
+            <h3 class="rotulo">Aditivos</h3>
+            ${ad.map((a) => `
+              <div class="cuanto" data-clase="limite">
+                <div class="cuanto__cab">
+                  <span class="cuanto__nombre">${esc(a.nombre)}</span>
+                  <span class="cuanto__pct cifra">${redondear(a.raciones)}<small> raciones</small></span>
+                </div>
+                <p class="cuanto__frase">Harían falta ${redondear(a.raciones)} raciones al día para llegar a su ingesta admisible.</p>
+                <p class="cuanto__fuente">Suponiendo la cantidad máxima que permite la ley, que es el peor caso: el producto llevará menos.</p>
+              </div>`).join('')}
+            <p class="apunte-via">La ingesta admisible NO es donde empieza el daño. Se calcula cogiendo la dosis más alta sin ningún efecto observado y dividiéndola entre cien: es un margen de seguridad para toda la vida.</p>` : ''}
+        </div>
+      </details>` : ''}
+
+    ${situar.length ? `
+      <details class="sub">
+        <summary><span class="sub__signo">·</span> Para situarse<span class="sub__mas">+</span></summary>
+        <div class="sub__cuerpo">
+          <p class="apunte-via">Ni límite ni objetivo: depende de cada persona. Están para dar contexto.</p>
+          ${situar.map((f) => `
+            <div class="cuanto" data-clase="referencia">
+              <div class="cuanto__cab">
+                <span class="cuanto__nombre">${esc(f.nombre)}</span>
+                <span class="cuanto__pct cifra">${f.pct}<small>% de la referencia</small></span>
+              </div>
+              <p class="cuanto__fuente">${esc(f.porRacion)} ${esc(f.unidad)} por ración · ${esc(f.fuente)}: ${esc(f.nota)}</p>
+            </div>`).join('')}
+        </div>
+      </details>` : ''}
+
+    ${riesgo ? `
+      <div class="riesgo">
+        <h3>${esc(riesgo.titulo)}</h3>
+        <p>${esc(riesgo.texto)}</p>
+        <p class="cuanto__fuente">${esc(riesgo.fuente)}</p>
+      </div>` : ''}
+
+    <p class="apunte-via">
+      No hay forma de decir cuánto tiempo hace falta para que algo cause daño:
+      ese dato no existe. El riesgo del azúcar, la sal o la grasa es continuo y
+      se acumula con los años, no tiene un punto donde empiece.
+    </p>`;
+}
+
+/** Una cifra que se lee: 2,9 se queda en "3"; 0,4 en "menos de 1". */
+function redondear(n) {
+  if (!Number.isFinite(n)) return '—';
+  if (n < 1) return 'menos de 1';
+  if (n < 10) return String(Math.round(n * 10) / 10).replace('.', ',');
+  return String(Math.round(n));
+}
+
 /** El icono de cada pestaña, del mismo trazo que el resto de la app. */
 const ICONOS = {
   'Ingredientes': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -183,6 +302,7 @@ const ICONOS = {
   'De qué se compone': '<path d="M12 3v9l7 4"/><circle cx="12" cy="12" r="9"/>',
   'Conviene limitar': '<path d="M12 3l9 16H3l9-16Z"/><path d="M12 10v4M12 17h.01"/>',
   'Lo mejor': '<path d="M12 3l2.6 5.6 6 .8-4.4 4.3 1.1 6.1L12 17l-5.3 2.8 1.1-6.1L3.4 9.4l6-.8Z"/>',
+  'Límites y recomendaciones': '<path d="M4 12h16"/><path d="M7 8v8M12 6v12M17 9v6"/>',
   'Alternativas': '<path d="M4 8h12l-3-3M20 16H8l3 3"/>',
   'Qué se ha preguntado': '<circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>',
   'Por qué esta nota': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.3 2.5c-.5.2-.8.7-.8 1.2v.4M12 17h.01"/>',
@@ -506,6 +626,7 @@ export function resultado() {
         listaExplicada(enCurso.ingredientes) + bloqueAlergenos(v) + corregir('ingredientes'))}
       ${seccion('Tabla nutricional', bloqueTabla(v) + corregir('tabla'))}
       ${seccion('De qué se compone', desglose(v) + topes(v))}
+      ${seccion('Límites y recomendaciones', bloqueLimites(v))}
       ${seccion('Conviene limitar',
         bloque('', 'Ordenado de más a menos relevante.', v.limitar, 'malo'))}
       ${seccion('Lo mejor', bloque('', 'Ordenado de más a menos relevante.', v.favorables, 'bueno'))}

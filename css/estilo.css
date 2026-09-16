@@ -2265,10 +2265,33 @@ body{
    El nombre dentro de una barra del color que le toca. Llegué a dejarlo como
    texto de color con un punto delante: más elegante, sí, pero se distinguía
    mucho menos de un vistazo, que es justamente para lo que está. */
-.bloque[data-nivel="rojo"] .bloque[data-nivel="naranja"] .bloque[data-nivel="amarillo"] .bloque[data-nivel="verde_claro"] .bloque[data-nivel="verde_parchis"] .bloque__nombre{
+.bloque__nombre{
   flex:1; min-width:0; text-align:center;
   font-family:var(--datos); font-size:var(--t1); font-weight:400;
   letter-spacing:.2em; text-transform:uppercase;
+}
+
+/* Cada barra con el color de su nivel.
+   
+   Estas cinco reglas desaparecieron al fusionar los duplicados de la hoja: la
+   sustitución buscaba el nombre de la clase sin anclarlo al principio del
+   selector, así que casó DENTRO de las reglas por nivel y se llevó por delante
+   el cuerpo de las cinco, dejando los selectores pegados unos a otros. Las
+   barras se quedaron grises. */
+.bloque[data-nivel="rojo"] .bloque__barra{
+  background:var(--rojo); color:var(--sobre-rojo);
+}
+.bloque[data-nivel="naranja"] .bloque__barra{
+  background:var(--naranja); color:var(--sobre-naranja);
+}
+.bloque[data-nivel="amarillo"] .bloque__barra{
+  background:var(--amarillo); color:var(--sobre-amarillo);
+}
+.bloque[data-nivel="verde_claro"] .bloque__barra{
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.bloque[data-nivel="verde_parchis"] .bloque__barra{
+  background:var(--verde-parchis); color:var(--sobre-verde-parchis);
 }
 .bloque__cuantos{
   flex:none; font-size:var(--t1); opacity:.82;
@@ -2568,6 +2591,90 @@ input[type="search"]::-webkit-search-results-decoration{
   .seccion__mas{transition:none}
 }
 
+
+
+/* --- Las barras de color, con la forma de Preferencias ---------------------
+   Mismo radio, mismo relleno, nombre centrado en versalitas y un más que gira.
+   Lo único que cambia es el color, que es lo que tienen que decir. */
+.bloque__barra{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  margin:0;
+  padding:var(--e3) var(--e4);
+  border-radius:var(--radio);
+  background:var(--carbon-alto); color:var(--hueso);
+}
+.bloque__barra::-webkit-details-marker{display:none}
+
+/* --- Límites y recomendaciones ---------------------------------------------
+   Dos mitades que no significan lo mismo: lo que conviene alcanzar y lo que
+   conviene no pasar. El color lo distingue sin tener que leerlo. */
+.sub{
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon);
+  padding:0 var(--e4);
+  margin-bottom:var(--e2);
+}
+.sub[open]{border-color:var(--acento); padding-bottom:var(--e3)}
+.sub summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e3) 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso);
+}
+.sub summary::-webkit-details-marker{display:none}
+.sub__signo{
+  flex:none; width:1.6rem; height:1.6rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--carbon-alto); font-family:var(--datos); font-size:var(--t2);
+}
+.sub__mas{
+  margin-left:auto; flex:none;
+  font-family:var(--datos); font-size:var(--t4); color:var(--ceniza-tenue);
+  line-height:1; transition:transform .18s ease;
+}
+.sub[open] .sub__mas{transform:rotate(45deg)}
+.sub__cuerpo{border-top:1px solid var(--linea); padding-top:var(--e3)}
+
+.cuanto{margin-bottom:var(--e4)}
+.cuanto__cab{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--e3);
+}
+.cuanto__nombre{font-size:var(--t3); color:var(--hueso)}
+.cuanto__pct{
+  flex:none; font-size:var(--t4); font-weight:600;
+  font-variant-numeric:tabular-nums; color:var(--hueso);
+}
+.cuanto__pct small{font-size:var(--t0); font-weight:400; color:var(--ceniza-tenue)}
+.cuanto__barra{
+  height:5px; border-radius:3px; background:var(--carbon-alto);
+  margin:var(--e2) 0; overflow:hidden;
+}
+.cuanto__barra i{display:block; height:100%; border-radius:3px}
+.cuanto[data-clase="objetivo"] .cuanto__barra i{background:var(--verde-parchis)}
+.cuanto[data-clase="limite"] .cuanto__barra i{background:var(--naranja)}
+.cuanto[data-clase="objetivo"] .cuanto__pct{color:var(--verde-parchis-letra)}
+.cuanto[data-clase="limite"] .cuanto__pct{color:var(--naranja-letra)}
+.cuanto__frase{margin:0; font-size:var(--t2); color:var(--ceniza)}
+.cuanto__fuente{
+  margin:var(--e1) 0 0;
+  font-family:var(--datos); font-size:var(--t0); line-height:1.5;
+  color:var(--ceniza-tenue);
+}
+
+.riesgo{
+  border:1.5px solid var(--naranja); border-radius:var(--radio-s);
+  padding:var(--e4); margin-top:var(--e3);
+}
+.riesgo h3{
+  margin:0 0 var(--e2);
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+}
+.riesgo p{margin:0 0 var(--e2); font-size:var(--t2); line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){ .sub__mas{transition:none} }
+
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a
    cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:
@@ -2586,17 +2693,3 @@ input[type="search"]::-webkit-search-results-decoration{
   box-shadow:none !important;
   outline:none !important;
 }
-
-
-/* --- Las barras de color, con la forma de Preferencias ---------------------
-   Mismo radio, mismo relleno, nombre centrado en versalitas y un más que gira.
-   Lo único que cambia es el color, que es lo que tienen que decir. */
-.bloque__barra{
-  cursor:pointer; list-style:none;
-  display:flex; align-items:center; gap:var(--e3);
-  margin:0;
-  padding:var(--e3) var(--e4);
-  border-radius:var(--radio);
-  background:var(--carbon-alto); color:var(--hueso);
-}
-.bloque__barra::-webkit-details-marker{display:none}
