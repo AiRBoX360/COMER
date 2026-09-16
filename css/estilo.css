@@ -461,7 +461,6 @@ button{touch-action:manipulation}
 .banda__tramo[data-nivel="verde_parchis"].es-actual{background:var(--verde-parchis)}
 
 /* La nota, en grande */
-.veredicto{display:flex; align-items:baseline; gap:var(--e3); margin-bottom:var(--e4)}
 .veredicto__nota{
   font-family:var(--display); font-weight:800;
   font-size:var(--t9); line-height:.9; letter-spacing:-.045em;
@@ -537,10 +536,6 @@ button{touch-action:manipulation}
 .factor__motivo{margin:0; font-size:var(--t3); color:var(--ceniza); line-height:1.5}
 
 /* --- Resumen de tres cifras ---------------------------------------------- */
-.resumen{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2);
-  margin-top:var(--e5);
-}
 .resumen div{
   background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio-s);
@@ -838,14 +833,6 @@ button{touch-action:manipulation}
 
 /* --- Ficha de cada ingrediente -------------------------------------------- */
 .fichas{margin-top:var(--e3)}
-.ficha{
-  border:1.5px solid var(--linea);
-  border-left-width:4px;
-  border-radius:var(--radio);
-  background:var(--carbon);
-  margin-bottom:var(--e2);
-  overflow:hidden;
-}
 .ficha[open]{border-color:var(--acento); border-left-width:4px}
 .ficha--favorable{border-left-color:var(--verde-claro-letra)}
 .ficha--limitar{border-left-color:var(--naranja-letra)}
@@ -862,26 +849,10 @@ button{touch-action:manipulation}
   width:1.6rem; flex:none;
   font-size:var(--t1); color:var(--ceniza-tenue);
 }
-.ficha__titulo{
-  flex:1; min-width:0;
-  font-family:var(--display); font-weight:600; font-size:var(--t3);
-  line-height:1.25;
-}
 .ficha__titulo .cifra{color:var(--ceniza); font-size:var(--t1)}
-.ficha__sello{
-  flex:none;
-  font-family:var(--datos); font-size:var(--t0); font-weight:600;
-  letter-spacing:.07em; text-transform:uppercase;
-  color:var(--ceniza-tenue); text-align:right;
-}
 .ficha--favorable .ficha__sello{color:var(--verde-claro-letra)}
 .ficha--limitar .ficha__sello{color:var(--naranja-letra)}
 
-.ficha__cuerpo{padding:0 var(--e4) var(--e4)}
-.ficha__linea{
-  margin:0 0 var(--e3); font-size:var(--t3);
-  color:var(--ceniza); line-height:1.5;
-}
 .ficha__linea b{color:var(--hueso); font-weight:600}
 .ficha__fuente{
   margin:0; font-family:var(--datos); font-size:var(--t0);
@@ -918,20 +889,6 @@ button{touch-action:manipulation}
    una, se le devuelve el espacio para que su lista respire. */
 .bloque{margin-bottom:var(--e2)}
 .bloque[open]{margin-bottom:var(--e6)}
-.producto{
-  display:flex; align-items:center; gap:var(--e3);
-  background:var(--carbon); border:1.5px solid var(--acento);
-  border-radius:var(--radio-s);
-  padding:var(--e3);
-  margin-bottom:var(--e2);
-  position:relative;
-}
-.producto__foto{
-  width:3.6rem; height:3.6rem; flex:none;
-  border-radius:var(--radio-s);
-  background:var(--carbon-alto) center/cover no-repeat;
-  display:flex; align-items:center; justify-content:center;
-}
 .producto__foto span{
   font-family:var(--datos); font-size:var(--t0);
   color:var(--ceniza-tenue); text-transform:uppercase; letter-spacing:.05em;
@@ -943,10 +900,6 @@ button{touch-action:manipulation}
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .producto__fecha{margin:2px 0 0; font-size:var(--t1); color:var(--ceniza-tenue)}
-.producto__nota{
-  flex:none; width:2.8rem; text-align:center;
-  font-size:var(--t5); font-weight:600;
-}
 .producto__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
 .producto__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
 .producto__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
@@ -982,28 +935,10 @@ button{touch-action:manipulation}
 }
 
 /* --- Filtros del catálogo ------------------------------------------------- */
-.filtros{display:flex; flex-wrap:wrap; gap:var(--e2); margin-bottom:var(--e2)}
-.filtro{
-  appearance:none; cursor:pointer;
-  background:var(--carbon); color:var(--ceniza);
-  border:1.5px solid var(--linea); border-radius:var(--radio-s);
-  padding:var(--e2) var(--e4);
-  font-family:var(--cuerpo); font-weight:600; font-size:var(--t2);
-}
 .filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
 
 /* --- Lo que se repite en tu despensa -------------------------------------- */
 .repetidas{margin-bottom:var(--e5)}
-.repetida{
-  display:flex; align-items:baseline; gap:var(--e3);
-  padding:var(--e3);
-  border-bottom:1px solid var(--linea);
-}
-.repetida__veces{
-  width:2.4rem; flex:none;
-  font-size:var(--t3); font-weight:600; color:var(--naranja-letra);
-}
-.repetida__nombre{flex:1; min-width:0; color:var(--hueso); font-size:var(--t3)}
 .repetida__donde{
   flex:none; max-width:40%;
   font-size:var(--t1); color:var(--ceniza-tenue); text-align:right;
@@ -1109,12 +1044,6 @@ button{touch-action:manipulation}
 .aviso-fuerte li:last-child{margin-bottom:0}
 .aviso-fuerte b{color:var(--hueso)}
 
-.nivel{
-  background:var(--carbon); border:1.5px solid var(--linea);
-  border-left:3px solid var(--ceniza-tenue);
-  border-radius:var(--radio-s);
-  padding:var(--e4); margin-bottom:var(--e3);
-}
 .nivel--1{border-left-color:var(--verde-parchis-letra)}
 .nivel--2{border-left-color:var(--verde-claro-letra)}
 .nivel--3{border-left-color:var(--amarillo-letra)}
@@ -1202,11 +1131,6 @@ button{touch-action:manipulation}
 .diagnostico b.no{text-transform:none; letter-spacing:.01em}
 
 /* --- De qué se compone la nota -------------------------------------------- */
-.parte{
-  background:var(--carbon); border:1.5px solid var(--linea);
-  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
-  margin-bottom:var(--e2);
-}
 .parte__cab{display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3)}
 .parte__nombre{font-family:var(--display); font-weight:600; font-size:var(--t3)}
 .parte__nota{font-size:var(--t5); font-weight:600; color:var(--hueso)}
@@ -1256,25 +1180,6 @@ button{touch-action:manipulation}
    en vez de flotar por encima. */
 /* Última fila de la columna. La franja de seguridad del teléfono va como
    relleno debajo, no como distancia al borde. */
-.barra{
-  flex:none;
-  margin:0 auto;
-  margin-bottom:max(0.35rem, env(safe-area-inset-bottom));
-  /* Con cinco pestañas y una de ellas ensanchada para mostrar su nombre, el
-     conjunto se salía del cuadro en pantallas estrechas. Ahora las cuatro sin
-     marcar pueden encogerse y la activa se queda con el espacio que necesita
-     hasta donde haya. */
-  max-width:calc(100vw - 1.2rem);
-  min-width:0;
-  display:flex; align-items:center; gap:0.24rem;
-  padding:0.38rem;
-  background:var(--fondo-barra);
-  backdrop-filter:blur(20px) saturate(140%);
-  -webkit-backdrop-filter:blur(20px) saturate(140%);
-  border:1px solid var(--borde-barra);
-  border-radius:var(--radio-pastilla);
-  box-shadow:var(--sombra-barra);
-}
 
 .barra__pestana{
   appearance:none; cursor:pointer;
@@ -1384,26 +1289,10 @@ body{
 }
 
 /* La vía abierta se tiñe muy levemente en verde, como su icono. */
-.via--abierta{
-  background:linear-gradient(180deg, var(--tinte-a), transparent 46%), var(--carbon);
-}
 
 /* La cabecera recoge el mismo tinte para que no se vea un corte. */
-.cabecera{
-  background:
-    radial-gradient(120% 200% at 88% 0%, var(--tinte-a), transparent 62%),
-    var(--fondo-cabecera);
-}
 
 /* --- La tarjeta del veredicto --------------------------------------------- */
-.veredicto{
-  display:flex; align-items:center; gap:var(--e5);
-  padding:var(--e5) var(--e4);
-  border:1.5px solid var(--linea);
-  border-radius:var(--radio);
-  margin-bottom:var(--e4);
-  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
-}
 
 .veredicto__anillo{position:relative; width:8.6rem; height:8.6rem; flex:none}
 .veredicto__anillo svg{
@@ -1467,7 +1356,12 @@ body{
 }
 
 /* Las tres casillas de debajo, con más aire y un punto de color. */
-.resumen{gap:var(--e2)}
+.resumen{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--e2);
+  margin-top:var(--e5);
+}
 .resumen > div{
   background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
   border:1.5px solid var(--linea); border-radius:var(--radio-s);
@@ -1558,29 +1452,12 @@ body{
 .cambio--peor .cambio__nota{color:var(--naranja-letra)}
 
 /* --- Inicio: dos acciones grandes y lo demás en voz baja ------------------- */
-.accion{
-  appearance:none; cursor:pointer; width:100%; text-align:left;
-  display:flex; align-items:center; gap:var(--e4);
-  padding:var(--e4);
-  border:1.5px solid var(--acento);
-  border-radius:var(--radio);
-  margin:var(--e3) 0;
-  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 55%), var(--carbon);
-  color:var(--hueso);
-}
-.accion__icono{
-  flex:none; width:3rem; height:3rem;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:var(--radio-pastilla);
-  background:var(--carbon-alto); color:var(--ceniza);
-}
 .accion--principal .accion__icono{background:var(--tinta); color:var(--hueso)}
 .accion__icono svg{
   width:1.5rem; height:1.5rem;
   fill:none; stroke:currentColor; stroke-width:1.8;
   stroke-linecap:round; stroke-linejoin:round;
 }
-.accion__texto{flex:1; min-width:0}
 .accion__texto b{
   display:block; font-family:var(--display); font-weight:700; font-size:var(--t4);
   line-height:1.2;
@@ -1624,44 +1501,81 @@ body{
 /* Las fichas del catálogo llevan su color en una barra lateral discreta y
    ganan aire. El sello se vuelve una pastilla, que se lee de un vistazo. */
 .ficha{
-  border-radius:var(--radio);
+  border:1.5px solid var(--linea);
   border-left-width:3px;
+  border-radius:var(--radio);
+  background:var(--carbon);
   margin-bottom:var(--e3);
   overflow:hidden;
 }
 .ficha summary{padding:var(--e4)}
 .ficha__titulo{
-  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  flex:1;
+  min-width:0;
+  font-family:var(--display);
+  font-weight:600;
+  font-size:var(--t3);
+  line-height:1.25;
   color:var(--hueso);
 }
 .ficha__sello{
-  font-family:var(--datos); font-size:var(--t0); font-weight:600;
-  letter-spacing:.07em; text-transform:uppercase;
-  padding:0.24rem 0.6rem; border-radius:var(--radio-pastilla);
+  flex:none;
+  font-family:var(--datos);
+  font-size:var(--t0);
+  font-weight:600;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  text-align:right;
+  padding:0.24rem 0.6rem;
+  border-radius:var(--radio-pastilla);
   border:1px solid currentColor;
   white-space:nowrap;
 }
-.ficha__cuerpo{padding:0 var(--e4) var(--e4)}
-.ficha__linea{margin:0 0 var(--e2); font-size:var(--t2); line-height:1.5}
+.ficha__cuerpo{
+  padding:0 var(--e4) var(--e4);
+}
+.ficha__linea{
+  margin:0 0 var(--e2);
+  font-size:var(--t2);
+  color:var(--ceniza);
+  line-height:1.5;
+}
 
 /* Los productos de la despensa: la nota en grande a la izquierda, como en el
    resultado, para que las dos pantallas se reconozcan entre sí. */
 .producto{
-  padding:var(--e3) var(--e4);
-  border-radius:var(--radio);
-  margin-bottom:var(--e3);
+  display:flex;
+  align-items:center;
   gap:var(--e4);
+  background:var(--carbon);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e3);
+  position:relative;
 }
 .producto__foto{
-  width:3.4rem; height:3.4rem; border-radius:var(--radio-s);
-  display:flex; align-items:center; justify-content:center;
+  width:3.4rem;
+  height:3.4rem;
+  flex:none;
+  border-radius:var(--radio-s);
+  background:var(--carbon-alto) center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .producto__nombre{
   font-family:var(--display); font-weight:600; font-size:var(--t3);
   line-height:1.25;
 }
 .producto__nota{
-  font-family:var(--datos); font-size:var(--t6); font-weight:600;
+  flex:none;
+  width:2.8rem;
+  text-align:center;
+  font-size:var(--t6);
+  font-weight:600;
+  font-family:var(--datos);
   font-variant-numeric:tabular-nums;
 }
 
@@ -1674,15 +1588,24 @@ body{
 
 /* Los filtros, como pastillas. */
 .filtro{
-  border-radius:var(--radio);
-  padding:0.42rem 0.9rem;
-  font-size:var(--t1);
-  border:1.5px solid var(--linea);
+  appearance:none;
+  cursor:pointer;
   background:var(--carbon);
   color:var(--ceniza);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  padding:0.42rem 0.9rem;
+  font-family:var(--cuerpo);
+  font-weight:600;
+  font-size:var(--t1);
 }
 .filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
-.filtros{display:flex; flex-wrap:wrap; gap:0.4rem}
+.filtros{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0.4rem;
+  margin-bottom:var(--e2);
+}
 
 /* --- La bienvenida --------------------------------------------------------
    Cuatro pantallas, poco texto y un movimiento pequeño que explica lo que dice
@@ -1873,10 +1796,13 @@ body{
    debajo. El monograma sale de aquí: pasa a acompañar al nombre de cada
    pantalla, que es donde de verdad dice algo. */
 .cabecera{
-  flex:none;
-  display:flex; flex-direction:column; align-items:center; gap:1px;
-  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
   background:var(--fondo-cabecera);
+  flex:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
   border-bottom:1px solid var(--linea);
@@ -1910,8 +1836,13 @@ body{
    no es adorno, es una pista de por dónde ibas la última vez. */
 
 .accion{
-  appearance:none; cursor:pointer; width:100%; text-align:left;
-  display:flex; align-items:center; gap:var(--e4);
+  appearance:none;
+  cursor:pointer;
+  width:100%;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:var(--e4);
   padding:var(--e4);
   border:1.5px solid var(--acento);
   border-radius:var(--radio);
@@ -1922,17 +1853,25 @@ body{
 .accion--reciente{background:var(--tinte-a)}
 
 .accion__icono{
-  flex:none; width:3.4rem; height:3.4rem;
-  display:flex; align-items:center; justify-content:center;
+  flex:none;
+  width:3.4rem;
+  height:3.4rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   border-radius:50%;
-  background:var(--acento); color:var(--sobre-acento);
+  background:var(--acento);
+  color:var(--sobre-acento);
 }
 .accion__icono svg{
   width:1.8rem; height:1.8rem;
   fill:none; stroke:currentColor; stroke-width:1.9;
   stroke-linecap:round; stroke-linejoin:round;
 }
-.accion__texto{flex:1; min-width:0}
+.accion__texto{
+  flex:1;
+  min-width:0;
+}
 .accion__texto b{
   display:block; font-family:var(--display); font-weight:800; font-size:var(--t6);
   line-height:1.1; letter-spacing:-.02em;
@@ -2076,7 +2015,10 @@ body{
   background:var(--carbon);
   color:var(--hueso);
 }
-.via--abierta{background:var(--tinte-a); margin-bottom:0}
+.via--abierta{
+  background:var(--tinte-a);
+  margin-bottom:0;
+}
 
 .via__icono{
   flex:none; width:2.9rem; height:2.9rem;
@@ -2147,12 +2089,16 @@ body{
    Antes se pintaban los cinco tramos con uno destacado. Los otros cuatro no
    dicen nada del producto que tienes en la mano y competían con el que sí. */
 .nivel{
-  display:flex; align-items:center; gap:var(--e3);
-  padding:var(--e3) var(--e4);
-  border-radius:var(--radio);
-  margin-bottom:var(--e5);
-  color:var(--sobre-acento);
   background:var(--acento);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e5);
+  display:flex;
+  align-items:center;
+  gap:var(--e3);
+  color:var(--sobre-acento);
 }
 .nivel[data-nivel="rojo"]{background:var(--rojo); color:var(--sobre-rojo)}
 .nivel[data-nivel="naranja"]{background:var(--naranja); color:var(--sobre-naranja)}
@@ -2183,10 +2129,14 @@ body{
 
 /* --- La tarjeta del veredicto, con el perfil de la app --------------------- */
 .veredicto{
+  display:flex;
+  align-items:center;
+  gap:var(--e5);
+  margin-bottom:var(--e4);
+  padding:var(--e5) var(--e4);
   border:1.5px solid var(--acento);
   border-radius:var(--radio);
   background:var(--carbon);
-  padding:var(--e5) var(--e4);
 }
 .veredicto[data-nivel="rojo"]{border-color:var(--rojo)}
 .veredicto[data-nivel="naranja"]{border-color:var(--naranja)}
@@ -2206,7 +2156,14 @@ body{
   border-width:1.5px;
   border-radius:var(--radio);
 }
-.parte{border-color:var(--linea)}
+.parte{
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+  border-color:var(--linea);
+}
 
 /* --- Saber: seis puertas y un buscador ------------------------------------
    La pantalla arranca sin resultados. Los filtros y los órdenes solo aparecen
@@ -2257,11 +2214,6 @@ body{
   fill:none; stroke:currentColor; stroke-width:2;
   stroke-linecap:round; stroke-linejoin:round;
 }
-.resultados__cuenta{
-  font-family:var(--datos); font-size:var(--t0);
-  letter-spacing:.1em; text-transform:uppercase; color:var(--ceniza-tenue);
-  text-align:right;
-}
 
 /* Lo de la despensa, plegado: es interesante pero no es lo que vienes a hacer. */
 .repetidas-panel{
@@ -2279,34 +2231,45 @@ body{
 .repetidas-panel[open] summary::after{content:'  −'}
 .repetidas-panel[open]{padding-bottom:var(--e4)}
 .repetida{
-  appearance:none; cursor:pointer; width:100%; text-align:left;
-  display:flex; align-items:baseline; gap:var(--e3);
+  display:flex;
+  align-items:baseline;
+  gap:var(--e3);
   padding:var(--e2) 0;
-  background:none; border:0; border-top:1px solid var(--linea);
-  color:var(--hueso); font-size:var(--t2);
+  border-bottom:1px solid var(--linea);
+  appearance:none;
+  cursor:pointer;
+  width:100%;
+  text-align:left;
+  background:none;
+  border:0;
+  border-top:1px solid var(--linea);
+  color:var(--hueso);
+  font-size:var(--t2);
 }
-.repetida__veces{flex:none; color:var(--ceniza-tenue); font-size:var(--t1)}
-.repetida__nombre{flex:1; min-width:0}
+.repetida__veces{
+  width:2.4rem;
+  flex:none;
+  font-size:var(--t1);
+  font-weight:600;
+  color:var(--ceniza-tenue);
+}
+.repetida__nombre{
+  flex:1;
+  min-width:0;
+  color:var(--hueso);
+  font-size:var(--t3);
+}
 
 
 /* --- La cabecera de cada bloque de la Despensa -----------------------------
    El nombre dentro de una barra del color que le toca. Llegué a dejarlo como
    texto de color con un punto delante: más elegante, sí, pero se distinguía
    mucho menos de un vistazo, que es justamente para lo que está. */
-.bloque__barra{
-  display:flex; align-items:center; justify-content:space-between; gap:var(--e3);
-  margin:0;
-  padding:var(--e2) var(--e4);
-  border-radius:var(--radio-s);
-  font-family:var(--display); font-weight:600; font-size:var(--t2);
-  background:var(--carbon-alto); color:var(--hueso);
+.bloque[data-nivel="rojo"] .bloque[data-nivel="naranja"] .bloque[data-nivel="amarillo"] .bloque[data-nivel="verde_claro"] .bloque[data-nivel="verde_parchis"] .bloque__nombre{
+  flex:1; min-width:0; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase;
 }
-.bloque[data-nivel="rojo"] .bloque__barra{background:var(--rojo); color:var(--sobre-rojo)}
-.bloque[data-nivel="naranja"] .bloque__barra{background:var(--naranja); color:var(--sobre-naranja)}
-.bloque[data-nivel="amarillo"] .bloque__barra{background:var(--amarillo); color:var(--sobre-amarillo)}
-.bloque[data-nivel="verde_claro"] .bloque__barra{background:var(--verde-claro); color:var(--sobre-verde-claro)}
-.bloque[data-nivel="verde_parchis"] .bloque__barra{background:var(--verde-parchis); color:var(--sobre-verde-parchis)}
-.bloque__nombre{flex:1; min-width:0}
 .bloque__cuantos{
   flex:none; font-size:var(--t1); opacity:.82;
   font-variant-numeric:tabular-nums;
@@ -2316,7 +2279,23 @@ body{
    El teléfono reserva una franja para su barra de inicio. Dejarla entera como
    margen subía la nuestra más de lo necesario: con algo más de la mitad se
    despeja el indicador y la barra se apoya en el borde. */
-.barra{margin-bottom:max(0.35rem, calc(env(safe-area-inset-bottom) * 0.55))}
+.barra{
+  flex:none;
+  margin:0 auto;
+  margin-bottom:max(0.35rem, calc(env(safe-area-inset-bottom) * 0.55));
+  max-width:calc(100vw - 1.2rem);
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:0.24rem;
+  padding:0.38rem;
+  background:var(--fondo-barra);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  border:1px solid var(--borde-barra);
+  border-radius:var(--radio-pastilla);
+  box-shadow:var(--sombra-barra);
+}
 
 /* --- De dónde viene -------------------------------------------------------- */
 .procede{
@@ -2347,11 +2326,6 @@ body{
 
 
 
-.seccion__cuerpo{
-  padding:0 var(--e4) var(--e4);
-  border-top:1px solid var(--linea);
-  padding-top:var(--e4);
-}
 .seccion__cuerpo > .subtitulo:first-child{margin-top:0}
 
 @media (prefers-reduced-motion:reduce){
@@ -2415,9 +2389,14 @@ body{
   background-repeat:no-repeat;
 }
 .resultados__cuenta{
-  display:block; margin:0 0 var(--e3);
-  font-family:var(--datos); font-size:var(--t0);
-  letter-spacing:.1em; text-transform:uppercase; color:var(--ceniza-tenue);
+  font-family:var(--datos);
+  font-size:var(--t0);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  text-align:right;
+  display:block;
+  margin:0 0 var(--e3);
 }
 
 /* --- La tabla nutricional, en casillas ------------------------------------- */
@@ -2479,21 +2458,17 @@ body{
 /* --- Los bloques de color, ahora plegables --------------------------------
    Con la despensa llena, poder cerrar "Especialmente favorable" para mirar
    solo lo que conviene limitar es justo para lo que sirve esta pantalla. */
-.bloque__barra{
-  cursor:pointer; list-style:none;
-  display:flex; align-items:center; gap:var(--e3);
-}
-.bloque__barra::-webkit-details-marker{display:none}
-.bloque__flecha{flex:none; display:flex; opacity:.72}
-.bloque__flecha svg{
-  width:1.1rem; height:1.1rem; display:block;
-  fill:none; stroke:currentColor; stroke-width:2.2;
-  stroke-linecap:round; stroke-linejoin:round;
+
+/* Un más que gira, como en Preferencias y en las pestañas del resultado: una
+   sola forma de decir "esto se abre" en toda la app. */
+.bloque__flecha{
+  flex:none;
+  font-family:var(--datos); font-size:var(--t4); line-height:1;
+  opacity:.8;
   transition:transform .18s ease;
 }
-.bloque[open] .bloque__flecha svg{transform:rotate(180deg)}
-.bloque[open] .bloque__barra{margin-bottom:var(--e3)}
-
+.bloque[open] .bloque__flecha{transform:rotate(45deg)}
+.bloque[open] 
 @media (prefers-reduced-motion:reduce){
   .bloque__flecha svg{transition:none}
 }
@@ -2583,6 +2558,7 @@ input[type="search"]::-webkit-search-results-decoration{
 .seccion[open]{padding-bottom:var(--e4)}
 .seccion[open] .seccion__nombre{color:var(--hueso)}
 .seccion__cuerpo{
+  padding:0 var(--e4) var(--e4);
   border-top:1px solid var(--linea);
   padding-top:var(--e4);
 }
@@ -2591,3 +2567,36 @@ input[type="search"]::-webkit-search-results-decoration{
 @media (prefers-reduced-motion:reduce){
   .seccion__mas{transition:none}
 }
+
+/* --- El campo de búsqueda, a prueba de Safari ------------------------------
+   El marco interior seguía saliendo en el móvil aunque el borde estuviera a
+   cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:
+   sombra, contorno y apariencia, y con más peso que cualquier regla anterior.
+
+   Va al final del fichero a propósito: lo último que se lee es lo que manda. */
+.campo__entrada input[type="search"],
+.campo__entrada input[type="text"],
+.campo__entrada input[type="number"],
+.campo__entrada input{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+
+
+/* --- Las barras de color, con la forma de Preferencias ---------------------
+   Mismo radio, mismo relleno, nombre centrado en versalitas y un más que gira.
+   Lo único que cambia es el color, que es lo que tienen que decir. */
+.bloque__barra{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  margin:0;
+  padding:var(--e3) var(--e4);
+  border-radius:var(--radio);
+  background:var(--carbon-alto); color:var(--hueso);
+}
+.bloque__barra::-webkit-details-marker{display:none}

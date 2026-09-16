@@ -260,9 +260,7 @@ function bloquesDeColor(visibles, total) {
         <summary class="bloque__barra">
           <span class="bloque__nombre">${esc(n.texto)}</span>
           <span class="bloque__cuantos cifra">${suyos.length}</span>
-          <span class="bloque__flecha" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </span>
+          <span class="bloque__flecha" aria-hidden="true">+</span>
         </summary>
         ${mostrados.map(ficha).join('') || '<p class="texto" style="font-size:var(--t2)">Ninguno todavía.</p>'}
         ${faltan > 0 ? `
