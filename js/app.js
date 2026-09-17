@@ -27,7 +27,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.33.0';
+export const VERSION = '4.34.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 

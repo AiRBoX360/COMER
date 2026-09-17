@@ -491,18 +491,25 @@ button{touch-action:manipulation}
   display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3);
   margin-bottom:var(--e3);
 }
-.factor__nombre{font-family:var(--display); font-weight:600; font-size:var(--t4); letter-spacing:-.01em}
+.factor__nombre{font-family:var(--display); font-weight:600; font-size:var(--t3); line-height:1.25; letter-spacing:-.01em}
 .factor__peso{font-size:var(--t2); color:var(--ceniza-tenue); flex:none}
 .factor__medida{height:4px; border-radius:2px; background:var(--carbon-alto); overflow:hidden}
 .factor__medida i{display:block; height:100%; border-radius:2px}
 .factor--malo .factor__medida i{background:var(--rojo)}
 .factor--bueno .factor__medida i{background:var(--acento)}
 .factor__dato{
-  margin:var(--e3) 0 var(--e2);
-  font-size:var(--t2); color:var(--ceniza);
-  letter-spacing:.03em;
+  margin:var(--e2) 0;
+  font-family:var(--datos);
+  font-size:var(--t0);
+  line-height:1.4;
+  color:var(--ceniza-tenue);
 }
-.factor__motivo{margin:0; font-size:var(--t3); color:var(--ceniza); line-height:1.5}
+.factor__motivo{
+  margin:0;
+  font-size:var(--t2);
+  line-height:1.5;
+  color:var(--ceniza);
+}
 
 /* --- Resumen de tres cifras ---------------------------------------------- */
 .resumen div{
