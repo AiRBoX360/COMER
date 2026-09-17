@@ -18,7 +18,9 @@ import { nombrePantalla } from './inicio.js';
 
 let cache = [];
 let filtro = '';
-let buscarDentro = false;
+// Se busca a la vez por nombre y por lo que lleva dentro: elegir entre las
+// dos cosas era un paso que nadie quiere dar.
+const buscarDentro = true;
 let pendientes = null;
 
 /**
@@ -186,13 +188,9 @@ export function despensa() {
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
           </span>
           <input type="search" id="buscarDespensa" value="${esc(filtro)}"
-                 placeholder="${buscarDentro ? 'aceite de palma, E250, gluten…' : 'Buscar por nombre'}"
+                 placeholder="Nombre, o algo que lleve dentro"
                  autocomplete="off">
         </div>
-      </div>
-      <div class="filtros" style="margin-bottom:var(--e4)">
-        <button class="filtro${buscarDentro ? '' : ' es-activo'}" data-donde="nombre">Por nombre</button>
-        <button class="filtro${buscarDentro ? ' es-activo' : ''}" data-donde="dentro">Por lo que lleva dentro</button>
       </div>
       <div id="zonaDespensa">${listado(visibles, total, bloques, sinNota)}</div>`;
 
@@ -245,18 +243,31 @@ export function despensa() {
  * además sigues viendo tu despensa al entrar.
  */
 const POR_BLOQUE = 6;
+/** Colores a los que se les ha pedido ver todo. */
 const abiertos = new Set();
+/**
+ * Colores desplegados ahora mismo.
+ *
+ * Al refrescar la lista se rehacen los bloques, y sin esto volvían a salir
+ * cerrados: la página encogía de golpe y te sacaba del sitio donde estabas
+ * justo al pulsar "ver más".
+ */
+const desplegados = new Set();
 
 /** Los cinco bloques de color, cada uno plegable y con su tope. */
 function bloquesDeColor(visibles, total) {
   return NIVELES.slice().reverse().map((n) => {
-    const suyos = visibles.filter((p) => p.semaforo === n.clave);
+    // De mayor a menor nota dentro de cada color: dentro de "especialmente
+    // favorable" no da igual un 96 que un 86.
+    const suyos = visibles
+      .filter((p) => p.semaforo === n.clave)
+      .sort((a, b) => (b.puntuacion ?? 0) - (a.puntuacion ?? 0));
     if (total > 0 && suyos.length === 0) return '';
     const todos = abiertos.has(n.clave);
     const mostrados = todos ? suyos : suyos.slice(0, POR_BLOQUE);
     const faltan = suyos.length - mostrados.length;
     return `
-      <details class="bloque" data-nivel="${n.clave}">
+      <details class="bloque" data-nivel="${n.clave}"${desplegados.has(n.clave) ? ' open' : ''}>
         <summary class="bloque__barra">
           <span class="bloque__nombre">${esc(n.texto)}</span>
           <span class="bloque__cuantos cifra">${suyos.length}</span>
@@ -340,16 +351,6 @@ export async function despensaActivo(raiz, { repintar }) {
     pintarFotos(zona);
   }
 
-  raiz.addEventListener('click', (e) => {
-    const d = e.target.closest('[data-donde]');
-    if (!d) return;
-    buscarDentro = d.dataset.donde === 'dentro';
-    for (const b of raiz.querySelectorAll('[data-donde]')) {
-      b.classList.toggle('es-activo', b.dataset.donde === d.dataset.donde);
-    }
-    refrescarLista();
-  });
-
   raiz.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-poner-foto]');
     if (!b) return;
@@ -390,11 +391,24 @@ export async function despensaActivo(raiz, { repintar }) {
     window.dispatchEvent(new CustomEvent('comer:comparar'));
   });
 
+  // Se recuerda qué colores están desplegados, para no cerrarlos al refrescar.
+  raiz.addEventListener('toggle', (e) => {
+    const d = e.target.closest?.('.bloque');
+    if (!d) return;
+    if (d.open) desplegados.add(d.dataset.nivel);
+    else desplegados.delete(d.dataset.nivel);
+  }, true);
+
   raiz.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ver-todos]');
     if (!b) return;
+    const zona = raiz.querySelector('.principal') ?? document.querySelector('.principal');
+    const antes = zona?.scrollTop ?? 0;
     abiertos.add(b.dataset.verTodos);
+    desplegados.add(b.dataset.verTodos);
     refrescarLista();
+    // Se vuelve a donde estabas: pulsar "ver más" no puede moverte de sitio.
+    if (zona) zona.scrollTop = antes;
   });
 
   raiz.querySelector('#btnRecetasDespensa')?.addEventListener('click', () => {

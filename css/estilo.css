@@ -2716,7 +2716,9 @@ input[type="search"]::-webkit-search-results-decoration{
 .puntos{display:inline-flex; gap:2px; margin-left:0.35rem; vertical-align:baseline}
 .punto{
   display:inline-block; flex:none;
-  width:0.42em; height:0.42em; border-radius:50%;
+  width:0.53em; height:0.53em; border-radius:50%;
+  /* Un filo muy fino los despega del fondo sin ensuciar el color. */
+  box-shadow:0 0 0 1px rgba(0,0,0,.12);
 }
 .leyenda{
   border:1.5px dashed var(--linea); border-radius:var(--radio-s);
@@ -2728,6 +2730,6 @@ input[type="search"]::-webkit-search-results-decoration{
   padding:var(--e2) 0;
   font-size:var(--t2); line-height:1.45;
 }
-.leyenda__fila .punto{width:0.55em; height:0.55em}
+.leyenda__fila .punto{width:0.7em; height:0.7em}
 .leyenda__fila b{color:var(--hueso)}
 .leyenda__fila span{color:var(--ceniza)}

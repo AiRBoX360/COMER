@@ -18,12 +18,12 @@ import { combinacionesEntre, queAnadir, FRESCOS, COMBINACIONES } from '../motor.
  * Y como el color solo no basta, cada punto lleva escrito qué significa.
  */
 const COLORES_PAREJA = [
-  { color: '#2C6FB5', nombre: 'azul' },
-  { color: '#7B4FA8', nombre: 'morado' },
-  { color: '#0E8C84', nombre: 'turquesa' },
-  { color: '#C2417F', nombre: 'rosa' },
-  { color: '#8A5A2B', nombre: 'marrón' },
-  { color: '#4A5A73', nombre: 'gris azulado' },
+  { color: '#2962FF', nombre: 'azul eléctrico' },
+  { color: '#E5007E', nombre: 'magenta' },
+  { color: '#00C853', nombre: 'lima' },
+  { color: '#FF6D00', nombre: 'naranja flúor' },
+  { color: '#7C4DFF', nombre: 'violeta' },
+  { color: '#00B8D4', nombre: 'cian' },
 ];
 
 /**
@@ -128,7 +128,7 @@ export function combinar() {
     ${nombrePantalla(modo === 'recetas' ? 'recetas' : 'qué juntar')}
     <p class="texto">${modo === 'recetas'
       ? 'Elige lo que tienes a mano y te llevo a recetas de verdad, escritas por personas.'
-      : 'Elige lo que tienes a mano. Te digo qué se potencia entre sí y qué conviene separar, y por qué.'}</p>
+      : 'Une los colores para encontrar combinaciones ganadoras: dos alimentos con el mismo punto se potencian entre sí. Elígelos y te cuento por qué.'}</p>
 
     <h2 class="rotulo">De tu despensa</h2>
     ${guardados.length === 0
