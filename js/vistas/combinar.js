@@ -1,7 +1,79 @@
 import { esc } from '../ui.js';
 import { nombrePantalla } from './inicio.js';
 import { listar } from '../almacen.js';
-import { combinacionesEntre, queAnadir, FRESCOS } from '../motor.js';
+import { combinacionesEntre, queAnadir, FRESCOS, COMBINACIONES } from '../motor.js';
+
+/**
+ * Los puntos de color que dicen qué va con qué.
+ *
+ * Cada pareja posible entre tus alimentos recibe un color. Si el pistacho y la
+ * naranja llevan el mismo punto azul, es que juntos hacen algo. Si el pistacho
+ * lleva además uno morado, es que también va con otra cosa.
+ *
+ * Así no hay que ir probando a ciegas: se ve de un vistazo qué merece la pena
+ * juntar antes de elegir nada.
+ *
+ * Los colores son azules, morados y turquesas a propósito: ninguno se parece a
+ * los cinco del semáforo, para que nadie lea un punto como si fuera una nota.
+ * Y como el color solo no basta, cada punto lleva escrito qué significa.
+ */
+const COLORES_PAREJA = [
+  { color: '#2C6FB5', nombre: 'azul' },
+  { color: '#7B4FA8', nombre: 'morado' },
+  { color: '#0E8C84', nombre: 'turquesa' },
+  { color: '#C2417F', nombre: 'rosa' },
+  { color: '#8A5A2B', nombre: 'marrón' },
+  { color: '#4A5A73', nombre: 'gris azulado' },
+];
+
+/**
+ * Qué combinaciones hay entre todos los alimentos de la lista.
+ *
+ * Devuelve un mapa de nombre de alimento a los colores que le tocan, y la
+ * leyenda para explicarlos.
+ */
+function mapaDeParejas(nombres) {
+  const encontradas = [];
+  for (let i = 0; i < nombres.length; i += 1) {
+    for (let j = i + 1; j < nombres.length; j += 1) {
+      for (const c of combinacionesEntre([nombres[i], nombres[j]])) {
+        if (c.clase !== 'sinergia') continue;
+        let ya = encontradas.find((x) => x.clave === c.clave);
+        if (!ya) {
+          ya = { clave: c.clave, titulo: c.titulo, queOcurre: c.queOcurre, con: new Set() };
+          encontradas.push(ya);
+        }
+        ya.con.add(nombres[i]);
+        ya.con.add(nombres[j]);
+      }
+    }
+  }
+
+  // Más colores de los que se distinguen no ayudan: se quedan los que más
+  // alimentos tocan.
+  encontradas.sort((a, b) => b.con.size - a.con.size);
+  const usadas = encontradas.slice(0, COLORES_PAREJA.length);
+
+  const porAlimento = new Map();
+  const leyenda = [];
+  usadas.forEach((c, i) => {
+    const col = COLORES_PAREJA[i];
+    leyenda.push({ ...col, titulo: c.titulo, queOcurre: c.queOcurre });
+    for (const n of c.con) {
+      if (!porAlimento.has(n)) porAlimento.set(n, []);
+      porAlimento.get(n).push({ ...col, titulo: c.titulo });
+    }
+  });
+  return { porAlimento, leyenda, sobran: encontradas.length - usadas.length };
+}
+
+/** Los puntos que van detrás del nombre. */
+function puntos(lista) {
+  if (!lista || lista.length === 0) return '';
+  return `<span class="puntos">${lista.map((p) => `
+    <i class="punto" style="background:${p.color}" title="${esc(p.titulo)}"
+       aria-label="${esc(p.titulo)}"></i>`).join('')}</span>`;
+}
 
 /**
  * Qué merece la pena juntar de lo que tienes en casa.
@@ -46,6 +118,10 @@ export function combinar() {
   const nombres = [...[...elegidos].map((id) =>
     guardados.find((p) => p.id === id)?.nombre ?? ''), ...extras].filter(Boolean);
   const halladas = nombres.length >= 2 ? combinacionesEntre(nombres) : [];
+
+  // Los puntos se calculan sobre TODO lo guardado, no sobre lo elegido: sirven
+  // justamente para decidir qué elegir.
+  const parejas = mapaDeParejas(guardados.map((p) => p.nombre));
   const sugerencias = nombres.length >= 1 ? queAnadir(nombres) : [];
 
   return `
@@ -61,9 +137,21 @@ export function combinar() {
           ${guardados.map((p) => `
             <button class="elegible${elegidos.has(p.id) ? ' es-elegido' : ''}"
                     data-elegir="${p.id}" aria-pressed="${elegidos.has(p.id)}">
-              ${esc(p.nombre)}
+              ${esc(p.nombre)}${puntos(parejas.porAlimento.get(p.nombre))}
             </button>`).join('')}
         </div>`}
+
+    ${parejas.leyenda.length ? `
+      <div class="leyenda">
+        <p class="apunte-via">Los alimentos con el mismo punto se potencian entre sí.</p>
+        ${parejas.leyenda.map((l) => `
+          <div class="leyenda__fila">
+            <i class="punto" style="background:${l.color}"></i>
+            <span><b>${esc(l.titulo)}.</b> ${esc(l.queOcurre)}</span>
+          </div>`).join('')}
+        ${parejas.sobran > 0 ? `
+          <p class="apunte-via">Hay ${parejas.sobran} combinación(es) más entre lo que tienes, que no caben en colores distinguibles. Elige dos cosas y te las cuento.</p>` : ''}
+      </div>` : ''}
 
     <h2 class="rotulo" style="margin-top:20px">Añadir hasta tres más</h2>
     <p class="texto" style="font-size:0.9rem">Cosas que no tienes guardadas pero podrías comprar.</p>

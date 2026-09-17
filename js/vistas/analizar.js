@@ -427,6 +427,24 @@ export function analizarActivo(raiz, { repintar, irA }) {
   const estado = raiz.querySelector('#estadoLectura');
   const resumen = raiz.querySelector('#resumenLectura');
 
+/**
+   * Deja a la vista el botón de Revisar y baja hasta él.
+   *
+   * Se llama en cuanto hay algo cargado, venga de donde venga: un código, un
+   * alimento fresco, texto pegado o unas fotos. Sin esto el botón se queda
+   * oculto y el análisis no puede seguir.
+   *
+   * Se perdió al rehacer la pantalla, y se llamaba desde cuatro sitios: buscar
+   * por código reventaba en el momento de encontrar el producto.
+   */
+  function irAlResumen() {
+    const boton = raiz.querySelector('#btnRevisar');
+    if (boton) {
+      boton.style.display = '';
+      boton.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
   /** Cifra con coma decimal, que es como se escribe en español. */
   function conComa(v) {
     return String(v).replace('.', ',');

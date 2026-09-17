@@ -5,6 +5,7 @@
  * armazón sobre el que se irán colgando los módulos siguientes.
  */
 
+import { soltarCamara } from './escaner.js';
 import { inicio, inicioActivo } from './vistas/inicio.js';
 import { bienvenida, bienvenidaActivo, bienvenidaVista, reiniciarBienvenida } from './vistas/bienvenida.js';
 import { analizar, analizarActivo } from './vistas/analizar.js';
@@ -26,7 +27,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.25.0';
+export const VERSION = '4.31.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -99,6 +100,10 @@ window.addEventListener('popstate', (e) => {
 function irA(clave, conservarScroll = false, desdeHistorial = false) {
   const vista = VISTAS[clave];
   if (!vista || (clave === vistaActual && !conservarScroll)) return;
+  // Al salir de una pantalla se apaga la cámara si estaba encendida: se deja
+  // viva entre escaneos, no entre pantallas.
+  if (vistaActual !== clave) soltarCamara();
+
   vistaActual = clave;
 
   // Una entrada por pantalla. No se apila al volver atrás ni al repintar la

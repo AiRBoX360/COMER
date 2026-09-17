@@ -79,9 +79,47 @@ export async function hayEscaner() {
  * Devuelve el código en cuanto lo lee, o null si se cancela. Nunca lanza: un
  * fallo de cámara no debe romper la pantalla, y siempre queda teclearlo.
  */
+/**
+ * La cámara, una vez encendida, se deja encendida.
+ *
+ * Antes se apagaba al terminar cada escaneo, y volver a encenderla es lo que
+ * hacía que el teléfono pidiera permiso otra vez. Ahora el flujo se guarda y
+ * se reutiliza mientras la app siga abierta.
+ *
+ * Se apaga sola al salir de la pantalla o al dejar la app en segundo plano:
+ * tener la cámara encendida sin usarla gasta batería y enciende el punto verde
+ * del móvil, y eso no se hace a espaldas de nadie.
+ */
+let flujoGuardado = null;
+
+/** Apaga la cámara. Se llama al salir de la pantalla. */
+export function soltarCamara() {
+  if (!flujoGuardado) return;
+  flujoGuardado.getTracks().forEach((t) => t.stop());
+  flujoGuardado = null;
+}
+
+// Si la app se va a segundo plano, la cámara se suelta.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) soltarCamara();
+  });
+}
+
+/** ¿Sigue viva la cámara guardada? Una pista parada no sirve. */
+function flujoVivo() {
+  return flujoGuardado
+    && flujoGuardado.getTracks().some((t) => t.readyState === 'live');
+}
+
 export async function escanear({ video, alEstado = () => {} }) {
   let flujo = null;
-  try {
+  let reutilizado = false;
+
+  if (flujoVivo()) {
+    flujo = flujoGuardado;
+    reutilizado = true;
+  } else try {
     alEstado('Encendiendo la cámara…');
     flujo = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -94,6 +132,7 @@ export async function escanear({ video, alEstado = () => {} }) {
       audio: false,
     });
   } catch (err) {
+    flujoGuardado = null;
     return {
       ok: false,
       motivo: err.name === 'NotAllowedError' ? 'permiso' : 'camara',
@@ -103,6 +142,7 @@ export async function escanear({ video, alEstado = () => {} }) {
     };
   }
 
+  flujoGuardado = flujo;
   video.srcObject = flujo;
   video.setAttribute('playsinline', '');   // sin esto, iOS abre el vídeo a pantalla completa
   await video.play().catch(() => {});
@@ -110,7 +150,7 @@ export async function escanear({ video, alEstado = () => {} }) {
   const nativo = await detectorNativo();
   const propio = nativo ? null : await cargarLectorPropio();
   if (!nativo && !propio) {
-    flujo.getTracks().forEach((t) => t.stop());
+    soltarCamara();
     return {
       ok: false, motivo: 'sin_lector',
       mensaje: 'El lector de códigos no está instalado en esta copia de la app. Teclea el número a mano.',
@@ -124,7 +164,9 @@ export async function escanear({ video, alEstado = () => {} }) {
   const limite = Date.now() + 30000;   // medio minuto buscando y se rinde
   let parar = false;
 
-  const detener = () => { parar = true; flujo.getTracks().forEach((t) => t.stop()); };
+  // Se deja de mirar, pero la cámara sigue encendida para el siguiente
+  // escaneo. Apagarla es lo que hace que el móvil vuelva a pedir permiso.
+  const detener = () => { parar = true; };
 
   try {
     while (!parar && Date.now() < limite) {

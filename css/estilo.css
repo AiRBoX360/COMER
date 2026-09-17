@@ -233,31 +233,6 @@ html{
  * debajo no hay nada. Y de paso desaparecen dos apaños: medir la cabecera al
  * arrancar y reservarle hueco a la barra.
  */
-body{
-  margin:0;
-  /* Anclada a los cuatro bordes del visor, no a una altura calculada.
-     
-     Con "100dvh" la barra bajaba casi siempre y a veces no: en iPhone esa
-     medida se resuelve en el arranque y puede leerse antes de que el sistema
-     haya terminado de colocar la ventana, así que la página quedaba más alta
-     que la pantalla y la última fila se salía por abajo. Que fallara solo a
-     veces era la pista: un número mal calculado, no una regla mal escrita.
-     
-     Fijando los cuatro bordes no hay altura que calcular. La página mide
-     exactamente lo que se ve, siempre. */
-  position:fixed;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  background:var(--tinta);
-  color:var(--hueso);
-  font-family:var(--cuerpo);
-  font-size:var(--t3);
-  line-height:1.55;
-  -webkit-font-smoothing:antialiased;
-  overscroll-behavior-y:none;
-}
 
 /* Nada de zoom accidental al tocar dos veces */
 button{touch-action:manipulation}
@@ -482,13 +457,7 @@ button{touch-action:manipulation}
   font-size:var(--t3); color:var(--ceniza);
 }
 .diagnostico li:last-child{border-bottom:0}
-.diagnostico b{
-  font-family:var(--datos); font-size:var(--t1); font-weight:600;
-  letter-spacing:.05em; text-transform:uppercase;
-  color:var(--ceniza-tenue);
-}
 .diagnostico b.si{color:var(--verde-claro-letra)}
-.diagnostico b.no{color:var(--naranja-letra)}
 
 /* --- Instrucciones de instalación en iPhone ------------------------------- */
 .instalar{
@@ -719,19 +688,18 @@ button{touch-action:manipulation}
    una línea doble, que es lo que pasaba. */
 .campo__entrada input,
 .campo__entrada select{
-  flex:1; min-width:0;
-  /* Safari le pone su propio marco redondeado a los campos de búsqueda, y no
-     se quita poniendo el borde a cero: hay que desactivar su apariencia
-     nativa. Sin esto se veía un marco dentro de otro. */
+  flex:1;
+  min-width:0;
   appearance:none;
   -webkit-appearance:none;
-  background:none; color:var(--hueso);
+  background:none;
+  color:var(--hueso);
   border:0;
   padding:var(--e3) 0;
-  font-family:var(--datos); font-size:var(--t4);
+  font-family:var(--cuerpo);
+  font-size:var(--t3);
   font-variant-numeric:tabular-nums;
 }
-.campo__entrada select{font-family:var(--cuerpo); font-size:var(--t3)}
 .campo__entrada input:focus,
 .campo__entrada select:focus{border-color:var(--hueso); outline:none}
 .campo__unidad{
@@ -839,15 +807,25 @@ button{touch-action:manipulation}
 .ficha--neutro{border-left-color:var(--ceniza-tenue)}
 .ficha--sin_ficha{border-left-color:var(--linea); border-left-style:dashed}
 
+/* El número a la izquierda, y a su derecha el nombre con el sello debajo.
+   
+   Antes iban los tres en fila. El sello no encoge —"CONVIENE LIMITAR" no se
+   puede partir— así que con un nombre largo el título se quedaba sin sitio y
+   caía en una palabra por línea, con el sello encima. */
 .ficha summary{
-  display:flex; align-items:center; gap:var(--e3);
-  padding:var(--e3) var(--e4);
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:var(--e3); row-gap:var(--e2);
+  align-items:start;
+  padding:var(--e4);
   cursor:pointer; list-style:none;
 }
 .ficha summary::-webkit-details-marker{display:none}
 .ficha__orden{
-  width:1.6rem; flex:none;
+  width:1.6rem;
+  grid-row:1 / span 2;
   font-size:var(--t1); color:var(--ceniza-tenue);
+  line-height:1.6;
 }
 .ficha__titulo .cifra{color:var(--ceniza); font-size:var(--t1)}
 .ficha--favorable .ficha__sello{color:var(--verde-claro-letra)}
@@ -935,7 +913,6 @@ button{touch-action:manipulation}
 }
 
 /* --- Filtros del catálogo ------------------------------------------------- */
-.filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
 
 /* --- Lo que se repite en tu despensa -------------------------------------- */
 .repetidas{margin-bottom:var(--e5)}
@@ -1127,14 +1104,27 @@ button{touch-action:manipulation}
 .rapido b{display:block; font-family:var(--display); font-weight:600; font-size:var(--t3)}
 .rapido span{display:block; font-size:var(--t1); color:var(--ceniza-tenue); margin-top:2px}
 /* En el diagnóstico, los detalles largos no deben ir en mayúsculas ni cortarse. */
-.diagnostico b{max-width:58%; text-align:right; overflow-wrap:anywhere}
-.diagnostico b.no{text-transform:none; letter-spacing:.01em}
+.diagnostico b{
+  font-family:var(--datos);
+  font-size:var(--t1);
+  font-weight:600;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  max-width:58%;
+  text-align:right;
+  overflow-wrap:anywhere;
+}
+.diagnostico b.no{
+  color:var(--naranja-letra);
+  text-transform:none;
+  letter-spacing:.01em;
+}
 
 /* --- De qué se compone la nota -------------------------------------------- */
 .parte__cab{display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3)}
 .parte__nombre{font-family:var(--display); font-weight:600; font-size:var(--t3)}
 .parte__nota{font-size:var(--t5); font-weight:600; color:var(--hueso)}
-.parte__nota small{font-size:var(--t0); color:var(--ceniza-tenue); font-weight:400}
 .parte__barra{
   height:0.5rem; margin:var(--e2) 0;
   background:var(--carbon-alto); border-radius:var(--radio-s); overflow:hidden;
@@ -1276,10 +1266,22 @@ button{touch-action:manipulation}
    fondo, en muy baja intensidad, y en los acentos de la interfaz. La regla de
    que el color fuerte es del veredicto se mantiene intacta. */
 body{
+  margin:0;
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
   background:
     radial-gradient(120% 55% at 88% -8%, var(--tinte-a), transparent 60%),
     radial-gradient(100% 45% at 4% 4%, var(--tinte-b), transparent 58%),
     var(--tinta);
+  color:var(--hueso);
+  font-family:var(--cuerpo);
+  font-size:var(--t3);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
   background-attachment:fixed;
 }
 
@@ -1453,19 +1455,6 @@ body{
 
 /* --- Inicio: dos acciones grandes y lo demás en voz baja ------------------- */
 .accion--principal .accion__icono{background:var(--tinta); color:var(--hueso)}
-.accion__icono svg{
-  width:1.5rem; height:1.5rem;
-  fill:none; stroke:currentColor; stroke-width:1.8;
-  stroke-linecap:round; stroke-linejoin:round;
-}
-.accion__texto b{
-  display:block; font-family:var(--display); font-weight:700; font-size:var(--t4);
-  line-height:1.2;
-}
-.accion__texto small{
-  display:block; margin-top:3px; font-size:var(--t2); line-height:1.4;
-  color:var(--ceniza-tenue);
-}
 .accion--principal .accion__texto small{color:rgba(16,19,25,.62)}
 
 .recientes{margin-top:var(--e5)}
@@ -1508,10 +1497,9 @@ body{
   margin-bottom:var(--e3);
   overflow:hidden;
 }
-.ficha summary{padding:var(--e4)}
 .ficha__titulo{
-  flex:1;
   min-width:0;
+  overflow-wrap:anywhere;
   font-family:var(--display);
   font-weight:600;
   font-size:var(--t3);
@@ -1526,7 +1514,7 @@ body{
   letter-spacing:.07em;
   text-transform:uppercase;
   color:var(--ceniza-tenue);
-  text-align:right;
+  justify-self:start;
   padding:0.24rem 0.6rem;
   border-radius:var(--radio-pastilla);
   border:1px solid currentColor;
@@ -1599,7 +1587,11 @@ body{
   font-weight:600;
   font-size:var(--t1);
 }
-.filtro.es-activo{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
+.filtro.es-activo{
+  background:var(--acento);
+  color:var(--sobre-acento);
+  border-color:transparent;
+}
 .filtros{
   display:flex;
   flex-wrap:wrap;
@@ -1864,23 +1856,36 @@ body{
   color:var(--sobre-acento);
 }
 .accion__icono svg{
-  width:1.8rem; height:1.8rem;
-  fill:none; stroke:currentColor; stroke-width:1.9;
-  stroke-linecap:round; stroke-linejoin:round;
+  width:1.8rem;
+  height:1.8rem;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 .accion__texto{
   flex:1;
   min-width:0;
 }
 .accion__texto b{
-  display:block; font-family:var(--display); font-weight:800; font-size:var(--t6);
-  line-height:1.1; letter-spacing:-.02em;
+  display:block;
+  font-family:var(--display);
+  font-weight:800;
+  font-size:var(--t6);
+  line-height:1.1;
+  letter-spacing:-.02em;
 }
 .accion__texto small{
-  display:block; margin-top:3px;
-  font-family:var(--datos); font-size:var(--t1); font-weight:400;
-  letter-spacing:.14em; text-transform:uppercase;
+  display:block;
+  margin-top:3px;
+  font-size:var(--t1);
+  line-height:1.4;
   color:var(--ceniza);
+  font-family:var(--datos);
+  font-weight:400;
+  letter-spacing:.14em;
+  text-transform:uppercase;
 }
 
 /* El grupo enmarcado, con su rótulo centrado dentro. */
@@ -2036,6 +2041,7 @@ body{
   font-family:var(--display); font-weight:700; font-size:var(--t4);
   line-height:1.2; letter-spacing:-.015em;
 }
+.via-seccion > summary{min-height:4.2rem}
 
 .via__cuerpo{
   border:1.5px solid var(--acento);
@@ -2268,7 +2274,7 @@ body{
 .bloque__nombre{
   flex:1; min-width:0; text-align:center;
   font-family:var(--datos); font-size:var(--t1); font-weight:400;
-  letter-spacing:.2em; text-transform:uppercase;
+  letter-spacing:.2em; text-transform:uppercase; line-height:1.2;
 }
 
 /* Cada barra con el color de su nivel.
@@ -2458,7 +2464,11 @@ body{
 .parte__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
 .parte__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
 .parte__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
-.parte__nota small{color:var(--ceniza-tenue); font-weight:400}
+.parte__nota small{
+  font-size:var(--t0);
+  color:var(--ceniza-tenue);
+  font-weight:400;
+}
 
 /* --- Corregir lo que esté mal ---------------------------------------------
    Lleva a Revisar, que ya existía. Lo que faltaba no era un editor: era poder
@@ -2555,10 +2565,13 @@ input[type="search"]::-webkit-search-results-decoration{
   padding:0 var(--e4);
   margin-bottom:var(--e2);
 }
+/* Todas del mismo alto, se parta el nombre o no. Antes crecían cuando el
+   rótulo ocupaba dos líneas y la columna quedaba desigual. */
 .seccion summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
-  padding:var(--e4) 0;
+  min-height:3.4rem;
+  padding:0;
 }
 .seccion summary::-webkit-details-marker{display:none}
 .seccion__icono{flex:none; color:var(--ceniza-tenue); display:flex}
@@ -2571,6 +2584,7 @@ input[type="search"]::-webkit-search-results-decoration{
   flex:1; text-align:center;
   font-family:var(--datos); font-size:var(--t1); font-weight:400;
   letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza);
+  line-height:1.2;
 }
 .seccion__mas{
   flex:none; font-family:var(--datos); font-size:var(--t4);
@@ -2600,7 +2614,8 @@ input[type="search"]::-webkit-search-results-decoration{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
   margin:0;
-  padding:var(--e3) var(--e4);
+  min-height:3rem;
+  padding:0 var(--e4);
   border-radius:var(--radio);
   background:var(--carbon-alto); color:var(--hueso);
 }
@@ -2693,3 +2708,26 @@ input[type="search"]::-webkit-search-results-decoration{
   box-shadow:none !important;
   outline:none !important;
 }
+
+/* --- Los puntos que dicen qué va con qué ----------------------------------
+   Mismo punto, mismo color: esos dos alimentos se potencian. Azules, morados
+   y turquesas a propósito, para que nadie lea un punto como si fuera una nota
+   del semáforo. */
+.puntos{display:inline-flex; gap:2px; margin-left:0.35rem; vertical-align:baseline}
+.punto{
+  display:inline-block; flex:none;
+  width:0.42em; height:0.42em; border-radius:50%;
+}
+.leyenda{
+  border:1.5px dashed var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-top:var(--e3);
+}
+.leyenda__fila{
+  display:flex; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0;
+  font-size:var(--t2); line-height:1.45;
+}
+.leyenda__fila .punto{width:0.55em; height:0.55em}
+.leyenda__fila b{color:var(--hueso)}
+.leyenda__fila span{color:var(--ceniza)}
