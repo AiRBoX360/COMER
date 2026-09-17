@@ -2656,7 +2656,12 @@ input[type="search"]::-webkit-search-results-decoration{
 .cuanto__cab{
   display:flex; align-items:baseline; justify-content:space-between; gap:var(--e3);
 }
-.cuanto__nombre{font-size:var(--t3); color:var(--hueso)}
+/* Misma tipografía que el título de una ficha de ingrediente: van uno al lado
+   del otro y con distinta letra parecían de dos pantallas distintas. */
+.cuanto__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25; color:var(--hueso);
+}
 .cuanto__pct{
   flex:none; font-size:var(--t4); font-weight:600;
   font-variant-numeric:tabular-nums; color:var(--hueso);
@@ -2671,10 +2676,10 @@ input[type="search"]::-webkit-search-results-decoration{
 .cuanto[data-clase="limite"] .cuanto__barra i{background:var(--naranja)}
 .cuanto[data-clase="objetivo"] .cuanto__pct{color:var(--verde-parchis-letra)}
 .cuanto[data-clase="limite"] .cuanto__pct{color:var(--naranja-letra)}
-.cuanto__frase{margin:0; font-size:var(--t2); color:var(--ceniza)}
+.cuanto__frase{margin:0; font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
 .cuanto__fuente{
   margin:var(--e1) 0 0;
-  font-family:var(--datos); font-size:var(--t0); line-height:1.5;
+  font-family:var(--datos); font-size:var(--t0); line-height:1.4;
   color:var(--ceniza-tenue);
 }
 
