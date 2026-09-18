@@ -219,7 +219,7 @@ function cuantoDeLoQueLimita(v) {
             <span class="cuanto__nombre">${esc(a.nombre)}</span>
             <span class="cuanto__pct cifra">${redondear(a.raciones)}<small> raciones</small></span>
           </div>
-          <p class="cuanto__frase">Harían falta ${redondear(a.raciones)} raciones al día para llegar a su ingesta admisible.</p>
+          <p class="cuanto__frase">Harían falta <b>${esc(redondear(a.raciones))} raciones</b> al día para llegar a su ingesta admisible.</p>
           <p class="cuanto__fuente">Suponiendo la cantidad máxima que permite la ley, que es el peor caso: el producto llevará menos.</p>
         </div>`).join('')}
       <p class="apunte-via">La ingesta admisible NO es donde empieza el daño. Se calcula cogiendo la dosis más alta sin ningún efecto observado y dividiéndola entre cien: es un margen de seguridad para toda la vida.</p>` : ''}
@@ -266,9 +266,10 @@ function redondear(n) {
 
 /** Una fila: nombre, porcentaje, barra, cuántas raciones y de dónde sale. */
 function filaCuanto(f) {
-  const frase = f.clase === 'objetivo'
-    ? `${redondear(f.raciones)} raciones cubrirían el día`
-    : `${redondear(f.raciones)} raciones llegarían al límite`;
+  // Las raciones van en negrita y con su propio color: es el dato que la gente
+  // se lleva de aquí, y se perdía entre el resto del texto.
+  const frase = `<b>${esc(redondear(f.raciones))} raciones</b> `
+    + (f.clase === 'objetivo' ? 'cubrirían el día' : 'llegarían al límite');
   return `
     <div class="cuanto" data-clase="${f.clase}">
       <div class="cuanto__cab">
@@ -276,7 +277,7 @@ function filaCuanto(f) {
         <span class="cuanto__pct cifra">${f.pct}<small>% de tu día</small></span>
       </div>
       <div class="cuanto__barra"><i style="width:${Math.min(100, f.pct)}%"></i></div>
-      <p class="cuanto__frase">${esc(frase)}</p>
+      <p class="cuanto__frase">${frase}</p>
       <p class="cuanto__fuente">${esc(f.porRacion)} ${esc(f.unidad)} por ración · ${esc(f.fuente)}: ${esc(f.nota)}</p>
     </div>`;
 }

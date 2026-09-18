@@ -6,6 +6,7 @@ import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js
 import { nombrePantalla } from './inicio.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
+import { buscarFrescoExtra, buscarMediterraneo } from '../frescos-extra.js';
 import { buscarFresco, frescoAEntrada, compararConAnterior,
          buscarPorCodigoGuardado } from '../motor.js';
 import { listar } from '../almacen.js';
@@ -678,7 +679,10 @@ export function analizarActivo(raiz, { repintar, irA }) {
   const cajaFresco = raiz.querySelector('#buscaFresco');
   const listaFresco = raiz.querySelector('#resultadosFresco');
   cajaFresco?.addEventListener('input', () => {
-    const encontrados = buscarFresco(cajaFresco.value);
+    // Se busca en las dos listas: la del motor y la que se añadió después.
+    const encontrados = [...buscarFresco(cajaFresco.value),
+                         ...buscarFrescoExtra(cajaFresco.value),
+                         ...buscarMediterraneo(cajaFresco.value)];
     if (!encontrados.length) { listaFresco.innerHTML = ''; return; }
     listaFresco.innerHTML = encontrados.map((f, i) => `
       <button class="fresco" data-fresco="${i}">
@@ -691,7 +695,10 @@ export function analizarActivo(raiz, { repintar, irA }) {
   listaFresco?.addEventListener('click', (e) => {
     const b = e.target.closest('[data-fresco]');
     if (!b) return;
-    const encontrados = buscarFresco(cajaFresco.value);
+    // Se busca en las dos listas: la del motor y la que se añadió después.
+    const encontrados = [...buscarFresco(cajaFresco.value),
+                         ...buscarFrescoExtra(cajaFresco.value),
+                         ...buscarMediterraneo(cajaFresco.value)];
     const f = encontrados[Number(b.dataset.fresco)];
     if (!f) return;
 

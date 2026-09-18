@@ -2745,3 +2745,19 @@ input[type="search"]::-webkit-search-results-decoration{
 .leyenda__fila .punto{width:0.7em; height:0.7em}
 .leyenda__fila b{color:var(--hueso)}
 .leyenda__fila span{color:var(--ceniza)}
+
+/* El número de raciones es el dato que la gente se lleva de aquí: va en
+   negrita y con el color de su mitad, para que no se pierda entre el texto. */
+.cuanto__frase b{
+  font-family:var(--display); font-weight:700;
+  font-size:var(--t3); letter-spacing:-.01em;
+}
+.cuanto[data-clase="objetivo"] .cuanto__frase b{color:var(--verde-parchis-letra)}
+.cuanto[data-clase="limite"] .cuanto__frase b{color:var(--naranja-letra)}
+
+/* Las raciones son el dato que se busca en esa línea: se perdían entre el
+   resto del texto. */
+.cuanto__frase b{
+  font-family:var(--display); font-weight:700;
+  font-size:var(--t3); color:var(--hueso);
+}
