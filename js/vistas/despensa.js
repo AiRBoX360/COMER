@@ -119,10 +119,8 @@ function ficha(p) {
                    aria-label="Añadir una foto de ${esc(p.nombre)}">
              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
            </button>`}
-      <div class="producto__texto">
-        <h3>${esc(p.nombre)}</h3>
-        <p class="producto__fecha cifra">${esc(fecha)}</p>
-      </div>
+      <h3 class="producto__nombre">${esc(p.nombre)}</h3>
+      <p class="producto__fecha cifra">${esc(fecha)}</p>
       <span class="producto__nota cifra" data-nivel="${p.semaforo ?? 'rojo'}">
         ${p.puntuacion ?? '—'}
       </span>

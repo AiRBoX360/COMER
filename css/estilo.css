@@ -737,7 +737,7 @@ button{touch-action:manipulation}
 .apunte--ok{color:var(--verde-claro-letra)}
 
 .mas{margin-top:var(--e4)}
-.mas summary{
+.mas > summary{
   cursor:pointer; padding:var(--e3) 0;
   font-family:var(--display); font-weight:600; font-size:var(--t3);
   color:var(--ceniza);
@@ -819,7 +819,7 @@ button{touch-action:manipulation}
    Antes iban los tres en fila. El sello no encoge —"CONVIENE LIMITAR" no se
    puede partir— así que con un nombre largo el título se quedaba sin sitio y
    caía en una palabra por línea, con el sello encima. */
-.ficha summary{
+.ficha > summary{
   display:grid;
   grid-template-columns:auto 1fr;
   column-gap:var(--e3); row-gap:var(--e2);
@@ -827,7 +827,7 @@ button{touch-action:manipulation}
   padding:var(--e4);
   cursor:pointer; list-style:none;
 }
-.ficha summary::-webkit-details-marker{display:none}
+.ficha > summary::-webkit-details-marker{display:none}
 .ficha__orden{
   width:1.6rem;
   grid-row:1 / span 2;
@@ -878,23 +878,38 @@ button{touch-action:manipulation}
   font-family:var(--datos); font-size:var(--t0);
   color:var(--ceniza-tenue); text-transform:uppercase; letter-spacing:.05em;
 }
-.producto__texto{flex:1; min-width:0}
-.producto__texto h3{
+.producto__nombre{
+  grid-area:nombre; min-width:0;
   margin:0; font-family:var(--display); font-weight:600; font-size:var(--t3);
   line-height:1.25;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+  overflow:hidden;
 }
-.producto__fecha{margin:2px 0 0; font-size:var(--t1); color:var(--ceniza-tenue)}
+.producto__fecha{
+  grid-area:fecha; margin:0;
+  font-size:var(--t1); color:var(--ceniza-tenue); white-space:nowrap;
+}
 .producto__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
 .producto__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
 .producto__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
 .producto__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
 .producto__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
 .producto__borrar{
-  appearance:none; cursor:pointer; flex:none;
-  width:2.2rem; height:2.2rem; padding:0;
-  background:none; border:0; color:var(--ceniza-tenue);
-  font-size:var(--t5); line-height:1;
+  grid-area:borrar;
+  justify-self:end;
+  align-self:start;
+  appearance:none;
+  cursor:pointer;
+  flex:none;
+  width:1.8rem;
+  height:2.2rem;
+  padding:0;
+  background:none;
+  border:0;
+  color:var(--ceniza-tenue);
+  font-size:var(--t5);
+  line-height:1;
 }
 
 .ultimo{
@@ -1487,8 +1502,8 @@ body{
 .atajo:active{border-color:var(--hueso); color:var(--hueso)}
 
 /* Los ajustes, plegados. Se tocan una vez y no se vuelven a mirar. */
-.ajustes summary::-webkit-details-marker{display:none}
-.ajustes summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.ajustes > summary::-webkit-details-marker{display:none}
+.ajustes > summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
 .ajustes[open] summary::after{content:'  −'}
 .ajustes[open]{padding-bottom:var(--e4)}
 
@@ -1539,10 +1554,17 @@ body{
 
 /* Los productos de la despensa: la nota en grande a la izquierda, como en el
    resultado, para que las dos pantallas se reconozcan entre sí. */
+/* Dos filas: el nombre arriba con todo el ancho, y debajo la fecha y la nota.
+   En una sola fila la foto, la nota y la equis se comían el sitio y el nombre
+   se quedaba en dos letras. */
 .producto{
-  display:flex;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-areas:
+    "foto nombre borrar"
+    "foto fecha  nota";
   align-items:center;
-  gap:var(--e4);
+  column-gap:var(--e3); row-gap:var(--e1);
   background:var(--carbon);
   border:1.5px solid var(--acento);
   border-radius:var(--radio);
@@ -1551,6 +1573,7 @@ body{
   position:relative;
 }
 .producto__foto{
+  grid-area:foto;
   width:3.4rem;
   height:3.4rem;
   flex:none;
@@ -1560,15 +1583,13 @@ body{
   align-items:center;
   justify-content:center;
 }
-.producto__nombre{
-  font-family:var(--display); font-weight:600; font-size:var(--t3);
-  line-height:1.25;
-}
 .producto__nota{
+  grid-area:nota;
+  justify-self:end;
   flex:none;
-  width:2.8rem;
+  min-width:2.2rem;
   text-align:center;
-  font-size:var(--t6);
+  font-size:var(--t5);
   font-weight:600;
   font-family:var(--datos);
   font-variant-numeric:tabular-nums;
@@ -1689,12 +1710,12 @@ body{
 }
 .combi--suma{border-left-color:var(--verde-claro-letra)}
 .combi--resta{border-left-color:var(--naranja-letra)}
-.combi summary{
+.combi > summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
   padding:var(--e4);
 }
-.combi summary::-webkit-details-marker{display:none}
+.combi > summary::-webkit-details-marker{display:none}
 .combi__signo{
   flex:none; width:2.1rem; height:2.1rem; border-radius:var(--radio-s);
   display:flex; align-items:center; justify-content:center;
@@ -1935,13 +1956,13 @@ body{
   background:var(--carbon); padding:0 var(--e4);
   margin-bottom:var(--e5);
 }
-.ajustes summary{
+.ajustes > summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
   padding:var(--e4) 0;
 }
-.ajustes summary::-webkit-details-marker{display:none}
-.ajustes summary::after{content:none}
+.ajustes > summary::-webkit-details-marker{display:none}
+.ajustes > summary::after{content:none}
 .ajustes__icono{flex:none; color:var(--ceniza-tenue)}
 .ajustes__icono svg{
   width:1.3rem; height:1.3rem; display:block;
@@ -2234,13 +2255,13 @@ body{
   background:var(--carbon); padding:0 var(--e4);
   margin-top:var(--e6);
 }
-.repetidas-panel summary{
+.repetidas-panel > summary{
   cursor:pointer; list-style:none; padding:var(--e4) 0;
   font-family:var(--display); font-weight:600; font-size:var(--t3);
   color:var(--hueso);
 }
-.repetidas-panel summary::-webkit-details-marker{display:none}
-.repetidas-panel summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.repetidas-panel > summary::-webkit-details-marker{display:none}
+.repetidas-panel > summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
 .repetidas-panel[open] summary::after{content:'  −'}
 .repetidas-panel[open]{padding-bottom:var(--e4)}
 .repetida{
@@ -2574,13 +2595,13 @@ input[type="search"]::-webkit-search-results-decoration{
 }
 /* Todas del mismo alto, se parta el nombre o no. Antes crecían cuando el
    rótulo ocupaba dos líneas y la columna quedaba desigual. */
-.seccion summary{
+.seccion > summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
   min-height:3.4rem;
   padding:0;
 }
-.seccion summary::-webkit-details-marker{display:none}
+.seccion > summary::-webkit-details-marker{display:none}
 .seccion__icono{flex:none; color:var(--ceniza-tenue); display:flex}
 .seccion__icono svg{
   width:1.3rem; height:1.3rem; display:block;
@@ -2638,14 +2659,14 @@ input[type="search"]::-webkit-search-results-decoration{
   margin-bottom:var(--e2);
 }
 .sub[open]{border-color:var(--acento); padding-bottom:var(--e3)}
-.sub summary{
+.sub > summary{
   cursor:pointer; list-style:none;
   display:flex; align-items:center; gap:var(--e3);
   padding:var(--e3) 0;
   font-family:var(--display); font-weight:600; font-size:var(--t3);
   color:var(--hueso);
 }
-.sub summary::-webkit-details-marker{display:none}
+.sub > summary::-webkit-details-marker{display:none}
 .sub__signo{
   flex:none; width:1.6rem; height:1.6rem; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -2702,24 +2723,6 @@ input[type="search"]::-webkit-search-results-decoration{
 
 @media (prefers-reduced-motion:reduce){ .sub__mas{transition:none} }
 
-/* --- El campo de búsqueda, a prueba de Safari ------------------------------
-   El marco interior seguía saliendo en el móvil aunque el borde estuviera a
-   cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:
-   sombra, contorno y apariencia, y con más peso que cualquier regla anterior.
-
-   Va al final del fichero a propósito: lo último que se lee es lo que manda. */
-.campo__entrada input[type="search"],
-.campo__entrada input[type="text"],
-.campo__entrada input[type="number"],
-.campo__entrada input{
-  appearance:none !important;
-  -webkit-appearance:none !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
-  outline:none !important;
-}
 
 /* --- Los puntos que dicen qué va con qué ----------------------------------
    Mismo punto, mismo color: esos dos alimentos se potencian. Azules, morados
@@ -2755,9 +2758,21 @@ input[type="search"]::-webkit-search-results-decoration{
 .cuanto[data-clase="objetivo"] .cuanto__frase b{color:var(--verde-parchis-letra)}
 .cuanto[data-clase="limite"] .cuanto__frase b{color:var(--naranja-letra)}
 
-/* Las raciones son el dato que se busca en esa línea: se perdían entre el
-   resto del texto. */
-.cuanto__frase b{
-  font-family:var(--display); font-weight:700;
-  font-size:var(--t3); color:var(--hueso);
+/* --- El campo de búsqueda, a prueba de Safari ------------------------------
+   El marco interior seguía saliendo en el móvil aunque el borde estuviera a
+   cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:
+   sombra, contorno y apariencia, y con más peso que cualquier regla anterior.
+
+   Va al final del fichero a propósito: lo último que se lee es lo que manda. */
+.campo__entrada input[type="search"],
+.campo__entrada input[type="text"],
+.campo__entrada input[type="number"],
+.campo__entrada input{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  outline:none !important;
 }
