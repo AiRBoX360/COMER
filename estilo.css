@@ -1,0 +1,2800 @@
+/* ==========================================================================
+   VERDICTO · Sistema visual
+   Regla que no se rompe: si algo tiene color saturado, significa algo.
+   La interfaz es hueso sobre tinta. El único color es el veredicto.
+   ========================================================================== */
+
+/* --- Tipografías, servidas desde la propia app ---------------------------- */
+@font-face{font-family:Archivo;src:url(../fuentes/archivo-600.woff2)format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:Archivo;src:url(../fuentes/archivo-800.woff2)format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Plex Sans";src:url(../fuentes/plex-sans-400.woff2)format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex Sans";src:url(../fuentes/plex-sans-600.woff2)format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url(../fuentes/plex-mono-400.woff2)format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url(../fuentes/plex-mono-600.woff2)format("woff2");font-weight:600;font-display:swap}
+
+:root{
+  /* ------------------------------------------------------------------------
+     DOS TEMAS, UN SOLO JUEGO DE NOMBRES.
+     
+     Todo el resto de la hoja usa estos nombres y nunca un color escrito a
+     pelo. Así cambiar de tema es cambiar este bloque, no repasar mil reglas.
+     
+     Los colores del veredicto van en dos versiones y NO son intercambiables:
+       · --nivel-X       el relleno, para inundar superficies grandes
+       · --nivel-X-letra el mismo color como letra pequeña sobre el fondo
+     Sobre fondo claro un relleno vivo no se lee como texto, y un texto lo
+     bastante oscuro para leerse queda apagado como relleno. Hacen falta los
+     dos. Todos los pares están medidos y pasan el 4,5 a 1 que piden las
+     pautas WCAG para texto normal.
+     ------------------------------------------------------------------------ */
+
+  /* --- Tema oscuro, el de siempre --- */
+  --tinta:#101319;
+  --carbon:#191D26;
+  --carbon-alto:#212633;
+  --linea:#262C38;
+  --hueso:#E9EBEF;
+  --ceniza:#878E9E;
+  /* Subido de #5C6474: sobre tarjeta se quedaba en 2,84 a 1 y las pautas
+     piden 3 para texto pequeño de apoyo. Ahora llega a 3,42. */
+  --ceniza-tenue:#68707F;
+
+  /* Veredicto: los únicos colores saturados de toda la aplicación */
+  /* Más profundo que el #D93B34 original. Dos razones medidas: con texto claro
+     encima llega a 4,59 a 1, y se separa más del naranja (1,82 en vez de
+     1,50), que era la pareja que más cuesta distinguir de un vistazo. */
+  --rojo:#C62E2E;
+  --naranja:#E4771D;
+  /* El nivel 5 lleva el verde de la app. Los dos verdes tuvieron que
+     reordenarse: el 4 pasa a un verde bosque más oscuro, porque aclararlo lo
+     habría pegado al amarillo y se confundirían el 3 y el 4. Con estos dos hay
+     2,01 de separación entre sí y 2,74 frente al amarillo. */
+  /* El nivel 4 lleva el verde que predomina en la app; el 5, un verde claro
+     tipo Pantone 359. Cada par contiguo se distingue: 1,36 entre el amarillo y
+     el 4, y 1,48 entre el 4 y el 5. */
+  /* ------------------------------------------------------------------------
+     EL VERDE DE LA APP VA APARTE DE LA ESCALA.
+     
+     Estaban atados: la interfaz usaba el color del nivel 4, así que al
+     reordenar la escala se movió el verde de todos los botones, círculos y
+     pestañas. Un color de marca no puede depender de dónde caiga un nivel.
+     
+     Ahora --acento es el verde de la app y no se mueve. Coincide con el del
+     nivel 5 a propósito, porque es el que se quiere ver por todas partes.
+     ------------------------------------------------------------------------ */
+  --acento:#78B341;
+  --sobre-acento:#101319;
+
+  /* El nivel 5, el mejor, lleva ese mismo verde. El 4 es un verde claro con
+     más amarillo; el 3, el amarillo con menos magenta. */
+  --verde-claro:#B1D65F;
+  --verde-parchis:#78B341;
+  --amarillo:#E9C61A;
+
+  /* En oscuro, relleno y letra coinciden: sobre fondo negro un color vivo se
+     lee bien de las dos maneras. */
+  --rojo-letra:var(--rojo);
+  --naranja-letra:var(--naranja);
+  --amarillo-letra:var(--amarillo);
+  --verde-claro-letra:var(--acento);
+  --verde-parchis-letra:var(--verde-parchis);
+
+  /* Qué color de letra va ENCIMA de cada relleno. */
+  --sobre-rojo:#FFFFFF;
+  --sobre-naranja:#101319;
+  --sobre-amarillo:#101319;
+  --sobre-verde-claro:#101319;
+  --sobre-verde-parchis:#101319;
+
+  /* El tinte de fondo, muy suave, que quita la sensación de hoja de cálculo */
+  --tinte-a:rgba(120,179,65,.09);
+  --tinte-b:rgba(80,140,200,.07);
+  --brillo-tarjeta:rgba(255,255,255,.035);
+  --sombra-barra:0 10px 30px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
+  --fondo-barra:rgba(26,30,38,.92);
+  --borde-barra:rgba(255,255,255,.07);
+  --fondo-cabecera:rgba(16,19,25,.9);
+
+}
+
+/* --- Tema claro ------------------------------------------------------------
+   Da la sensación de limpieza que el oscuro no da, y en un supermercado con
+   fluorescentes se lee mejor. El fondo no es blanco puro: un hueso muy claro
+   cansa menos la vista en sesiones largas. */
+[data-tema="claro"]{
+  color-scheme:light;
+  --acento:#78B341;
+  --sobre-acento:#1A1D24;
+  /* Subido un 7 %: el blanco casi puro se veía lavado. */
+  --tinta:#EFEDE9;
+  --carbon:#FFFFFF;
+  --carbon-alto:#E4E1DC;
+  --linea:#D8D5D0;
+  --hueso:#1A1D24;
+  --ceniza:#565D6B;
+  --ceniza-tenue:#767D8B;
+
+  /* Rellenos vivos, para inundar. El 5 lleva el mismo verde que la interfaz;
+     el 4 es un verde claro con más amarillo; el 3, el amarillo con menos
+     magenta. */
+  --rojo:#D0392F;
+  --naranja:#E07B1C;
+  --amarillo:#E9C61A;
+  --verde-claro:#B1D65F;
+  --verde-parchis:#78B341;
+
+  /* Los mismos, oscurecidos, para cuando van como letra pequeña */
+  --rojo-letra:#B32B22;
+  --naranja-letra:#9A5410;
+  --amarillo-letra:#7A5F05;
+  /* Los rellenos claros no se leen como letra pequeña sobre el fondo: hacen
+     falta versiones oscurecidas, medidas aparte. */
+  --verde-claro-letra:#5F7D2C;
+  --verde-parchis-letra:#4C7526;
+
+  --sobre-rojo:#FFFFFF;
+  --sobre-naranja:#1A1D24;
+  --sobre-amarillo:#1A1D24;
+  --sobre-verde-claro:#1A1D24;
+  --sobre-verde-parchis:#1A1D24;
+
+  --tinte-a:rgba(114,172,60,.10);
+  --tinte-b:rgba(80,140,200,.07);
+  --brillo-tarjeta:rgba(0,0,0,.02);
+  --sombra-barra:0 6px 22px rgba(26,29,36,.16), 0 1px 4px rgba(26,29,36,.10);
+  --fondo-barra:rgba(255,255,255,.94);
+  --borde-barra:rgba(26,29,36,.08);
+  --fondo-cabecera:rgba(251,250,248,.92);
+}
+
+:root{
+
+  /* ------------------------------------------------------------------------
+     LA ESCALA TIPOGRÁFICA.
+     
+     Antes había 46 tamaños distintos, ocho de ellos entre 0,85 y 0,98 rem:
+     diferencias que nadie percibe y que solo consiguen que todo pese lo mismo
+     y el ojo no sepa dónde mirar primero.
+     
+     Ahora hay diez escalones y ninguna regla escribe un tamaño a mano. Si dos
+     cosas tienen que verse distintas, se separan al menos un escalón; si no,
+     comparten el mismo.
+     ------------------------------------------------------------------------ */
+  --t0:0.72rem;
+  --t1:0.82rem;
+  --t2:0.92rem;
+  --t3:1.0rem;
+  --t4:1.14rem;
+  --t5:1.32rem;
+  --t6:1.62rem;
+  --t7:2.05rem;
+  --t8:2.6rem;
+  --t9:3.6rem;
+
+  /* Tipografía */
+  --display:Archivo,"Segoe UI",system-ui,sans-serif;
+  --cuerpo:"Plex Sans","Segoe UI",system-ui,sans-serif;
+  --datos:"Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  /* Escala. Todo el tamaño de la interfaz cuelga de aquí.
+     La cambia el propio usuario desde Inicio y se recuerda entre sesiones. */
+  --escala:1;
+
+  /* Ritmo, en rem para que crezca junto con el texto */
+  --e1:0.25rem; --e2:0.5rem; --e3:0.7rem; --e4:1rem;
+  --e5:1.4rem; --e6:1.9rem; --e7:2.8rem;
+  /* Tres radios y ninguno escrito a mano.
+     
+     Había 0,85 y 0,5 rem de la etapa anterior, y encima once componentes con
+     1,4 o 1,1 escritos directamente en la regla: los del diseño nuevo. Con dos
+     juegos conviviendo, la app se veía cosida de dos telas distintas. */
+  --radio:1.4rem;
+  --radio-s:1.1rem;
+  --radio-xs:0.6rem;
+  /* Para las formas de pastilla: la barra de pestañas, los filtros, el
+     interruptor. No son tarjetas y no comparten su radio. */
+  --radio-pastilla:1.5rem;
+
+  /* El tema tarda un instante en aplicarse al arrancar; sin esto se ve un
+     destello del color contrario. */
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+/* 17px de base en vez de 16: en un móvil a un brazo de distancia se agradece.
+   El multiplicador permite subirlo sin tocar una sola regla más. */
+/**
+ * La página no se desplaza: se desplaza su contenido.
+ *
+ * En Safari de iPhone, al estirar la página más allá del final, los elementos
+ * fijos se mueven CON ella. La barra de pestañas se despegaba de abajo. No es
+ * un fallo del navegador: es cómo funciona el rebote elástico.
+ *
+ * La solución es que el documento no se desplace nunca, y que lo haga un
+ * contenedor interno. Así el rebote ocurre dentro y la barra no se entera.
+ */
+html{
+  -webkit-text-size-adjust:100%;
+  font-size:calc(17px * var(--escala));
+  height:100%;
+  overflow:hidden;
+}
+
+/**
+ * Tres filas: cabecera, contenido y barra. En ese orden y sin nada "fijo".
+ *
+ * La barra llevaba tres intentos quedándose flotando por encima del borde.
+ * Cada arreglo ajustaba números —el hueco reservado, el margen de abajo, la
+ * franja del sistema— y ninguno la bajaba del todo, porque el problema no
+ * era el número: era que estaba fuera del flujo y colocada a mano.
+ *
+ * Ahora es el último elemento de una columna. No puede quedarse arriba porque
+ * debajo no hay nada. Y de paso desaparecen dos apaños: medir la cabecera al
+ * arrancar y reservarle hueco a la barra.
+ */
+
+/* Nada de zoom accidental al tocar dos veces */
+button{touch-action:manipulation}
+
+/* --- Accesibilidad -------------------------------------------------------- */
+.saltar{
+  position:absolute; left:-9999px; top:0; z-index:100;
+  background:var(--carbon); color:var(--hueso);
+  padding:var(--e3) var(--e4); border-radius:0 0 var(--radio-xs) 0;
+  font-weight:600;
+}
+.saltar:focus{left:0}
+
+:focus-visible{
+  outline:2px solid var(--hueso);
+  outline-offset:2px;
+  border-radius:var(--radio-s);
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* --- Cabecera ------------------------------------------------------------- */
+/* Fija, no pegajosa: ahora que el documento no se desplaza, "sticky" no
+   tendría respecto a qué pegarse. */
+
+
+/* El monograma: la C de Catario con la barra del veredicto saliendo por la
+   boca. Sigue la regla de toda la app: gris salvo el veredicto. */
+
+
+
+
+/* El nombre respira un poco más que antes: una sola palabra aguanta mejor el
+   espaciado abierto que tres, y así se sostiene junto al monograma. */
+
+/* La coletilla es la instrucción de la etiqueta: va en voz baja. */
+
+
+
+/* --- Contenido ------------------------------------------------------------ */
+.principal{
+  /* Este es el único elemento que se desplaza. El rebote elástico ocurre aquí
+     dentro, así que la barra de abajo no se mueve con él. */
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  /* Abajo solo lo justo para que el último elemento no quede pegado a la
+     barra. Antes había 2,8rem encima del hueco que ya reserva el `bottom`. */
+  padding:var(--e5) var(--e4) var(--e4);
+}
+
+/* El envoltorio solo centra el contenido. Llegué a ponerle "display:flex" para
+   que la bienvenida pudiera repartirse de arriba abajo, y eso cambiaba la
+   maquetación de TODAS las pantallas: los márgenes dejan de fundirse y los
+   elementos se estiran o encogen. Un arreglo local no puede tocar lo global. */
+.vista__cuerpo > *{max-width:640px; width:100%; margin-inline:auto}
+
+.principal:focus{outline:none}
+
+/* --- Barra de pestañas ---------------------------------------------------- */
+
+
+
+
+
+/* --- Piezas reutilizables ------------------------------------------------- */
+.tarjeta{
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e5) var(--e4);
+}
+
+.titulo{
+  font-family:var(--display); font-weight:800;
+  font-size:var(--t7); line-height:1.12; letter-spacing:-.025em;
+  margin:0 0 var(--e5);
+}
+/* El párrafo que va justo debajo de un título es su bajada: se pega a él. */
+.titulo + .texto{margin-top:calc(var(--e5) * -1 + var(--e2)); margin-bottom:var(--e6)}
+/* Un título pertenece a lo que viene DEBAJO, no a lo que queda encima.
+   Estaban casi igual de separados por los dos lados, así que el ojo no sabía
+   dónde acababa una sección y empezaba otra: es la mitad de la sensación de
+   que todo pesa lo mismo. Ahora el espacio de arriba triplica al de abajo. */
+.subtitulo{
+  font-family:var(--display); font-weight:600;
+  font-size:var(--t5); letter-spacing:-.015em; line-height:1.25;
+  margin:var(--e8) 0 var(--e3);
+}
+/* Dos títulos seguidos no dejan un hueco enorme entre ellos. */
+.subtitulo + .subtitulo, .titulo + .subtitulo{margin-top:var(--e5)}
+.rotulo{
+  font-family:var(--datos); font-weight:600;
+  font-size:var(--t0); letter-spacing:.11em; text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  margin:var(--e6) 0 var(--e3);
+}
+.rotulo:first-child{margin-top:0}
+.texto{color:var(--ceniza); margin:0 0 var(--e3); font-size:var(--t3)}
+.texto strong{color:var(--hueso); font-weight:600}
+.texto:last-child{margin-bottom:0}
+
+.cifra{font-family:var(--datos); font-variant-numeric:tabular-nums}
+
+/* Botón principal: ocupa espacio a propósito, se pulsa con el pulgar */
+.boton-grande{
+  appearance:none; cursor:pointer; width:100%;
+  display:block; text-align:center;
+  padding:var(--e4);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  background:var(--carbon);
+  color:var(--hueso);
+  font-family:var(--display); font-weight:700; font-size:var(--t4);
+  line-height:1.2;
+}
+.boton-grande:active{transform:scale(.985)}
+.boton-grande small{
+  display:block; margin-top:var(--e1);
+  font-family:var(--datos); font-weight:400; font-size:var(--t0);
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ceniza);
+}
+.boton-grande:disabled{
+  background:var(--carbon-alto); color:var(--ceniza);
+  cursor:not-allowed;
+}
+.boton-grande:disabled small{color:var(--ceniza-tenue)}
+
+.boton{
+  appearance:none; cursor:pointer;
+  padding:var(--e3) var(--e4);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t2); line-height:1.25;
+}
+.boton:disabled{color:var(--ceniza-tenue); cursor:not-allowed}
+
+/* Estado vacío: una invitación, no una disculpa */
+.vacio{
+  text-align:center;
+  padding:var(--e7) var(--e4);
+  border:1.5px dashed var(--linea);
+  border-radius:var(--radio);
+}
+.vacio h3{
+  font-family:var(--display); font-weight:600; font-size:var(--t4);
+  margin:0 0 var(--e2);
+}
+.vacio p{color:var(--ceniza); font-size:var(--t3); margin:0}
+
+/* Aviso de módulo pendiente. Honesto, no decorativo. */
+.pendiente{
+  display:flex; gap:var(--e3); align-items:flex-start;
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio-s);
+  padding:var(--e4);
+  font-size:var(--t3); color:var(--ceniza);
+}
+.pendiente b{color:var(--hueso); font-weight:600}
+
+/* --- LA BANDA DE VEREDICTO ------------------------------------------------ */
+/* Cinco tramos. El del producto se expande, los otros se apagan.
+   Es el guiño a la tira que va impresa en el propio envase.            */
+.banda{display:flex; flex-direction:column; gap:var(--e2)}
+.banda__tramo{
+  display:flex; align-items:center; gap:var(--e3);
+  height:2.4rem;
+  border-radius:var(--radio-s);
+  padding:0 var(--e3);
+  background:var(--carbon-alto);
+  color:var(--ceniza-tenue);
+  font-family:var(--datos); font-size:var(--t0); font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase;
+  width:52%;
+  transition:width .45s cubic-bezier(.2,.8,.25,1), background-color .3s ease, color .3s ease;
+}
+.banda__tramo::before{
+  content:""; width:6px; height:6px; border-radius:2px;
+  background:currentColor; opacity:.5; flex:none;
+}
+.banda__tramo.es-actual{
+  width:100%;
+  color:var(--tinta);
+  font-size:var(--t1);
+}
+.banda__tramo.es-actual::before{opacity:1; background:rgba(16,19,25,.55)}
+.banda__tramo[data-nivel="rojo"].es-actual{background:var(--rojo); color:var(--hueso)}
+/* El rojo es el único lo bastante oscuro para pedir texto claro encima. */
+.banda__tramo[data-nivel="rojo"].es-actual::before{background:rgba(233,235,239,.55)}
+.banda__tramo[data-nivel="naranja"].es-actual{background:var(--naranja)}
+.banda__tramo[data-nivel="amarillo"].es-actual{background:var(--amarillo)}
+.banda__tramo[data-nivel="verde_claro"].es-actual{background:var(--verde-claro)}
+.banda__tramo[data-nivel="verde_parchis"].es-actual{background:var(--verde-parchis)}
+
+/* La nota, en grande */
+.veredicto__nota{
+  font-family:var(--display); font-weight:800;
+  font-size:var(--t9); line-height:.9; letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+}
+.veredicto__total{font-family:var(--datos); font-size:var(--t3); color:var(--ceniza-tenue)}
+.veredicto[data-nivel="rojo"] .veredicto__nota{color:var(--rojo-letra)}
+.veredicto[data-nivel="naranja"] .veredicto__nota{color:var(--naranja-letra)}
+.veredicto[data-nivel="amarillo"] .veredicto__nota{color:var(--amarillo-letra)}
+.veredicto[data-nivel="verde_claro"] .veredicto__nota{color:var(--verde-claro-letra)}
+.veredicto[data-nivel="verde_parchis"] .veredicto__nota{color:var(--verde-parchis-letra)}
+
+/* --- Diagnóstico de instalación ------------------------------------------ */
+.diagnostico{list-style:none; margin:0; padding:0}
+.diagnostico li{
+  display:flex; justify-content:space-between; align-items:center; gap:var(--e3);
+  padding:var(--e3) 0;
+  border-bottom:1px solid var(--linea);
+  font-size:var(--t3); color:var(--ceniza);
+}
+.diagnostico li:last-child{border-bottom:0}
+.diagnostico b.si{color:var(--verde-claro-letra)}
+
+/* --- Instrucciones de instalación en iPhone ------------------------------- */
+.instalar{
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e4);
+  margin-bottom:var(--e5);
+}
+.instalar h3{font-family:var(--display); font-weight:600; font-size:var(--t4); margin:0 0 var(--e2)}
+.instalar ol{margin:var(--e3) 0 0; padding-left:1.15em; color:var(--ceniza); font-size:var(--t3)}
+.instalar li{margin-bottom:var(--e2)}
+.instalar li:last-child{margin-bottom:0}
+
+/* --- Escritorio ----------------------------------------------------------- */
+@media (min-width:44rem){
+  .principal{padding-bottom:var(--e7)}
+  
+}
+
+/* --- Filas de factor: las dos tablas del veredicto ------------------------ */
+/* La barra mide el peso del factor. Es lo que ordena la tabla, no una opinión. */
+.factor{
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e4);
+  margin-bottom:var(--e2);
+}
+.factor__cab{
+  display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3);
+  margin-bottom:var(--e3);
+}
+.factor__nombre{font-family:var(--display); font-weight:600; font-size:var(--t3); line-height:1.25; letter-spacing:-.01em}
+.factor__peso{font-size:var(--t2); color:var(--ceniza-tenue); flex:none}
+.factor__medida{height:4px; border-radius:2px; background:var(--carbon-alto); overflow:hidden}
+.factor__medida i{display:block; height:100%; border-radius:2px}
+.factor--malo .factor__medida i{background:var(--rojo)}
+.factor--bueno .factor__medida i{background:var(--acento)}
+.factor__dato{
+  margin:var(--e2) 0;
+  font-family:var(--datos);
+  font-size:var(--t0);
+  line-height:1.4;
+  color:var(--ceniza-tenue);
+}
+.factor__motivo{
+  margin:0;
+  font-size:var(--t2);
+  line-height:1.5;
+  color:var(--ceniza);
+}
+
+/* --- Resumen de tres cifras ---------------------------------------------- */
+.resumen div{
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3); text-align:center;
+}
+.resumen b{
+  display:block;
+  font-family:var(--datos); font-weight:600; font-size:var(--t5);
+  color:var(--hueso); margin-bottom:2px;
+}
+.resumen span{font-size:var(--t1); color:var(--ceniza-tenue)}
+
+/* --- Control de tamaño ---------------------------------------------------- */
+/* Lo que a mí me parece legible y lo que le parece legible a otro no tienen
+   por qué coincidir. En vez de discutirlo, que lo decida quien mira. */
+.escala{
+  display:flex; gap:var(--e2); align-items:center;
+  margin:var(--e5) 0;
+}
+.escala__opciones{display:flex; gap:var(--e2); flex:1}
+.escala__boton{
+  appearance:none; cursor:pointer; flex:1;
+  background:var(--carbon); color:var(--ceniza);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e2);
+  font-family:var(--display); font-weight:600;
+  transition:background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.escala__boton:nth-child(1){font-size:var(--t2)}
+.escala__boton:nth-child(2){font-size:var(--t4)}
+.escala__boton:nth-child(3){font-size:var(--t5)}
+/* Lo elegido, en el mismo verde que marca la pestaña activa y la última
+   acción usada. Un solo color para "esto es lo que está puesto". */
+/* Dentro de Preferencias todo lleva el mismo perfil verde que las tarjetas de
+   fuera: sin él, los botones parecían de otra app. */
+.ajustes .escala__boton,
+.ajustes .boton,
+.ajustes .interruptor__boton{border:1.5px solid var(--acento)}
+
+.escala__boton[aria-pressed="true"]{
+  background:var(--acento); color:var(--sobre-acento);
+  border-color:transparent;
+}
+
+/* --- Tomas de foto -------------------------------------------------------- */
+.toma{
+  display:block; width:100%;
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  padding:var(--e4);
+  margin-bottom:var(--e3);
+  text-align:left;
+}
+/* La ranura vacía es un botón grande: se pulsa con el pulgar sin mirar. */
+.toma--vacia{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  border-style:dashed;
+  padding:var(--e6) var(--e4);
+  color:var(--hueso);
+  transition:border-color .15s ease, background-color .15s ease;
+}
+.toma--vacia:active{background:var(--carbon-alto); border-color:var(--ceniza-tenue)}
+.toma__icono{
+  width:2.3rem; height:2.3rem; fill:none;
+  stroke:var(--ceniza); stroke-width:1.4;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.toma__titulo{font-family:var(--display); font-weight:600; font-size:var(--t4)}
+.toma__pista{font-size:var(--t2); color:var(--ceniza-tenue); text-align:center}
+
+.toma__cabecera{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:var(--e3); margin-bottom:var(--e3);
+}
+.toma__nota{font-size:var(--t2); color:var(--ceniza-tenue); flex:none}
+
+/* Las dos imágenes lado a lado: lo que hiciste y lo que va a leerse.
+   Ver la diferencia explica el procesado mejor que cualquier texto. */
+.toma__imagenes{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2)}
+.toma__imagenes figure{margin:0}
+.toma__imagenes img{
+  width:100%; aspect-ratio:4/3; object-fit:cover;
+  border-radius:var(--radio-s);
+  background:var(--carbon-alto);
+  display:block;
+}
+.toma__imagenes figcaption{
+  margin-top:var(--e1);
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ceniza-tenue); text-align:center;
+}
+
+.toma__dictamen{
+  margin:var(--e3) 0 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+}
+.toma__dictamen--lista{color:var(--verde-claro-letra)}
+.toma__dictamen--regular{color:var(--amarillo-letra)}
+.toma__dictamen--mala{color:var(--naranja-letra)}
+
+.toma__problemas{
+  list-style:none; margin:var(--e3) 0 0; padding:0;
+  font-size:var(--t2); color:var(--ceniza);
+}
+.toma__problemas li{
+  padding:var(--e3); margin-bottom:var(--e2);
+  background:var(--carbon-alto);
+  border-radius:var(--radio-s);
+  border-left:3px solid var(--naranja);
+  line-height:1.45;
+}
+.toma__problemas b{color:var(--hueso); font-weight:600}
+.toma [data-repetir]{margin-top:var(--e3); width:100%}
+
+/* Mientras procesa. El pulso avisa de que no se ha colgado. */
+.toma--trabajando{opacity:.5; animation:latido 1.1s ease-in-out infinite}
+@keyframes latido{50%{opacity:.28}}
+
+/* --- Pegar texto ---------------------------------------------------------- */
+.pegar{
+  width:100%; display:block;
+  background:var(--carbon); color:var(--hueso);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
+  padding:var(--e3);
+  font-family:var(--datos); font-size:var(--t2); line-height:1.5;
+  resize:vertical;
+}
+.pegar::placeholder{color:var(--ceniza-tenue)}
+.pegar:focus{border-color:var(--ceniza); outline:none}
+
+/* --- Cifras leídas y sus dudas -------------------------------------------- */
+/* Las unidades no se escriben en mayúsculas: "1,09 g", no "1,09 G". */
+.diagnostico b.valor{text-transform:none; letter-spacing:.02em; color:var(--hueso)}
+.diagnostico li.dudoso b.valor{color:var(--amarillo-letra)}
+.diagnostico li.dudoso--error b.valor{color:var(--naranja-letra)}
+.diagnostico li.dudoso span::after{content:" ·"; color:var(--amarillo-letra)}
+
+.incidencias{list-style:none; margin:0; padding:0}
+.incidencia{
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--amarillo);
+  border-radius:var(--radio-s);
+  font-size:var(--t3); color:var(--ceniza); line-height:1.45;
+}
+.incidencia--error{border-left-color:var(--naranja-letra)}
+.incidencia b{color:var(--hueso); font-weight:600}
+.incidencia .cifra{color:var(--verde-claro-letra); font-size:var(--t2)}
+.apunte{
+  display:block; font-style:normal;
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.05em; text-transform:uppercase;
+  color:var(--amarillo-letra); margin-top:2px;
+}
+
+/* --- Campos editables ----------------------------------------------------- */
+/* Cada cifra es un cuadro que se puede tocar. Es el paso que convierte una
+   lectura aproximada en un dato del que fiarse. */
+.campo{
+  padding:var(--e3) 0;
+  border-bottom:1px solid var(--linea);
+}
+.campo--sangrado{padding-left:var(--e4)}
+.campo__nombre{
+  display:block; font-size:var(--t3); color:var(--ceniza);
+  margin-bottom:var(--e2);
+}
+.campo__entrada{
+  display:flex; align-items:center; gap:var(--e2);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio-s);
+  background:var(--carbon);
+  padding:0 var(--e3);
+}
+/* El borde lo lleva el contenedor, no el campo: si lo llevan los dos se ve
+   una línea doble, que es lo que pasaba. */
+.campo__entrada input,
+.campo__entrada select{
+  flex:1;
+  min-width:0;
+  appearance:none;
+  -webkit-appearance:none;
+  background:none;
+  color:var(--hueso);
+  border:0;
+  padding:var(--e3) 0;
+  font-family:var(--cuerpo);
+  font-size:var(--t3);
+  font-variant-numeric:tabular-nums;
+}
+.campo__entrada input:focus,
+.campo__entrada select:focus{border-color:var(--hueso); outline:none}
+.campo__unidad{
+  font-family:var(--datos); font-size:var(--t2);
+  color:var(--ceniza-tenue); width:2.6rem; flex:none;
+}
+.campo__aviso{
+  margin:var(--e2) 0 0; font-size:var(--t2);
+  color:var(--ceniza); line-height:1.45;
+}
+
+.campo--aviso .campo__entrada input{border-color:var(--amarillo-letra)}
+.campo--error .campo__entrada input{border-color:var(--naranja-letra)}
+.campo--falta .campo__entrada input{border-style:dashed; border-color:var(--naranja-letra)}
+.campo--corregido .campo__entrada input{border-color:var(--verde-claro-letra)}
+
+/* La corrección propuesta: un botón, no un cambio a tus espaldas. */
+.propuesta{
+  appearance:none; cursor:pointer;
+  margin-top:var(--e2);
+  background:none; color:var(--verde-claro-letra);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
+  padding:var(--e2) var(--e3);
+  font-family:var(--datos); font-size:var(--t2); font-weight:600;
+}
+.propuesta:active{background:var(--acento); color:var(--tinta)}
+
+.apunte--ok{color:var(--verde-claro-letra)}
+
+.mas{margin-top:var(--e4)}
+.mas > summary{
+  cursor:pointer; padding:var(--e3) 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--ceniza);
+}
+.toma__botones{display:flex; gap:var(--e2); width:100%; margin-top:var(--e3)}
+.toma__botones .boton{flex:1; text-align:center}
+
+/* --- Recorte con deslizadores --------------------------------------------- */
+.recorte{margin-top:var(--e3)}
+.recorte__lienzo{
+  position:relative; display:block;
+  border-radius:var(--radio-s); overflow:hidden;
+  background:var(--carbon-alto);
+  margin-bottom:var(--e4);
+}
+.recorte__lienzo img{width:100%; display:block}
+/* La sombra enorme oscurece todo lo que queda fuera del marco. Es un truco
+   viejo y funciona en cualquier navegador sin tocar el lienzo. */
+.recorte__marco{
+  position:absolute;
+  border:2px solid var(--hueso);
+  box-shadow:0 0 0 9999px rgba(16,19,25,.72);
+  pointer-events:none;
+  transition:none;
+}
+.recorte__marco::before,
+.recorte__marco::after{
+  content:""; position:absolute; inset:0;
+  border:1px solid rgba(233,235,239,.35);
+}
+.recorte__marco::after{
+  inset:33% 0; border-left:0; border-right:0;
+}
+
+.desliza{display:flex; align-items:center; gap:var(--e3); margin-bottom:var(--e2)}
+.desliza span{
+  width:5.5rem; flex:none;
+  font-family:var(--datos); font-size:var(--t1);
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ceniza-tenue);
+}
+.desliza input[type="range"]{
+  flex:1; min-width:0;
+  appearance:none; -webkit-appearance:none;
+  height:2.2rem; background:none; margin:0;
+}
+.desliza input[type="range"]::-webkit-slider-runnable-track{
+  height:4px; border-radius:2px; background:var(--linea);
+}
+.desliza input[type="range"]::-moz-range-track{
+  height:4px; border-radius:2px; background:var(--linea);
+}
+/* Pulgar grande: se maneja con el dedo, no con un ratón. */
+.desliza input[type="range"]::-webkit-slider-thumb{
+  appearance:none; -webkit-appearance:none;
+  width:1.6rem; height:1.6rem; margin-top:-0.7rem;
+  border-radius:50%; background:var(--hueso);
+  border:0; cursor:pointer;
+}
+.desliza input[type="range"]::-moz-range-thumb{
+  width:1.6rem; height:1.6rem;
+  border-radius:50%; background:var(--hueso);
+  border:0; cursor:pointer;
+}
+
+/* Cuadros de pegar más altos: menos scroll para ver la etiqueta entera. */
+.pegar--alta{min-height:14rem; line-height:1.6}
+
+/* --- Ficha de cada ingrediente -------------------------------------------- */
+.fichas{margin-top:var(--e3)}
+.ficha[open]{border-color:var(--acento); border-left-width:4px}
+.ficha--favorable{border-left-color:var(--verde-claro-letra)}
+.ficha--limitar{border-left-color:var(--naranja-letra)}
+.ficha--neutro{border-left-color:var(--ceniza-tenue)}
+.ficha--sin_ficha{border-left-color:var(--linea); border-left-style:dashed}
+
+/* El número a la izquierda, y a su derecha el nombre con el sello debajo.
+   
+   Antes iban los tres en fila. El sello no encoge —"CONVIENE LIMITAR" no se
+   puede partir— así que con un nombre largo el título se quedaba sin sitio y
+   caía en una palabra por línea, con el sello encima. */
+.ficha > summary{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:var(--e3); row-gap:var(--e2);
+  align-items:start;
+  padding:var(--e4);
+  cursor:pointer; list-style:none;
+}
+.ficha > summary::-webkit-details-marker{display:none}
+.ficha__orden{
+  width:1.6rem;
+  grid-row:1 / span 2;
+  font-size:var(--t1); color:var(--ceniza-tenue);
+  line-height:1.6;
+}
+.ficha__titulo .cifra{color:var(--ceniza); font-size:var(--t1)}
+.ficha--favorable .ficha__sello{color:var(--verde-claro-letra)}
+.ficha--limitar .ficha__sello{color:var(--naranja-letra)}
+
+.ficha__linea b{color:var(--hueso); font-weight:600}
+.ficha__fuente{
+  margin:0; font-family:var(--datos); font-size:var(--t0);
+  color:var(--ceniza-tenue); line-height:1.4;
+}
+
+/* --- Interruptor ---------------------------------------------------------- */
+.interruptor{
+  display:flex; align-items:center; gap:var(--e4);
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio); padding:var(--e4);
+  margin-bottom:var(--e5);
+}
+.interruptor label{flex:1; font-size:var(--t3); color:var(--ceniza); line-height:1.45}
+.interruptor__boton{
+  appearance:none; cursor:pointer; flex:none;
+  width:3.4rem; height:2rem; padding:0;
+  background:var(--carbon-alto); border:1.5px solid var(--linea);
+  border-radius:var(--radio-pastilla); position:relative;
+  transition:background-color .18s ease, border-color .18s ease;
+}
+.interruptor__boton span{
+  position:absolute; top:0.2rem; left:0.2rem;
+  width:1.4rem; height:1.4rem; border-radius:50%;
+  background:var(--ceniza-tenue);
+  transition:transform .18s ease, background-color .18s ease;
+}
+.interruptor__boton[aria-checked="true"]{background:var(--acento); border-color:var(--verde-claro-letra)}
+.interruptor__boton[aria-checked="true"] span{transform:translateX(1.4rem); background:var(--tinta)}
+
+/* --- Productos guardados -------------------------------------------------- */
+/* Recogidas, las barras van pegadas: el aire de antes servía para separar
+   grupos de productos, y sin productos a la vista solo deja huecos. Al abrir
+   una, se le devuelve el espacio para que su lista respire. */
+.bloque{margin-bottom:var(--e2)}
+.bloque[open]{margin-bottom:var(--e6)}
+.producto__foto span{
+  font-family:var(--datos); font-size:var(--t0);
+  color:var(--ceniza-tenue); text-transform:uppercase; letter-spacing:.05em;
+}
+.producto__nombre{
+  grid-area:nombre; min-width:0;
+  margin:0; font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25;
+  overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+  overflow:hidden;
+}
+.producto__fecha{
+  grid-area:fecha; margin:0;
+  font-size:var(--t1); color:var(--ceniza-tenue); white-space:nowrap;
+}
+.producto__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
+.producto__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
+.producto__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
+.producto__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
+.producto__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
+.producto__borrar{
+  grid-area:borrar;
+  justify-self:end;
+  align-self:start;
+  appearance:none;
+  cursor:pointer;
+  flex:none;
+  width:1.8rem;
+  height:2.2rem;
+  padding:0;
+  background:none;
+  border:0;
+  color:var(--ceniza-tenue);
+  font-size:var(--t5);
+  line-height:1;
+}
+
+.ultimo{
+  appearance:none; cursor:pointer; width:100%;
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3);
+  margin-bottom:var(--e2); text-align:left;
+}
+.ultimo__nota{
+  width:2.6rem; flex:none; text-align:center;
+  font-size:var(--t4); font-weight:600;
+}
+.ultimo__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
+.ultimo__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
+.ultimo__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
+.ultimo__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
+.ultimo__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
+.ultimo__nombre{
+  flex:1; min-width:0; color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t3);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* --- Filtros del catálogo ------------------------------------------------- */
+
+/* --- Lo que se repite en tu despensa -------------------------------------- */
+.repetidas{margin-bottom:var(--e5)}
+.repetida__donde{
+  flex:none; max-width:40%;
+  font-size:var(--t1); color:var(--ceniza-tenue); text-align:right;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* --- Duelo entre dos productos -------------------------------------------- */
+.duelo{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2); margin:var(--e5) 0}
+.duelo__lado{
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio); padding:var(--e4);
+  text-align:center;
+}
+.duelo__lado.es-ganador{border-color:var(--verde-claro-letra)}
+.duelo__lado .producto__nota{display:block; width:auto; font-size:var(--t7); margin-bottom:var(--e2)}
+.duelo__lado span:last-child{font-size:var(--t2); color:var(--ceniza); line-height:1.3}
+
+.dif{
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e4);
+  margin-bottom:var(--e2);
+}
+.dif__cab{display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3)}
+.dif__titulo{font-family:var(--display); font-weight:600; font-size:var(--t4)}
+.dif__peso{font-size:var(--t2); color:var(--ceniza-tenue)}
+.dif__valores{
+  display:flex; align-items:center; gap:var(--e3);
+  margin:var(--e3) 0;
+  font-family:var(--datos); font-size:var(--t3); color:var(--ceniza);
+}
+.dif__valores .es-mejor{color:var(--verde-claro-letra); font-weight:600}
+.dif__flecha{font-family:var(--cuerpo); font-size:var(--t1); color:var(--ceniza-tenue)}
+.dif__gana{margin:0 0 var(--e2); font-size:var(--t2); color:var(--ceniza)}
+.dif__gana b{color:var(--hueso)}
+.dif__motivo{margin:0; font-size:var(--t2); color:var(--ceniza-tenue); line-height:1.45}
+
+/* El número de nivel: señal que funciona sin ver el color. */
+.banda__pos{
+  font-family:var(--datos); font-weight:600; font-size:var(--t2);
+  opacity:.55; flex:none;
+}
+.banda__tramo.es-actual .banda__pos{opacity:1}
+
+/* --- Qué hay cargado ahora mismo ------------------------------------------ */
+/* Un análisis a medias invisible es lo que hace que los datos de un producto
+   se cuelen en el siguiente. Aquí se ve siempre. */
+.en-curso{
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon-alto);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--hueso);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e4);
+}
+.en-curso__texto{flex:1; min-width:0}
+.en-curso__texto b{
+  display:block; font-family:var(--display); font-weight:600; font-size:var(--t3);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.en-curso__texto span{
+  display:block; margin-top:2px;
+  font-family:var(--datos); font-size:var(--t1); color:var(--ceniza-tenue);
+}
+.en-curso .boton{flex:none; font-size:var(--t2); padding:var(--e2) var(--e3)}
+
+/* --- Escáner de código de barras ------------------------------------------ */
+.escaner{position:relative; margin-bottom:var(--e4)}
+.escaner video{
+  width:100%; display:block;
+  aspect-ratio:4/3; object-fit:cover;
+  border-radius:var(--radio); background:#000;
+}
+/* La mira: una franja apaisada, que es la forma de un código de barras. */
+.escaner__mira{
+  position:absolute; left:8%; right:8%; top:34%; height:32%;
+  border:2px solid var(--hueso);
+  border-radius:var(--radio-s);
+  box-shadow:0 0 0 9999px rgba(16,19,25,.55);
+  pointer-events:none;
+}
+.escaner__mira::after{
+  content:""; position:absolute; left:0; right:0; top:50%;
+  height:2px; background:var(--rojo); opacity:.8;
+}
+.escaner .boton{margin-top:var(--e3); width:100%}
+
+/* --- Qué es y qué no es --------------------------------------------------- */
+.aviso-fuerte{
+  background:var(--carbon);
+  border:1.5px solid var(--naranja);
+  border-radius:var(--radio);
+  padding:var(--e5) var(--e4);
+  margin-bottom:var(--e6);
+}
+.aviso-fuerte h2{
+  margin:0 0 var(--e4);
+  font-family:var(--display); font-weight:800; font-size:var(--t5);
+  color:var(--naranja-letra); letter-spacing:-.015em;
+}
+.aviso-fuerte ul{margin:0; padding-left:1.1em; color:var(--ceniza); font-size:var(--t3); line-height:1.5}
+.aviso-fuerte li{margin-bottom:var(--e3)}
+.aviso-fuerte li:last-child{margin-bottom:0}
+.aviso-fuerte b{color:var(--hueso)}
+
+.nivel--1{border-left-color:var(--verde-parchis-letra)}
+.nivel--2{border-left-color:var(--verde-claro-letra)}
+.nivel--3{border-left-color:var(--amarillo-letra)}
+.nivel h3{
+  margin:0 0 var(--e2);
+  font-family:var(--display); font-weight:600; font-size:var(--t4);
+}
+.nivel p{margin:0 0 var(--e2); font-size:var(--t3); color:var(--ceniza); line-height:1.5}
+.nivel p:last-child{margin-bottom:0}
+.nivel b{color:var(--hueso)}
+.ficha__fuente a{color:var(--ceniza); word-break:break-all}
+
+/* --- Tendencia ------------------------------------------------------------ */
+.evolucion{
+  display:flex; align-items:center; justify-content:center; gap:var(--e4);
+  flex-wrap:wrap;
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio); padding:var(--e5) var(--e4);
+  margin:var(--e4) 0;
+}
+.evolucion .cifra{font-size:var(--t8); font-weight:600; color:var(--ceniza)}
+.evolucion__flecha{font-size:var(--t7); color:var(--ceniza-tenue)}
+.evolucion[data-signo="sube"] .cifra:last-of-type,
+.evolucion[data-signo="sube"] .evolucion__flecha{color:var(--verde-claro-letra)}
+.evolucion[data-signo="baja"] .cifra:last-of-type,
+.evolucion[data-signo="baja"] .evolucion__flecha{color:var(--naranja-letra)}
+.evolucion small{
+  flex-basis:100%; text-align:center; margin-top:var(--e2);
+  font-size:var(--t1); color:var(--ceniza-tenue);
+}
+
+.reparto{display:flex; align-items:center; gap:var(--e3); margin-bottom:var(--e2)}
+.reparto__nombre{width:9rem; flex:none; font-size:var(--t2); color:var(--ceniza)}
+.reparto__barra{flex:1; height:1.1rem; background:var(--carbon-alto); border-radius:var(--radio-s); overflow:hidden}
+.reparto__barra i{display:block; height:100%; border-radius:var(--radio-s)}
+.reparto__barra i[data-nivel="rojo"]{background:var(--rojo)}
+.reparto__barra i[data-nivel="naranja"]{background:var(--naranja)}
+.reparto__barra i[data-nivel="amarillo"]{background:var(--amarillo)}
+.reparto__barra i[data-nivel="verde_claro"]{background:var(--verde-claro)}
+.reparto__barra i[data-nivel="verde_parchis"]{background:var(--verde-parchis)}
+.reparto__n{width:2rem; flex:none; text-align:right; font-size:var(--t2); color:var(--ceniza-tenue)}
+
+/* --- Avisos de tu lista de vigilancia ------------------------------------- */
+.vigila{
+  background:var(--carbon); border:1.5px solid var(--naranja);
+  border-radius:var(--radio); padding:var(--e4); margin-bottom:var(--e4);
+}
+.vigila h3{
+  margin:0 0 var(--e3);
+  font-family:var(--display); font-weight:800; font-size:var(--t4); color:var(--naranja-letra);
+}
+.vigila ul{list-style:none; margin:0; padding:0}
+.vigila li{
+  display:flex; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0; font-size:var(--t3); color:var(--hueso);
+}
+.vigila li span{font-size:var(--t1); color:var(--ceniza-tenue)}
+/* El segundo botón grande pesa menos: hay una acción principal, no dos. */
+.boton-grande--suave{background:var(--tinte-a)}
+.boton-grande--suave small{color:var(--ceniza-tenue)}
+
+/* --- Modo supermercado ---------------------------------------------------- */
+.sin-revisar{
+  background:var(--carbon); border:1.5px dashed var(--amarillo);
+  border-radius:var(--radio-s); padding:var(--e4);
+  margin-bottom:var(--e4);
+  font-size:var(--t3); color:var(--ceniza); line-height:1.5;
+}
+.sin-revisar b{color:var(--amarillo-letra)}
+
+.rapido{
+  display:flex; align-items:center; gap:var(--e3);
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-left:3px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.rapido--malo{border-left-color:var(--rojo-letra)}
+.rapido--bueno{border-left-color:var(--verde-claro-letra)}
+.rapido__peso{width:2.4rem; flex:none; text-align:center; font-size:var(--t4); color:var(--ceniza-tenue)}
+.rapido b{display:block; font-family:var(--display); font-weight:600; font-size:var(--t3)}
+.rapido span{display:block; font-size:var(--t1); color:var(--ceniza-tenue); margin-top:2px}
+/* En el diagnóstico, los detalles largos no deben ir en mayúsculas ni cortarse. */
+.diagnostico b{
+  font-family:var(--datos);
+  font-size:var(--t1);
+  font-weight:600;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  max-width:58%;
+  text-align:right;
+  overflow-wrap:anywhere;
+}
+.diagnostico b.no{
+  color:var(--naranja-letra);
+  text-transform:none;
+  letter-spacing:.01em;
+}
+
+/* --- De qué se compone la nota -------------------------------------------- */
+.parte__cab{display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3)}
+.parte__nombre{font-family:var(--display); font-weight:600; font-size:var(--t3)}
+.parte__nota{font-size:var(--t5); font-weight:600; color:var(--hueso)}
+.parte__barra{
+  height:0.5rem; margin:var(--e2) 0;
+  background:var(--carbon-alto); border-radius:var(--radio-s); overflow:hidden;
+}
+.parte__barra i{display:block; height:100%; border-radius:var(--radio-s)}
+.parte__barra i[data-nivel="rojo"]{background:var(--rojo)}
+.parte__barra i[data-nivel="naranja"]{background:var(--naranja)}
+.parte__barra i[data-nivel="amarillo"]{background:var(--amarillo)}
+.parte__barra i[data-nivel="verde_claro"]{background:var(--verde-claro)}
+.parte__barra i[data-nivel="verde_parchis"]{background:var(--verde-parchis)}
+.parte__peso{margin:0; font-size:var(--t0); color:var(--ceniza-tenue); line-height:1.4}
+.parte--sin{border-style:dashed}
+.parte--sin .parte__nota{color:var(--ceniza-tenue)}
+/* Un valor calculado no puede parecer uno leído del envase. */
+.campo--calculado .campo__entrada input{border-color:var(--amarillo-letra); border-style:dashed}
+.apunte--calc{color:var(--amarillo-letra)}
+.propuesta--calc{color:var(--amarillo-letra); border-color:var(--amarillo-letra)}
+.propuesta--calc:active{background:var(--amarillo); color:var(--tinta)}
+
+/* --- Alimentos frescos ---------------------------------------------------- */
+.fresco{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio-s); padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.fresco__nombre{
+  display:block; font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso);
+}
+.fresco__nota{
+  display:block; margin-top:2px; font-size:var(--t2); color:var(--ceniza-tenue);
+  line-height:1.4;
+}
+
+
+/* --- La barra de abajo ----------------------------------------------------
+   Flotante y separada del borde, no pegada de lado a lado. La pestaña activa
+   se ensancha y muestra su nombre; las demás se quedan en el icono. Así se
+   sabe dónde estás sin leer nada, y caben las cinco sin apretarse. */
+/* Última fila de la columna. La franja de seguridad del teléfono va como
+   relleno debajo, no como distancia al borde: así la barra se apoya en ella
+   en vez de flotar por encima. */
+/* Última fila de la columna. La franja de seguridad del teléfono va como
+   relleno debajo, no como distancia al borde. */
+
+.barra__pestana{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:0.42rem;
+  /* Pueden encoger, pero nunca por debajo del mínimo que se toca con el dedo
+     menos el hueco: así el conjunto cabe sin que ninguna quede impracticable. */
+  flex:0 1 auto;
+  width:2.75rem; min-width:2.6rem; height:2.75rem; padding:0;
+  background:var(--carbon-alto);
+  border:0; border-radius:var(--radio-pastilla);
+  color:var(--ceniza);
+  transition:width .22s ease, background-color .22s ease, color .22s ease;
+  overflow:hidden;
+}
+.barra__pestana svg{
+  width:1.32rem; height:1.32rem; flex:none;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.barra__pestana span{
+  font-family:var(--cuerpo); font-weight:600; font-size:var(--t1);
+  white-space:nowrap; max-width:0; opacity:0;
+  transition:max-width .22s ease, opacity .16s ease;
+}
+
+/* La activa: pastilla clara con su nombre al lado del icono. */
+/* La pestaña donde estás, en el mismo verde que marca lo último pulsado. */
+.barra__pestana[aria-selected="true"]{
+  /* La activa se queda con lo que sobre, y su nombre se recorta antes que
+     desbordar el cuadro. */
+  /* La activa no encoge: su nombre es lo que dice dónde estás, y salía
+     cortado como "Analiz…". */
+  width:auto; min-width:0; flex:0 0 auto;
+  padding:0 0.75rem 0 0.6rem;
+  background:var(--acento); color:var(--sobre-acento);
+}
+.barra__pestana[aria-selected="true"] span{max-width:8rem; opacity:1}
+
+/**
+ * Cuando no cabe, el nombre desaparece: no se corta.
+ *
+ * Salía "Analiz…" y eso no dice nada. La medida va en rem, así que el umbral
+ * crece con el tamaño de letra elegido: con el texto en grande, la barra pasa
+ * a mostrar solo iconos, que es lo correcto. La pastilla verde sigue diciendo
+ * dónde estás.
+ */
+@media (max-width:20.5rem){
+  .barra__pestana[aria-selected="true"]{width:2.75rem; padding:0}
+  .barra__pestana[aria-selected="true"] span{max-width:0; opacity:0}
+}
+.barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
+
+@media (prefers-reduced-motion:reduce){
+  .barra__pestana, .barra__pestana span{transition:none}
+}
+
+/* --- Las cuatro vías de Analizar ------------------------------------------
+   Tarjetas que se despliegan de una en una. Antes estaban las cuatro abiertas
+   a la vez, cada una con un párrafo explicando para qué servía: un muro que se
+   lee una vez y estorba las otras cien. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* La letra pequeña de cada vía: una sola línea, y en voz baja. */
+.apunte-via{
+  margin:var(--e3) 0 0;
+  font-size:var(--t1); line-height:1.45;
+  color:var(--ceniza-tenue);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .via__flecha svg{transition:none}
+}
+
+/* --- Un poco de color ------------------------------------------------------
+   La app era gris de arriba abajo salvo el veredicto, y eso la hacía parecer
+   una hoja de cálculo. Se añade color donde NO compite con el semáforo: en el
+   fondo, en muy baja intensidad, y en los acentos de la interfaz. La regla de
+   que el color fuerte es del veredicto se mantiene intacta. */
+body{
+  margin:0;
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:
+    radial-gradient(120% 55% at 88% -8%, var(--tinte-a), transparent 60%),
+    radial-gradient(100% 45% at 4% 4%, var(--tinte-b), transparent 58%),
+    var(--tinta);
+  color:var(--hueso);
+  font-family:var(--cuerpo);
+  font-size:var(--t3);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+  background-attachment:fixed;
+}
+
+/* Las tarjetas dejan de ser cajas planas: un punto de luz arriba las levanta. */
+.via, .tarjeta, .parte, .ficha, .producto, .dif, .duelo__lado{
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 42%), var(--carbon);
+}
+
+/* La vía abierta se tiñe muy levemente en verde, como su icono. */
+
+/* La cabecera recoge el mismo tinte para que no se vea un corte. */
+
+/* --- La tarjeta del veredicto --------------------------------------------- */
+
+.veredicto__anillo{position:relative; width:8.6rem; height:8.6rem; flex:none}
+.veredicto__anillo svg{
+  width:100%; height:100%; display:block;
+  /* Se gira para que el arco empiece arriba y no a la derecha. */
+  transform:rotate(-90deg);
+}
+.veredicto__pista{
+  fill:none; stroke:var(--carbon-alto); stroke-width:9;
+}
+.veredicto__arco{
+  fill:none; stroke-width:9; stroke-linecap:round;
+  stroke:var(--ceniza);
+}
+.veredicto[data-nivel="rojo"] .veredicto__arco{stroke:var(--rojo)}
+.veredicto[data-nivel="naranja"] .veredicto__arco{stroke:var(--naranja)}
+.veredicto[data-nivel="amarillo"] .veredicto__arco{stroke:var(--amarillo)}
+.veredicto[data-nivel="verde_claro"] .veredicto__arco{stroke:var(--verde-claro)}
+.veredicto[data-nivel="verde_parchis"] .veredicto__arco{stroke:var(--verde-parchis)}
+
+.veredicto__cifra{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px;
+}
+/* La nota es el dato por el que existe la app: tiene que ser lo más grande de
+   la pantalla, no empatar con un título. El anillo crece con ella. */
+.veredicto__cifra b{
+  font-family:var(--datos); font-size:var(--t8); font-weight:600;
+  line-height:1; color:var(--hueso); font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em;
+}
+.veredicto__cifra small{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+
+.veredicto__texto{flex:1; min-width:0}
+.veredicto__texto h1{
+  margin:0; font-family:var(--display); font-weight:800;
+  font-size:var(--t6); line-height:1.1; letter-spacing:-.02em;
+  overflow-wrap:anywhere;
+}
+.veredicto__marca{
+  margin:4px 0 0; font-size:var(--t2); color:var(--ceniza-tenue);
+}
+.veredicto__nivel{
+  margin:var(--e3) 0 0;
+  font-family:var(--datos); font-size:var(--t1); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.veredicto[data-nivel="rojo"] .veredicto__nivel{color:var(--rojo-letra)}
+.veredicto[data-nivel="naranja"] .veredicto__nivel{color:var(--naranja-letra)}
+.veredicto[data-nivel="amarillo"] .veredicto__nivel{color:var(--amarillo-letra)}
+.veredicto[data-nivel="verde_claro"] .veredicto__nivel{color:var(--verde-claro-letra)}
+.veredicto[data-nivel="verde_parchis"] .veredicto__nivel{color:var(--verde-parchis-letra)}
+
+/* En pantallas estrechas, el anillo encima y el texto debajo. */
+@media (max-width:23rem){
+  .veredicto{flex-direction:column; text-align:center; gap:var(--e4)}
+}
+
+/* Las tres casillas de debajo, con más aire y un punto de color. */
+.resumen{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--e2);
+  margin-top:var(--e5);
+}
+.resumen > div{
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  padding:var(--e4) var(--e2);
+}
+
+/* --- El hueco de la foto en la Despensa ------------------------------------
+   Cuando no hay foto, el hueco es un botón que abre la cámara. Antes había que
+   borrar el producto entero y rehacerlo solo para ponerle una foto. */
+.producto__foto--vacia{
+  appearance:none; cursor:pointer; padding:0;
+  border:1.5px dashed var(--linea);
+  background:var(--carbon-alto);
+  color:var(--ceniza-tenue);
+}
+.producto__foto--vacia svg{
+  width:1.5rem; height:1.5rem;
+  fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
+}
+.producto__foto--vacia:active{border-color:var(--hueso); color:var(--hueso)}
+.producto__foto--trabajando{opacity:.45}
+
+/* --- Alternativas de tu despensa ------------------------------------------ */
+.alterna{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e3);
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--acento);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+}
+.alterna__nota{
+  flex:none; width:2.6rem; text-align:center;
+  font-size:var(--t5); font-weight:600;
+}
+.alterna__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
+.alterna__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
+.alterna__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
+.alterna__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
+.alterna__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
+.alterna__texto{flex:1; min-width:0}
+.alterna__texto b{
+  display:block; font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso); line-height:1.25;
+}
+.alterna__por{
+  display:block; margin-top:2px;
+  font-size:var(--t1); color:var(--ceniza-tenue); line-height:1.35;
+}
+.alterna__mejora{
+  flex:none; font-size:var(--t2); font-weight:600; color:var(--verde-claro-letra);
+}
+
+/* --- Aviso de que la receta ha cambiado ------------------------------------
+   Las marcas reformulan en silencio. Este bloque es la única forma que tiene
+   la app de decírtelo, y aparece antes que nada. */
+.cambio{
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--amarillo);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, rgba(232,182,23,.07), rgba(255,255,255,0) 50%), var(--carbon);
+  padding:var(--e4);
+  margin-bottom:var(--e4);
+}
+.cambio--peor{
+  border-left-color:var(--naranja-letra);
+  background:linear-gradient(180deg, rgba(228,119,29,.08), rgba(255,255,255,0) 50%), var(--carbon);
+}
+.cambio h3{
+  margin:0; font-family:var(--display); font-weight:700; font-size:var(--t4);
+  color:var(--hueso);
+}
+.cambio__cuando{margin:2px 0 var(--e3); font-size:var(--t2); color:var(--ceniza-tenue)}
+.cambio__lista{list-style:none; margin:0; padding:0}
+.cambio__lista li{
+  display:flex; justify-content:space-between; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0; border-bottom:1px solid var(--linea);
+  font-size:var(--t2);
+}
+.cambio__lista li:last-child{border-bottom:0}
+.cambio__lista b{font-weight:600; color:var(--hueso)}
+.cambio__lista span{color:var(--ceniza); text-align:right}
+.cambio__nota{
+  margin:var(--e3) 0 0; font-size:var(--t3); font-weight:600; color:var(--hueso);
+}
+.cambio--peor .cambio__nota{color:var(--naranja-letra)}
+
+/* --- Inicio: dos acciones grandes y lo demás en voz baja ------------------- */
+.accion--principal .accion__icono{background:var(--tinta); color:var(--hueso)}
+.accion--principal .accion__texto small{color:rgba(16,19,25,.62)}
+
+.recientes{margin-top:var(--e5)}
+
+/* Tres atajos en fila, en voz baja. */
+.atajos{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2);
+  margin:var(--e5) 0;
+}
+.atajo{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  padding:var(--e4) var(--e2);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--ceniza);
+  font-size:var(--t1); line-height:1.25; text-align:center;
+}
+.atajo svg{
+  width:1.3rem; height:1.3rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.atajo:active{border-color:var(--hueso); color:var(--hueso)}
+
+/* Los ajustes, plegados. Se tocan una vez y no se vuelven a mirar. */
+.ajustes > summary::-webkit-details-marker{display:none}
+.ajustes > summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.ajustes[open] summary::after{content:'  −'}
+.ajustes[open]{padding-bottom:var(--e4)}
+
+/* --- Saber y Despensa: la misma piel que el resto -------------------------- */
+
+/* Las fichas del catálogo llevan su color en una barra lateral discreta y
+   ganan aire. El sello se vuelve una pastilla, que se lee de un vistazo. */
+.ficha{
+  border:1.5px solid var(--linea);
+  border-left-width:3px;
+  border-radius:var(--radio);
+  background:var(--carbon);
+  margin-bottom:var(--e3);
+  overflow:hidden;
+}
+.ficha__titulo{
+  min-width:0;
+  overflow-wrap:anywhere;
+  font-family:var(--display);
+  font-weight:600;
+  font-size:var(--t3);
+  line-height:1.25;
+  color:var(--hueso);
+}
+.ficha__sello{
+  flex:none;
+  font-family:var(--datos);
+  font-size:var(--t0);
+  font-weight:600;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  justify-self:start;
+  padding:0.24rem 0.6rem;
+  border-radius:var(--radio-pastilla);
+  border:1px solid currentColor;
+  white-space:nowrap;
+}
+.ficha__cuerpo{
+  padding:0 var(--e4) var(--e4);
+}
+.ficha__linea{
+  margin:0 0 var(--e2);
+  font-size:var(--t2);
+  color:var(--ceniza);
+  line-height:1.5;
+}
+
+/* Los productos de la despensa: la nota en grande a la izquierda, como en el
+   resultado, para que las dos pantallas se reconozcan entre sí. */
+/* Dos filas: el nombre arriba con todo el ancho, y debajo la fecha y la nota.
+   En una sola fila la foto, la nota y la equis se comían el sitio y el nombre
+   se quedaba en dos letras. */
+.producto{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-areas:
+    "foto nombre borrar"
+    "foto fecha  nota";
+  align-items:center;
+  column-gap:var(--e3); row-gap:var(--e1);
+  background:var(--carbon);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e3);
+  position:relative;
+}
+.producto__foto{
+  grid-area:foto;
+  width:3.4rem;
+  height:3.4rem;
+  flex:none;
+  border-radius:var(--radio-s);
+  background:var(--carbon-alto) center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.producto__nota{
+  grid-area:nota;
+  justify-self:end;
+  flex:none;
+  min-width:2.2rem;
+  text-align:center;
+  font-size:var(--t5);
+  font-weight:600;
+  font-family:var(--datos);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Los encabezados de cada bloque de color, con su punto delante. */
+
+.bloque__titulo::before{
+  content:''; width:0.6rem; height:0.6rem; border-radius:50%;
+  background:currentColor; flex:none;
+}
+
+/* Los filtros, como pastillas. */
+.filtro{
+  appearance:none;
+  cursor:pointer;
+  background:var(--carbon);
+  color:var(--ceniza);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio);
+  padding:0.42rem 0.9rem;
+  font-family:var(--cuerpo);
+  font-weight:600;
+  font-size:var(--t1);
+}
+.filtro.es-activo{
+  background:var(--acento);
+  color:var(--sobre-acento);
+  border-color:transparent;
+}
+.filtros{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0.4rem;
+  margin-bottom:var(--e2);
+}
+
+/* --- La bienvenida --------------------------------------------------------
+   Cuatro pantallas, poco texto y un movimiento pequeño que explica lo que dice
+   el texto. Quien abre una app por primera vez no viene a leer. */
+.bien{
+  /* Sin alturas calculadas de ninguna clase. Lo intenté dos veces: primero
+     restando medidas a mano y luego estirándola contra la zona, y las dos
+     veces el botón acabó fuera de la vista. Se maqueta sola, de arriba abajo,
+     y ocupa lo que necesita. */
+  text-align:center;
+  padding-bottom:var(--e4);
+}
+.bien__cabeza{display:flex; justify-content:flex-end; margin-bottom:var(--e4)}
+.bien__saltar{
+  appearance:none; cursor:pointer;
+  background:none; border:0;
+  padding:var(--e2) var(--e3);
+  font-family:var(--datos); font-size:var(--t1); letter-spacing:.05em;
+  color:var(--ceniza-tenue);
+}
+.bien__saltar:active{color:var(--hueso)}
+
+.bien__escena{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  min-height:11rem;
+}
+.bien__svg{width:100%; max-width:16rem; height:auto}
+/* El texto dentro del SVG se escala con el propio dibujo, así que va en
+   unidades del lienzo, no en píxeles de pantalla. Aun así se escribe en em
+   para que respete el tamaño de letra elegido. */
+.bien__cifra{
+  font-family:var(--datos); font-size:0.94em; font-weight:600;
+  fill:var(--hueso); letter-spacing:.04em;
+}
+
+.bien__texto h1{
+  margin:0 0 var(--e3);
+  font-family:var(--display); font-weight:800; font-size:var(--t7);
+  letter-spacing:-.025em; line-height:1.1;
+}
+.bien__texto p{
+  margin:0 auto; max-width:22rem;
+  font-size:var(--t3); line-height:1.5; color:var(--ceniza);
+}
+
+.bien__puntos{display:flex; justify-content:center; gap:0.45rem; margin:var(--e5) 0}
+.bien__punto{
+  appearance:none; cursor:pointer; padding:0;
+  width:0.5rem; height:0.5rem; border-radius:50%;
+  border:0; background:var(--carbon-alto);
+  transition:width .2s ease, background-color .2s ease;
+}
+.bien__punto.es-actual{width:1.5rem; border-radius:0.25rem; background:var(--hueso)}
+
+/* Si el teléfono pide menos movimiento, las escenas se quedan quietas. Se
+   entienden igual: el dibujo ya dice lo que tiene que decir. */
+@media (prefers-reduced-motion:reduce){
+  .bien__svg animate{display:none}
+  .bien__punto{transition:none}
+}
+
+/* --- Qué juntar ------------------------------------------------------------
+   No son recetas: son interacciones entre nutrientes con su mecanismo detrás.
+   Lo que suma lleva un más; lo que estorba, un menos. */
+.elegibles{display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:var(--e3)}
+.elegible{
+  appearance:none; cursor:pointer;
+  padding:0.45rem 0.85rem;
+  border:1.5px solid var(--acento); border-radius:var(--radio);
+  background:var(--carbon); color:var(--ceniza);
+  font-size:var(--t2); line-height:1.2; text-align:left;
+}
+.elegible.es-elegido{background:var(--acento); color:var(--sobre-acento); border-color:transparent}
+
+.combi{
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
+  margin-bottom:var(--e3);
+  overflow:hidden;
+}
+.combi--suma{border-left-color:var(--verde-claro-letra)}
+.combi--resta{border-left-color:var(--naranja-letra)}
+.combi > summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e4);
+}
+.combi > summary::-webkit-details-marker{display:none}
+.combi__signo{
+  flex:none; width:2.1rem; height:2.1rem; border-radius:var(--radio-s);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--datos); font-size:var(--t4); font-weight:600;
+  background:var(--carbon-alto);
+}
+.combi--suma .combi__signo{color:var(--verde-claro-letra)}
+.combi--resta .combi__signo{color:var(--naranja-letra)}
+.combi__cabeza{flex:1; min-width:0}
+.combi__cabeza b{
+  display:block; font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso); line-height:1.25;
+}
+.combi__cabeza small{
+  display:block; margin-top:2px; font-size:var(--t1); color:var(--ceniza-tenue);
+}
+.combi__cuerpo{padding:0 var(--e4) var(--e4)}
+.combi__que{
+  margin:0 0 var(--e3); font-size:var(--t3); line-height:1.5; color:var(--hueso);
+}
+.combi__linea{margin:0 0 var(--e2); font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
+.combi__linea b{color:var(--hueso)}
+
+.sugerencia{
+  display:flex; flex-direction:column; gap:2px;
+  border:1.5px dashed var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4); margin-bottom:var(--e2);
+}
+.sugerencia b{font-family:var(--display); font-weight:600; color:var(--hueso)}
+.sugerencia span{font-size:var(--t2); color:var(--ceniza-tenue); line-height:1.4}
+
+/* --- El movimiento de la bienvenida ----------------------------------------
+   Escrito para que funcione en Safari, que es donde se ve.
+
+   Nada de cálculos con variables dentro de las animaciones: no se aplicaban.
+   Nada de escalar con origen propio: sin "transform-box" cada navegador
+   interpreta el origen a su manera. Solo propiedades llanas y números fijos. */
+
+.esc-linea{animation:escanea 2.6s ease-in-out infinite}
+@keyframes escanea{
+  0%   {y:42px; opacity:0}
+  15%  {opacity:1}
+  50%  {y:104px; opacity:1}
+  85%  {opacity:1}
+  100% {y:42px; opacity:0}
+}
+
+/* El arco: pathLength="100" en el círculo permite escribir el trazo con
+   números llanos, del 0 al 100, sin depender del radio. */
+.esc-arco{
+  stroke:var(--rojo);
+  stroke-dasharray:18 100;
+  animation:arcoColor 6s ease-in-out infinite, arcoLlena 6s ease-in-out infinite;
+}
+@keyframes arcoColor{
+  0%,8%    {stroke:var(--rojo)}
+  24%      {stroke:var(--naranja)}
+  44%      {stroke:var(--amarillo)}
+  64%      {stroke:var(--acento)}
+  84%,94%  {stroke:var(--verde-parchis)}
+  100%     {stroke:var(--rojo)}
+}
+@keyframes arcoLlena{
+  0%,8%    {stroke-dasharray:18 100}
+  24%      {stroke-dasharray:36 100}
+  44%      {stroke-dasharray:55 100}
+  64%      {stroke-dasharray:76 100}
+  84%,94%  {stroke-dasharray:97 100}
+  100%     {stroke-dasharray:18 100}
+}
+.esc-cifra{animation:latido 6s ease-in-out infinite}
+@keyframes latido{0%,100%{opacity:.45} 50%{opacity:1}}
+
+/* Las barras crecen animando su ancho, no escalándolas: escalar necesita
+   "transform-box" para que el origen sea el que uno cree. */
+.esc-barra{animation:crece 3.6s ease-in-out infinite}
+.esc-barra--1{animation-name:crece1}
+.esc-barra--2{animation-name:crece2; animation-delay:.25s}
+.esc-barra--3{animation-name:crece3; animation-delay:.5s}
+@keyframes crece1{0%{width:0px} 35%,80%{width:58px} 100%{width:0px}}
+@keyframes crece2{0%{width:0px} 35%,80%{width:96px} 100%{width:0px}}
+@keyframes crece3{0%{width:0px} 35%,80%{width:128px} 100%{width:0px}}
+
+.esc-candado{animation:latido 3s ease-in-out infinite}
+
+/* Si el teléfono pide menos movimiento, se quedan quietas y se entienden
+   igual. Ojo: si alguien tiene activado "Reducir movimiento" en los ajustes
+   del móvil, no verá ninguna animación de la app, y eso es lo correcto. */
+@media (prefers-reduced-motion:reduce){
+  .esc-linea, .esc-arco, .esc-cifra, .esc-barra, .esc-candado{animation:none}
+  .esc-arco{stroke:var(--acento); stroke-dasharray:76 100}
+  .esc-linea{y:72px}
+}
+
+
+/* --- La cabecera -----------------------------------------------------------
+   Centrada, con el nombre grande y el lema en versalitas muy espaciadas
+   debajo. El monograma sale de aquí: pasa a acompañar al nombre de cada
+   pantalla, que es donde de verdad dice algo. */
+.cabecera{
+  background:var(--fondo-cabecera);
+  flex:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  padding:calc(var(--e3) + env(safe-area-inset-top)) var(--e4) var(--e3);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--linea);
+}
+.cabecera__nombre{
+  font-family:var(--display); font-weight:800; font-size:var(--t7);
+  letter-spacing:-.02em; line-height:1; color:var(--hueso);
+}
+.cabecera__lema{
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.24em; text-transform:uppercase;
+  color:var(--ceniza-tenue); line-height:1.4;
+}
+
+/* --- El nombre de la pantalla, con el monograma delante -------------------- */
+.pantalla{
+  display:flex; align-items:center; gap:var(--e2);
+  margin:0 0 var(--e5);
+}
+.pantalla__signo{flex:none; width:2.1rem; height:2.1rem; display:block}
+.pantalla__signo svg{width:100%; height:100%; display:block}
+.pantalla__signo path{fill:var(--ceniza)}
+.pantalla__signo rect{fill:var(--acento)}
+.pantalla__nombre{
+  font-family:var(--display); font-weight:800; font-size:var(--t6);
+  letter-spacing:-.025em; line-height:1; color:var(--hueso);
+}
+
+/* --- Inicio: dos acciones, un grupo y las preferencias plegadas ------------
+   Calcado de la maqueta. La última acción usada se queda marcada en verde:
+   no es adorno, es una pista de por dónde ibas la última vez. */
+
+.accion{
+  appearance:none;
+  cursor:pointer;
+  width:100%;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:var(--e4);
+  padding:var(--e4);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  margin:0 0 var(--e4);
+  background:var(--carbon);
+  color:var(--hueso);
+}
+.accion--reciente{background:var(--tinte-a)}
+
+.accion__icono{
+  flex:none;
+  width:3.4rem;
+  height:3.4rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:var(--acento);
+  color:var(--sobre-acento);
+}
+.accion__icono svg{
+  width:1.8rem;
+  height:1.8rem;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.accion__texto{
+  flex:1;
+  min-width:0;
+}
+.accion__texto b{
+  display:block;
+  font-family:var(--display);
+  font-weight:800;
+  font-size:var(--t6);
+  line-height:1.1;
+  letter-spacing:-.02em;
+}
+.accion__texto small{
+  display:block;
+  margin-top:3px;
+  font-size:var(--t1);
+  line-height:1.4;
+  color:var(--ceniza);
+  font-family:var(--datos);
+  font-weight:400;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+/* El grupo enmarcado, con su rótulo centrado dentro. */
+.grupo{
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  padding:var(--e3) var(--e3) var(--e4);
+  margin-bottom:var(--e6);
+}
+.grupo__titulo{
+  margin:0 0 var(--e3);
+  font-family:var(--datos); font-weight:400; font-size:var(--t0);
+  letter-spacing:.2em; text-transform:uppercase; text-align:center;
+  color:var(--ceniza-tenue);
+}
+.grupo__pastillas{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2)}
+
+.pastilla{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  padding:var(--e3) var(--e1);
+  border:1.5px solid var(--acento); border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--ceniza);
+  font-family:var(--cuerpo); font-size:var(--t2); line-height:1.2;
+  text-align:center;
+}
+.pastilla svg{
+  width:1.35rem; height:1.35rem;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.pastilla--reciente{
+  background:var(--tinte-a); border-color:var(--acento);
+  color:var(--verde-claro-letra);
+}
+
+/* Preferencias: una pastilla con el engranaje a un lado y el más al otro. */
+.ajustes{
+  border:1.5px solid var(--acento); border-radius:var(--radio);
+  background:var(--carbon); padding:0 var(--e4);
+  margin-bottom:var(--e5);
+}
+.ajustes > summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e4) 0;
+}
+.ajustes > summary::-webkit-details-marker{display:none}
+.ajustes > summary::after{content:none}
+.ajustes__icono{flex:none; color:var(--ceniza-tenue)}
+.ajustes__icono svg{
+  width:1.3rem; height:1.3rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.ajustes__nombre{
+  flex:1; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza);
+}
+.ajustes__mas{
+  flex:none; font-family:var(--datos); font-size:var(--t4);
+  color:var(--ceniza-tenue); line-height:1;
+}
+.ajustes[open] .ajustes__mas{transform:rotate(45deg)}
+.ajustes[open]{padding-bottom:var(--e4)}
+
+/* Las dos acciones, en rejilla para que midan exactamente lo mismo aunque una
+   parta el título en dos líneas y la otra no. */
+.acciones{
+  display:grid; grid-auto-rows:1fr; gap:var(--e4);
+  margin-bottom:var(--e4);
+}
+.acciones .accion{margin:0; height:100%}
+
+/* --- Alternativas buscadas fuera ------------------------------------------
+   Con foto, marca, nuestra nota y dónde comprarlo. Van después de las de tu
+   despensa porque merecen menos confianza: esas las analizaste tú con la
+   etiqueta delante. */
+.fuera{
+  display:flex; gap:var(--e4);
+  padding:var(--e3) var(--e4);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  background:linear-gradient(180deg, var(--brillo-tarjeta), transparent 50%), var(--carbon);
+  margin-bottom:var(--e3);
+}
+.fuera[data-nivel="verde_parchis"]{border-left-color:var(--verde-parchis)}
+.fuera[data-nivel="verde_claro"]{border-left-color:var(--verde-claro)}
+.fuera[data-nivel="amarillo"]{border-left-color:var(--amarillo)}
+
+.fuera__foto{
+  flex:none; width:4.4rem; height:4.4rem;
+  object-fit:contain; border-radius:var(--radio-s);
+  background:var(--carbon-alto);
+}
+.fuera__foto--sin{border:1.5px dashed var(--linea)}
+.fuera__texto{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.fuera__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25; color:var(--hueso);
+}
+.fuera__marca{font-size:var(--t1); color:var(--ceniza-tenue)}
+.fuera__veredicto{
+  display:flex; align-items:center; gap:0.4rem;
+  font-size:var(--t2); color:var(--ceniza);
+}
+.fuera__punto{width:0.6rem; height:0.6rem; border-radius:50%; flex:none; background:currentColor}
+.fuera[data-nivel="verde_parchis"] .fuera__veredicto{color:var(--verde-parchis-letra)}
+.fuera[data-nivel="verde_claro"] .fuera__veredicto{color:var(--verde-claro-letra)}
+.fuera[data-nivel="amarillo"] .fuera__veredicto{color:var(--amarillo-letra)}
+.fuera__veredicto em{font-style:normal; font-weight:600; margin-left:auto}
+.fuera__por{font-size:var(--t1); color:var(--ceniza-tenue); line-height:1.4}
+.fuera__donde{
+  margin-top:var(--e2); font-size:var(--t1); line-height:1.4;
+  color:var(--ceniza);
+}
+
+/* --- Analizar: cuatro vías, una a la vez -----------------------------------
+   Cerrada, se ven las cuatro para elegir. Abierta, las otras tres desaparecen
+   y la pantalla se dedica a lo que estás haciendo. */
+.vias{margin-bottom:var(--e5)}
+
+.via{
+  appearance:none; cursor:pointer; width:100%; text-align:left;
+  display:flex; align-items:center; gap:var(--e4);
+  padding:var(--e3) var(--e4);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  margin-bottom:var(--e3);
+  background:var(--carbon);
+  color:var(--hueso);
+}
+.via--abierta{
+  background:var(--tinte-a);
+  margin-bottom:0;
+}
+
+.via__icono{
+  flex:none; width:2.9rem; height:2.9rem;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%;
+  background:var(--acento); color:var(--sobre-acento);
+}
+.via__icono svg{
+  width:1.5rem; height:1.5rem;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.via__nombre{
+  flex:1; min-width:0;
+  font-family:var(--display); font-weight:700; font-size:var(--t4);
+  line-height:1.2; letter-spacing:-.015em;
+}
+.via-seccion > summary{min-height:4.2rem}
+
+.via__cuerpo{
+  border:1.5px solid var(--acento);
+  border-top:0;
+  border-radius:0 0 var(--radio) var(--radio);
+  padding:var(--e4);
+}
+
+/* Las cajas de dentro comparten perfil con todo lo demás. */
+.caja-accion{
+  appearance:none; cursor:pointer; width:100%;
+  padding:var(--e4);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--display); font-weight:600; font-size:var(--t4);
+  line-height:1.25; text-align:center;
+  margin-bottom:var(--e3);
+}
+.via__cuerpo .campo__entrada input,
+.via__cuerpo .pegar{
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+}
+.via__cuerpo .rotulo{text-align:center}
+
+/* El botón de acción: el mismo en las cuatro vías. */
+.buscar{
+  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
+  margin:var(--e5) 0 var(--e3);
+}
+.buscar__boton{
+  appearance:none; cursor:pointer;
+  width:3.4rem; height:3.4rem; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:50%;
+  background:var(--acento); color:var(--sobre-acento);
+}
+.buscar__boton svg{
+  width:1.7rem; height:1.7rem;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.buscar__boton:disabled{
+  background:var(--carbon-alto); color:var(--ceniza-tenue); cursor:default;
+}
+.buscar__rotulo{
+  font-family:var(--datos); font-size:var(--t0); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+
+/* --- El nivel, en una sola barra -------------------------------------------
+   Antes se pintaban los cinco tramos con uno destacado. Los otros cuatro no
+   dicen nada del producto que tienes en la mano y competían con el que sí. */
+.nivel{
+  background:var(--acento);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e5);
+  display:flex;
+  align-items:center;
+  gap:var(--e3);
+  color:var(--sobre-acento);
+}
+.nivel[data-nivel="rojo"]{background:var(--rojo); color:var(--sobre-rojo)}
+.nivel[data-nivel="naranja"]{background:var(--naranja); color:var(--sobre-naranja)}
+.nivel[data-nivel="amarillo"]{background:var(--amarillo); color:var(--sobre-amarillo)}
+.nivel[data-nivel="verde_claro"]{background:var(--verde-claro); color:var(--sobre-verde-claro)}
+.nivel[data-nivel="verde_parchis"]{background:var(--verde-parchis); color:var(--sobre-verde-parchis)}
+
+/* El número va en un círculo del color del papel, no sobre un velo del propio
+   color. Con velo, sobre el naranja daba 4,29 y sobre el verde parchís 3,84,
+   por debajo del mínimo. Así siempre se lee, sea cual sea el nivel. */
+.nivel__pos{
+  flex:none;
+  width:1.9rem; height:1.9rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--datos); font-size:var(--t2); font-weight:600;
+  background:var(--carbon); color:var(--hueso);
+}
+.nivel__texto{
+  flex:1; min-width:0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25;
+}
+.nivel__de{
+  flex:none;
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.12em; text-transform:uppercase; opacity:.72;
+}
+
+/* --- La tarjeta del veredicto, con el perfil de la app --------------------- */
+.veredicto{
+  display:flex;
+  align-items:center;
+  gap:var(--e5);
+  margin-bottom:var(--e4);
+  padding:var(--e5) var(--e4);
+  border:1.5px solid var(--acento);
+  border-radius:var(--radio);
+  background:var(--carbon);
+}
+.veredicto[data-nivel="rojo"]{border-color:var(--rojo)}
+.veredicto[data-nivel="naranja"]{border-color:var(--naranja)}
+.veredicto[data-nivel="amarillo"]{border-color:var(--amarillo)}
+.veredicto[data-nivel="verde_claro"]{border-color:var(--verde-claro)}
+.veredicto[data-nivel="verde_parchis"]{border-color:var(--verde-parchis)}
+
+/* Las tres casillas de debajo, con el mismo perfil. */
+.resumen > div{
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  background:var(--carbon);
+}
+
+/* Y el desglose y los topes, igual. */
+.parte, .alterna, .fuera, .combi, .cambio{
+  border-width:1.5px;
+  border-radius:var(--radio);
+}
+.parte{
+  background:var(--carbon);
+  border:1.5px solid var(--linea);
+  border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-bottom:var(--e2);
+  border-color:var(--linea);
+}
+
+/* --- Saber: seis puertas y un buscador ------------------------------------
+   La pantalla arranca sin resultados. Los filtros y los órdenes solo aparecen
+   cuando hay algo que filtrar: antes estaban siempre, aunque no hubiera nada
+   debajo. */
+.puertas{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e3);
+  margin-top:var(--e4);
+}
+.puerta{
+  appearance:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:flex-start; gap:var(--e2);
+  padding:var(--e4);
+  border:1.5px solid var(--acento); border-radius:var(--radio);
+  background:var(--carbon); color:var(--hueso);
+  text-align:left;
+}
+.puerta__icono{
+  width:2.4rem; height:2.4rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--acento); color:var(--sobre-acento);
+}
+.puerta__icono svg{
+  width:1.3rem; height:1.3rem;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.puerta__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.2;
+}
+.puerta__cuenta{font-size:var(--t1); color:var(--ceniza-tenue)}
+
+.resultados__cabeza{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--e3);
+  margin:var(--e4) 0 var(--e3);
+}
+.volver{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; gap:0.2rem;
+  padding:0.4rem 0.8rem 0.4rem 0.5rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon); color:var(--ceniza);
+  font-size:var(--t1);
+}
+.volver svg{
+  width:1.1rem; height:1.1rem;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* Lo de la despensa, plegado: es interesante pero no es lo que vienes a hacer. */
+.repetidas-panel{
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon); padding:0 var(--e4);
+  margin-top:var(--e6);
+}
+.repetidas-panel > summary{
+  cursor:pointer; list-style:none; padding:var(--e4) 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso);
+}
+.repetidas-panel > summary::-webkit-details-marker{display:none}
+.repetidas-panel > summary::after{content:'  +'; color:var(--ceniza-tenue); font-family:var(--datos)}
+.repetidas-panel[open] summary::after{content:'  −'}
+.repetidas-panel[open]{padding-bottom:var(--e4)}
+.repetida{
+  display:flex;
+  align-items:baseline;
+  gap:var(--e3);
+  padding:var(--e2) 0;
+  border-bottom:1px solid var(--linea);
+  appearance:none;
+  cursor:pointer;
+  width:100%;
+  text-align:left;
+  background:none;
+  border:0;
+  border-top:1px solid var(--linea);
+  color:var(--hueso);
+  font-size:var(--t2);
+}
+.repetida__veces{
+  width:2.4rem;
+  flex:none;
+  font-size:var(--t1);
+  font-weight:600;
+  color:var(--ceniza-tenue);
+}
+.repetida__nombre{
+  flex:1;
+  min-width:0;
+  color:var(--hueso);
+  font-size:var(--t3);
+}
+
+
+/* --- La cabecera de cada bloque de la Despensa -----------------------------
+   El nombre dentro de una barra del color que le toca. Llegué a dejarlo como
+   texto de color con un punto delante: más elegante, sí, pero se distinguía
+   mucho menos de un vistazo, que es justamente para lo que está. */
+.bloque__nombre{
+  flex:1; min-width:0; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; line-height:1.2;
+}
+
+/* Cada barra con el color de su nivel.
+   
+   Estas cinco reglas desaparecieron al fusionar los duplicados de la hoja: la
+   sustitución buscaba el nombre de la clase sin anclarlo al principio del
+   selector, así que casó DENTRO de las reglas por nivel y se llevó por delante
+   el cuerpo de las cinco, dejando los selectores pegados unos a otros. Las
+   barras se quedaron grises. */
+.bloque[data-nivel="rojo"] .bloque__barra{
+  background:var(--rojo); color:var(--sobre-rojo);
+}
+.bloque[data-nivel="naranja"] .bloque__barra{
+  background:var(--naranja); color:var(--sobre-naranja);
+}
+.bloque[data-nivel="amarillo"] .bloque__barra{
+  background:var(--amarillo); color:var(--sobre-amarillo);
+}
+.bloque[data-nivel="verde_claro"] .bloque__barra{
+  background:var(--verde-claro); color:var(--sobre-verde-claro);
+}
+.bloque[data-nivel="verde_parchis"] .bloque__barra{
+  background:var(--verde-parchis); color:var(--sobre-verde-parchis);
+}
+.bloque__cuantos{
+  flex:none; font-size:var(--t1); opacity:.82;
+  font-variant-numeric:tabular-nums;
+}
+
+/* --- La barra de abajo, más pegada al borde --------------------------------
+   El teléfono reserva una franja para su barra de inicio. Dejarla entera como
+   margen subía la nuestra más de lo necesario: con algo más de la mitad se
+   despeja el indicador y la barra se apoya en el borde. */
+.barra{
+  flex:none;
+  margin:0 auto;
+  margin-bottom:max(0.35rem, calc(env(safe-area-inset-bottom) * 0.55));
+  max-width:calc(100vw - 1.2rem);
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:0.24rem;
+  padding:0.38rem;
+  background:var(--fondo-barra);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  border:1px solid var(--borde-barra);
+  border-radius:var(--radio-pastilla);
+  box-shadow:var(--sombra-barra);
+}
+
+/* --- De dónde viene -------------------------------------------------------- */
+.procede{
+  border:1.5px solid var(--linea); border-radius:var(--radio);
+  background:var(--carbon);
+  padding:var(--e4);
+  margin-bottom:var(--e4);
+}
+.procede__linea{
+  margin:0; font-size:var(--t3); line-height:1.5; color:var(--hueso);
+}
+.procede__donde{
+  margin:var(--e2) 0 0; font-size:var(--t2); line-height:1.45; color:var(--ceniza);
+}
+
+/* --- Las secciones plegables del resultado ---------------------------------
+   Resultado era un scroll interminable con todo desplegado a la vez, y la
+   mayoría de las veces solo vas a mirar una cosa. Las que no tienen nada que
+   contar ni se pintan: una pestaña vacía es una promesa incumplida. */
+.secciones{margin-top:var(--e4)}
+
+
+
+
+
+
+
+
+
+
+.seccion__cuerpo > .subtitulo:first-child{margin-top:0}
+
+@media (prefers-reduced-motion:reduce){
+  .seccion__flecha svg{transition:none}
+}
+
+/* --- La procedencia, al lado del nombre ------------------------------------ */
+.procedencia{
+  display:inline-flex; flex-direction:column; gap:1px;
+  margin-top:var(--e2);
+  padding:var(--e2) var(--e3);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+}
+.procedencia__rotulo{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.procedencia__linea{
+  font-size:var(--t2); line-height:1.35; color:var(--hueso);
+}
+.procedencia__linea::before{content:'· '; color:var(--ceniza-tenue)}
+.procedencia--sin{border-style:dashed}
+.procedencia__nada{font-size:var(--t2); color:var(--ceniza-tenue)}
+.procedencia__matiz{
+  font-family:var(--datos); font-size:var(--t0);
+  color:var(--ceniza-tenue); font-style:italic;
+}
+
+/* --- La lupa dentro del campo de búsqueda ---------------------------------- */
+
+.campo__lupa{flex:none; display:flex; color:var(--ceniza-tenue); padding-left:var(--e2)}
+.campo__lupa svg{
+  width:1.15rem; height:1.15rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+
+/* --- Ordenar, en un desplegable -------------------------------------------
+   Eran cuatro pastillas siempre a la vista, de las que solo una estaba
+   elegida. Ocupaban dos líneas para decir una cosa. */
+.ordenar{
+  display:flex; align-items:center; gap:var(--e2);
+  padding:0.4rem 0.5rem 0.4rem 0.9rem;
+  border:1.5px solid var(--linea); border-radius:var(--radio-pastilla);
+  background:var(--carbon);
+}
+.ordenar__rotulo{
+  font-family:var(--datos); font-size:var(--t0);
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.ordenar__lista{
+  appearance:none; cursor:pointer;
+  border:0; background:none; color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t1);
+  padding:0 1.1rem 0 0.2rem;
+  background-image:linear-gradient(45deg, transparent 50%, currentColor 50%),
+                   linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:right 0.35rem center, right 0.05rem center;
+  background-size:0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat:no-repeat;
+}
+.resultados__cuenta{
+  font-family:var(--datos);
+  font-size:var(--t0);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  text-align:right;
+  display:block;
+  margin:0 0 var(--e3);
+}
+
+/* --- La tabla nutricional, en casillas ------------------------------------- */
+.tabla-nut{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e2);
+}
+@media (min-width:26rem){ .tabla-nut{grid-template-columns:repeat(3,1fr)} }
+
+.casilla{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:var(--e3) var(--e2);
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon);
+  text-align:center;
+}
+.casilla b{
+  font-family:var(--datos); font-size:var(--t5); font-weight:600;
+  color:var(--hueso); line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.casilla b small{font-size:var(--t1); font-weight:400; color:var(--ceniza-tenue); margin-left:1px}
+.casilla span{font-size:var(--t1); line-height:1.3; color:var(--ceniza)}
+.casilla i{
+  font-family:var(--datos); font-style:normal; font-size:var(--t0);
+  letter-spacing:.08em; text-transform:uppercase; color:var(--amarillo-letra);
+}
+.casilla--calc{border-style:dashed}
+
+/* --- El desglose: la nota en palabras, no solo en número ------------------- */
+.parte__lectura{
+  margin:var(--e2) 0 0;
+  font-size:var(--t2); line-height:1.4; color:var(--hueso);
+}
+.parte__nota[data-nivel="rojo"]{color:var(--rojo-letra)}
+.parte__nota[data-nivel="naranja"]{color:var(--naranja-letra)}
+.parte__nota[data-nivel="amarillo"]{color:var(--amarillo-letra)}
+.parte__nota[data-nivel="verde_claro"]{color:var(--verde-claro-letra)}
+.parte__nota[data-nivel="verde_parchis"]{color:var(--verde-parchis-letra)}
+.parte__nota small{
+  font-size:var(--t0);
+  color:var(--ceniza-tenue);
+  font-weight:400;
+}
+
+/* --- Corregir lo que esté mal ---------------------------------------------
+   Lleva a Revisar, que ya existía. Lo que faltaba no era un editor: era poder
+   volver a él una vez visto el resultado. */
+.corregir{
+  appearance:none; cursor:pointer;
+  display:flex; align-items:center; gap:var(--e2);
+  margin-top:var(--e4);
+  padding:var(--e2) var(--e4) var(--e2) var(--e3);
+  border:1.5px solid var(--acento); border-radius:var(--radio-pastilla);
+  background:var(--carbon); color:var(--hueso);
+  font-family:var(--cuerpo); font-size:var(--t2);
+}
+.corregir svg{
+  width:1.1rem; height:1.1rem; flex:none;
+  fill:none; stroke:currentColor; stroke-width:1.9;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* --- Los bloques de color, ahora plegables --------------------------------
+   Con la despensa llena, poder cerrar "Especialmente favorable" para mirar
+   solo lo que conviene limitar es justo para lo que sirve esta pantalla. */
+
+/* Un más que gira, como en Preferencias y en las pestañas del resultado: una
+   sola forma de decir "esto se abre" en toda la app. */
+.bloque__flecha{
+  flex:none;
+  font-family:var(--datos); font-size:var(--t4); line-height:1;
+  opacity:.8;
+  transition:transform .18s ease;
+}
+.bloque[open] .bloque__flecha{transform:rotate(45deg)}
+.bloque[open] 
+@media (prefers-reduced-motion:reduce){
+  .bloque__flecha svg{transition:none}
+}
+
+/* --- Las secciones de la Despensa, con la cara de Analizar -----------------
+   Tenían dos estilos distintos y la misma app parecía cosida de dos telas. */
+.via-seccion{margin-bottom:var(--e3)}
+.via-seccion > summary{
+  list-style:none;
+  margin-bottom:0;
+}
+.via-seccion > summary::-webkit-details-marker{display:none}
+.via-seccion[open] > summary{
+  background:var(--tinte-a);
+  border-radius:var(--radio) var(--radio) 0 0;
+}
+.via__flecha{flex:none; display:flex; color:var(--ceniza-tenue)}
+.via__flecha svg{
+  width:1.2rem; height:1.2rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .18s ease;
+}
+.via-seccion[open] .via__flecha svg{transform:rotate(180deg)}
+
+@media (prefers-reduced-motion:reduce){
+  .via__flecha svg{transition:none}
+}
+
+/* --- El recordatorio de copia ---------------------------------------------
+   Aparece justo después de guardar, que es cuando acabas de añadir algo que
+   perderías. Cada diez productos, no cada vez: avisar siempre es ruido. */
+.recordatorio{
+  margin-top:var(--e4);
+  padding:var(--e4);
+  border:1.5px solid var(--amarillo); border-radius:var(--radio);
+  background:var(--carbon);
+}
+.recordatorio p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5}
+.recordatorio .boton{width:100%}
+
+
+/* Safari añade además una lupa y una equis propias dentro de los campos de
+   búsqueda. La lupa la ponemos nosotros, así que la suya sobra. */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration{
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+
+/* --- Las pestañas del resultado, con la cara de Preferencias ---------------
+   Tenían el nombre a la izquierda y una flecha, mientras Preferencias llevaba
+   icono, nombre centrado y un más. Dos formas de decir lo mismo en la misma
+   app. */
+.seccion{
+  border:1.5px solid var(--acento); border-radius:var(--radio);
+  background:var(--carbon);
+  padding:0 var(--e4);
+  margin-bottom:var(--e2);
+}
+/* Todas del mismo alto, se parta el nombre o no. Antes crecían cuando el
+   rótulo ocupaba dos líneas y la columna quedaba desigual. */
+.seccion > summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  min-height:3.4rem;
+  padding:0;
+}
+.seccion > summary::-webkit-details-marker{display:none}
+.seccion__icono{flex:none; color:var(--ceniza-tenue); display:flex}
+.seccion__icono svg{
+  width:1.3rem; height:1.3rem; display:block;
+  fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.seccion__nombre{
+  flex:1; text-align:center;
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza);
+  line-height:1.2;
+}
+.seccion__mas{
+  flex:none; font-family:var(--datos); font-size:var(--t4);
+  color:var(--ceniza-tenue); line-height:1;
+  transition:transform .18s ease;
+}
+.seccion[open] .seccion__mas{transform:rotate(45deg)}
+.seccion[open]{padding-bottom:var(--e4)}
+.seccion[open] .seccion__nombre{color:var(--hueso)}
+.seccion__cuerpo{
+  padding:0 var(--e4) var(--e4);
+  border-top:1px solid var(--linea);
+  padding-top:var(--e4);
+}
+.seccion__cuerpo > .subtitulo:first-child{margin-top:0}
+
+@media (prefers-reduced-motion:reduce){
+  .seccion__mas{transition:none}
+}
+
+
+
+/* --- Las barras de color, con la forma de Preferencias ---------------------
+   Mismo radio, mismo relleno, nombre centrado en versalitas y un más que gira.
+   Lo único que cambia es el color, que es lo que tienen que decir. */
+.bloque__barra{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  margin:0;
+  min-height:3rem;
+  padding:0 var(--e4);
+  border-radius:var(--radio);
+  background:var(--carbon-alto); color:var(--hueso);
+}
+.bloque__barra::-webkit-details-marker{display:none}
+
+/* --- Límites y recomendaciones ---------------------------------------------
+   Dos mitades que no significan lo mismo: lo que conviene alcanzar y lo que
+   conviene no pasar. El color lo distingue sin tener que leerlo. */
+.sub{
+  border:1.5px solid var(--linea); border-radius:var(--radio-s);
+  background:var(--carbon);
+  padding:0 var(--e4);
+  margin-bottom:var(--e2);
+}
+.sub[open]{border-color:var(--acento); padding-bottom:var(--e3)}
+.sub > summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  padding:var(--e3) 0;
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  color:var(--hueso);
+}
+.sub > summary::-webkit-details-marker{display:none}
+.sub__signo{
+  flex:none; width:1.6rem; height:1.6rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--carbon-alto); font-family:var(--datos); font-size:var(--t2);
+}
+.sub__mas{
+  margin-left:auto; flex:none;
+  font-family:var(--datos); font-size:var(--t4); color:var(--ceniza-tenue);
+  line-height:1; transition:transform .18s ease;
+}
+.sub[open] .sub__mas{transform:rotate(45deg)}
+.sub__cuerpo{border-top:1px solid var(--linea); padding-top:var(--e3)}
+
+.cuanto{margin-bottom:var(--e4)}
+.cuanto__cab{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--e3);
+}
+/* Misma tipografía que el título de una ficha de ingrediente: van uno al lado
+   del otro y con distinta letra parecían de dos pantallas distintas. */
+.cuanto__nombre{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25; color:var(--hueso);
+}
+.cuanto__pct{
+  flex:none; font-size:var(--t4); font-weight:600;
+  font-variant-numeric:tabular-nums; color:var(--hueso);
+}
+.cuanto__pct small{font-size:var(--t0); font-weight:400; color:var(--ceniza-tenue)}
+.cuanto__barra{
+  height:5px; border-radius:3px; background:var(--carbon-alto);
+  margin:var(--e2) 0; overflow:hidden;
+}
+.cuanto__barra i{display:block; height:100%; border-radius:3px}
+.cuanto[data-clase="objetivo"] .cuanto__barra i{background:var(--verde-parchis)}
+.cuanto[data-clase="limite"] .cuanto__barra i{background:var(--naranja)}
+.cuanto[data-clase="objetivo"] .cuanto__pct{color:var(--verde-parchis-letra)}
+.cuanto[data-clase="limite"] .cuanto__pct{color:var(--naranja-letra)}
+.cuanto__frase{margin:0; font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
+.cuanto__fuente{
+  margin:var(--e1) 0 0;
+  font-family:var(--datos); font-size:var(--t0); line-height:1.4;
+  color:var(--ceniza-tenue);
+}
+
+.riesgo{
+  border:1.5px solid var(--naranja); border-radius:var(--radio-s);
+  padding:var(--e4); margin-top:var(--e3);
+}
+.riesgo h3{
+  margin:0 0 var(--e2);
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+}
+.riesgo p{margin:0 0 var(--e2); font-size:var(--t2); line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){ .sub__mas{transition:none} }
+
+
+/* --- Los puntos que dicen qué va con qué ----------------------------------
+   Mismo punto, mismo color: esos dos alimentos se potencian. Azules, morados
+   y turquesas a propósito, para que nadie lea un punto como si fuera una nota
+   del semáforo. */
+.puntos{display:inline-flex; gap:2px; margin-left:0.35rem; vertical-align:baseline}
+.punto{
+  display:inline-block; flex:none;
+  width:0.53em; height:0.53em; border-radius:50%;
+  /* Un filo muy fino los despega del fondo sin ensuciar el color. */
+  box-shadow:0 0 0 1px rgba(0,0,0,.12);
+}
+.leyenda{
+  border:1.5px dashed var(--linea); border-radius:var(--radio-s);
+  padding:var(--e3) var(--e4);
+  margin-top:var(--e3);
+}
+.leyenda__fila{
+  display:flex; align-items:baseline; gap:var(--e3);
+  padding:var(--e2) 0;
+  font-size:var(--t2); line-height:1.45;
+}
+.leyenda__fila .punto{width:0.7em; height:0.7em}
+.leyenda__fila b{color:var(--hueso)}
+.leyenda__fila span{color:var(--ceniza)}
+
+/* El número de raciones es el dato que la gente se lleva de aquí: va en
+   negrita y con el color de su mitad, para que no se pierda entre el texto. */
+.cuanto__frase b{
+  font-family:var(--display); font-weight:700;
+  font-size:var(--t3); letter-spacing:-.01em;
+}
+.cuanto[data-clase="objetivo"] .cuanto__frase b{color:var(--verde-parchis-letra)}
+.cuanto[data-clase="limite"] .cuanto__frase b{color:var(--naranja-letra)}
+
+
+/* --- Aviso de copia, flotando encima de la barra de abajo ------------------
+   Debajo del botón de guardar quedaba fuera de la vista. */
+.aviso-flotante{
+  position:fixed; z-index:50;
+  left:var(--e4); right:var(--e4);
+  bottom:calc(6.2rem + env(safe-area-inset-bottom, 0px));
+  max-width:34rem; margin:0 auto;
+  background:var(--carbon);
+  border:1.5px solid var(--amarillo); border-radius:var(--radio);
+  padding:var(--e4);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  animation:aviso-entra .22s ease-out;
+}
+.aviso-flotante p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
+.aviso-flotante p b{color:var(--hueso)}
+.aviso-flotante__botones{display:flex; gap:var(--e2)}
+.aviso-flotante__botones .boton{flex:1}
+.aviso-flotante [data-aviso="copia"]{background:var(--acento); color:var(--sobre-acento); font-weight:600}
+@keyframes aviso-entra{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ .aviso-flotante{animation:none} }
+
+/* --- El campo de búsqueda, a prueba de Safari ------------------------------
+   El marco interior seguía saliendo en el móvil aunque el borde estuviera a
+   cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:
+   sombra, contorno y apariencia, y con más peso que cualquier regla anterior.
+
+   Va al final del fichero a propósito: lo último que se lee es lo que manda. */
+.campo__entrada input[type="search"],
+.campo__entrada input[type="text"],
+.campo__entrada input[type="number"],
+.campo__entrada input{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
