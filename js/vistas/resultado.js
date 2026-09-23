@@ -193,6 +193,40 @@ function bloqueProcedencia() {
  * Cada número lleva su fuente. Un número sin fuente es una opinión.
  */
 /**
+ * El aviso de hacer copia, flotando sobre la barra de abajo.
+ *
+ * Antes se añadía debajo del botón de guardar, que ya está al final de la
+ * pantalla: quedaba fuera de la vista y no lo veía nadie. Ahora flota encima
+ * de todo hasta que lo atiendes o lo apartas.
+ */
+function mostrarAvisoCopia() {
+  document.querySelector('.aviso-flotante')?.remove();
+  const aviso = document.createElement('div');
+  aviso.className = 'aviso-flotante';
+  aviso.setAttribute('role', 'alertdialog');
+  aviso.setAttribute('aria-label', 'Conviene guardar una copia');
+  aviso.innerHTML = `
+    <p><b>Conviene guardar una copia.</b> ${esc(textoRecordatorio())}</p>
+    <div class="aviso-flotante__botones">
+      <button class="boton" data-aviso="luego">Más tarde</button>
+      <button class="boton boton--lleno" data-aviso="copia">Hacer copia</button>
+    </div>`;
+  document.body.appendChild(aviso);
+  aviso.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-aviso]');
+    if (!b) return;
+    aviso.remove();
+    if (b.dataset.aviso !== 'copia') return;
+    irA('despensa');
+    // Se abre la sección de la copia, para no dejarte buscándola.
+    setTimeout(() => {
+      const sec = document.querySelector('[data-seccion="copia"]');
+      if (sec) { sec.open = true; sec.scrollIntoView({ block: 'center' }); }
+    }, 150);
+  });
+}
+
+/**
  * Cuánto de tu día gasta esta ración, dentro de "Conviene limitar".
  *
  * Tenía pestaña propia y era un paso de más: el sitio de "cuánta sal llevas
@@ -730,6 +764,9 @@ export function resultadoActivo(raiz, { irA }) {
           // El código se guarda para poder detectar, dentro de meses, que la
           // marca ha cambiado la receta sin decírselo a nadie.
           codigoBarras: enCurso.codigoBarras ?? undefined,
+          // Si la foto no se pudo descargar (sin red, o el servidor no deja),
+          // se guarda al menos su dirección: la Despensa la enseña de ahí.
+          fotoUrl: enCurso.fotoUrl ?? undefined,
         },
         fotos,
       });
@@ -747,22 +784,7 @@ export function resultadoActivo(raiz, { irA }) {
       // de mucho: nadie mira ahí. Se dice justo después de guardar, que es
       // cuando acabas de añadir algo que perderías.
       contarGuardado();
-      if (tocaRecordar()) {
-        const aviso = document.createElement('div');
-        aviso.className = 'recordatorio';
-        aviso.innerHTML = `
-          <p><b>Conviene guardar una copia.</b> ${esc(textoRecordatorio())}</p>
-          <button class="boton" id="btnIrACopia">Hacer copia ahora</button>`;
-        estado.after(aviso);
-        aviso.querySelector('#btnIrACopia')?.addEventListener('click', () => {
-          irA('despensa');
-          // Se abre la sección de la copia, para no dejarte buscándola.
-          setTimeout(() => {
-            const sec = document.querySelector('[data-seccion="copia"]');
-            if (sec) { sec.open = true; sec.scrollIntoView({ block: 'center' }); }
-          }, 120);
-        });
-      }
+      if (tocaRecordar()) mostrarAvisoCopia();
       boton.textContent = 'GUARDADO';
     } catch (err) {
       boton.disabled = false;

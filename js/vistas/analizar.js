@@ -2,7 +2,7 @@ import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
 import { hayRecorte, RECORTE_COMPLETO, analizarProducto } from '../motor.js';
 import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
-import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso } from '../estado.js';
+import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso, cargarDatosDeFuera } from '../estado.js';
 import { nombrePantalla } from './inicio.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
@@ -599,21 +599,9 @@ export function analizarActivo(raiz, { repintar, irA }) {
     // Lo que llega de la base se trata igual que lo leído de una foto: entra
     // como dato leído, no como dato confirmado, y va a la pantalla de revisión.
     enCurso.nombre = p.nombre;
-    enCurso.codigoBarras = p.codigo ?? ultimoCodigo;
-    // La foto del envase viene en la ficha de Open Food Facts. Se descarga en
-    // segundo plano: si tarda o falla, el análisis sigue su curso sin ella.
-    enCurso.fotoUrl = p.imagenUrl ?? null;
-    // Las categorías de Open Food Facts hacen falta para buscar alternativas:
-    // sin ellas no hay con qué comparar.
-    enCurso.categoriasTags = p.categoriasTags ?? null;
-    enCurso.marca = p.marca ?? null;
-    enCurso.tiendas = p.tiendas ?? null;
-    enCurso.procedencia = {
-      origenes: p.origenes ?? null,
-      envasado: p.envasado ?? null,
-      codigosSanitarios: p.codigosSanitarios ?? null,
-      codigoBarras: p.codigo ?? ultimoCodigo,
-    };
+    // Foto, código, categorías, marca, tiendas y procedencia: la misma función
+    // que usa el escáner del súper, para que ninguna vía se deje nada.
+    cargarDatosDeFuera(p, ultimoCodigo);
     enCurso.categoria = p.categoria;
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
     for (const [k, d] of Object.entries(p.nutrientes)) {

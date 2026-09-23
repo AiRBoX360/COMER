@@ -2758,6 +2758,28 @@ input[type="search"]::-webkit-search-results-decoration{
 .cuanto[data-clase="objetivo"] .cuanto__frase b{color:var(--verde-parchis-letra)}
 .cuanto[data-clase="limite"] .cuanto__frase b{color:var(--naranja-letra)}
 
+
+/* --- Aviso de copia, flotando encima de la barra de abajo ------------------
+   Debajo del botón de guardar quedaba fuera de la vista. */
+.aviso-flotante{
+  position:fixed; z-index:50;
+  left:var(--e4); right:var(--e4);
+  bottom:calc(6.2rem + env(safe-area-inset-bottom, 0px));
+  max-width:34rem; margin:0 auto;
+  background:var(--carbon);
+  border:1.5px solid var(--amarillo); border-radius:var(--radio);
+  padding:var(--e4);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  animation:aviso-entra .22s ease-out;
+}
+.aviso-flotante p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
+.aviso-flotante p b{color:var(--hueso)}
+.aviso-flotante__botones{display:flex; gap:var(--e2)}
+.aviso-flotante__botones .boton{flex:1}
+.aviso-flotante [data-aviso="copia"]{background:var(--acento); color:var(--sobre-acento); font-weight:600}
+@keyframes aviso-entra{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ .aviso-flotante{animation:none} }
+
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a
    cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:

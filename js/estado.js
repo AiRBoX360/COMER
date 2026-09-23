@@ -101,3 +101,27 @@ export const CATEGORIAS = [
   { clave: 'carne_roja', nombre: 'Carne roja' },
   { clave: 'grasa_anadida', nombre: 'Aceite, grasa o frutos secos' },
 ];
+
+
+/**
+ * Carga en el análisis en curso lo que trae Open Food Facts de un producto:
+ * la foto, el código, las categorías, la marca, las tiendas y la procedencia.
+ *
+ * Una sola función para todas las vías. El escáner del súper tenía su propia
+ * copia de esto y se le olvidaban la foto, el código y la procedencia: si
+ * guardabas desde ahí, el producto llegaba a la Despensa sin foto.
+ */
+export function cargarDatosDeFuera(p, codigo = null) {
+  const cod = p.codigo ?? codigo ?? null;
+  enCurso.codigoBarras = cod;
+  enCurso.fotoUrl = p.imagenUrl ?? null;
+  enCurso.categoriasTags = p.categoriasTags ?? null;
+  enCurso.marca = p.marca ?? null;
+  enCurso.tiendas = p.tiendas ?? null;
+  enCurso.procedencia = {
+    origenes: p.origenes ?? null,
+    envasado: p.envasado ?? null,
+    codigosSanitarios: p.codigosSanitarios ?? null,
+    codigoBarras: cod,
+  };
+}

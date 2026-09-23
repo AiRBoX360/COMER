@@ -115,6 +115,8 @@ function ficha(p) {
     <article class="producto" data-id="${p.id}">
       ${frontal
         ? `<div class="producto__foto" data-foto="${frontal.idFoto}"></div>`
+        : fotoDeFuera(p)
+        ? `<div class="producto__foto" style="background-image:url('${fotoDeFuera(p)}')"></div>`
         : `<button class="producto__foto producto__foto--vacia" data-poner-foto="${p.id}"
                    aria-label="Añadir una foto de ${esc(p.nombre)}">
              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
@@ -457,6 +459,19 @@ export async function despensaActivo(raiz, { repintar }) {
       estado.textContent = `No se ha podido restaurar. ${err.message}`;
     }
   });
+}
+
+/**
+ * La dirección de la foto de Open Food Facts, si se guardó y es segura.
+ *
+ * Solo imágenes de su servidor y por https: va dentro de un estilo, y una
+ * dirección cualquiera ahí sería una puerta abierta.
+ */
+function fotoDeFuera(p) {
+  const u = p.entrada?.fotoUrl;
+  if (typeof u !== 'string') return null;
+  if (!/^https:\/\/images\.openfoodfacts\.org\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
+  return u;
 }
 
 /** Recupera un producto guardado al estado en curso para volver a verlo. */

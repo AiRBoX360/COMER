@@ -3,7 +3,7 @@ import { deDondeViene } from '../donde.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { analizarProducto, analizarIngredientesTexto, revisarVigilancia } from '../motor.js';
-import { enCurso, reiniciar } from '../estado.js';
+import { enCurso, reiniciar, cargarDatosDeFuera } from '../estado.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { nombrePantalla } from './inicio.js';
 
@@ -190,6 +190,7 @@ export function supermercadoActivo(raiz, { repintar, irA }) {
     // Se deja cargado por si se quiere revisar bien sin volver a escanear.
     reiniciar();
     enCurso.nombre = p.nombre;
+    cargarDatosDeFuera(p);
     enCurso.categoria = p.categoria;
     enCurso.nutrientes = { ...p.nutrientes };
     enCurso.ingredientes = ing;
