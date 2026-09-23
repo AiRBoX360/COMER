@@ -2780,6 +2780,67 @@ input[type="search"]::-webkit-search-results-decoration{
 @keyframes aviso-entra{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
 @media (prefers-reduced-motion:reduce){ .aviso-flotante{animation:none} }
 
+
+/* --- La foto del producto en la tarjeta del resultado ----------------------
+   Se funde hacia abajo y la nota se le monta encima hasta media altura del
+   círculo: así la foto y el anillo comparten sitio en vez de sumarse. Puestos
+   uno debajo del otro, la cabecera se comía media pantalla. */
+.veredicto--con-foto{position:relative; padding-top:0}
+.veredicto__foto{
+  position:absolute; top:0; left:0; right:0; height:13rem;
+  overflow:hidden; border-radius:var(--radio) var(--radio) 0 0;
+  /* El desvanecido: arriba entera, abajo al 15 %. */
+  -webkit-mask-image:linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.15) 100%);
+  mask-image:linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,.15) 100%);
+}
+.veredicto__foto img{
+  width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in;
+}
+.veredicto__ampliar{
+  position:absolute; top:var(--e3); right:var(--e3);
+  width:2.2rem; height:2.2rem; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--carbon); border:1.5px solid var(--linea);
+  border-radius:var(--radio-xs); color:var(--ceniza); cursor:pointer;
+}
+.veredicto__ampliar svg{
+  width:1.1rem; height:1.1rem;
+  fill:none; stroke:currentColor; stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+/* El anillo lleva su propio relleno: fundido con la foto, el número se pierde. */
+.veredicto--con-foto .veredicto__anillo{
+  position:relative; z-index:1;
+  background:var(--carbon); border-radius:50%;
+  margin-top:9.4rem;
+}
+/* Un velo del color del fondo detrás del nombre: invisible sobre foto oscura,
+   y lo que salva el texto sobre una etiqueta blanca. */
+.veredicto--con-foto .veredicto__texto{
+  position:relative; z-index:1;
+  background:var(--carbon);
+  border-radius:var(--radio-s);
+  padding:var(--e2) var(--e3);
+  margin-top:9.4rem;
+}
+
+/* La foto a pantalla completa. */
+.lupa{
+  position:fixed; inset:0; z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.92); padding:var(--e4);
+  animation:lupa-entra .16s ease-out;
+}
+.lupa img{max-width:100%; max-height:100%; border-radius:var(--radio-s)}
+.lupa__cerrar{
+  position:absolute; top:calc(var(--e4) + env(safe-area-inset-top, 0px)); right:var(--e4);
+  width:2.8rem; height:2.8rem; padding:0;
+  background:rgba(255,255,255,.14); border:0; border-radius:50%;
+  color:#fff; font-size:var(--t5); line-height:1; cursor:pointer;
+}
+@keyframes lupa-entra{from{opacity:0} to{opacity:1}}
+@media (prefers-reduced-motion:reduce){ .lupa{animation:none} }
+
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a
    cero y la apariencia nativa desactivada. Esto lo cubre por todos los lados:

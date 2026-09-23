@@ -316,6 +316,46 @@ function filaCuanto(f) {
     </div>`;
 }
 
+/**
+ * La foto que se enseña en la tarjeta.
+ *
+ * Primero la tuya, si has hecho una del frontal; si no, la del envase que
+ * trae Open Food Facts. Solo direcciones de su servidor y por https: va
+ * dentro de un atributo, y una dirección cualquiera ahí sería una puerta
+ * abierta.
+ */
+function fotoDelProducto() {
+  const propia = capturasActuales().get('frontal');
+  if (propia?.preparada) return propia.preparada.src ?? null;
+  const u = enCurso.fotoUrl;
+  if (typeof u !== 'string') return null;
+  if (!/^https:\/\/images\.openfoodfacts\.org\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
+  return u;
+}
+
+/**
+ * La foto a pantalla completa.
+ *
+ * Se cierra tocando en cualquier sitio o con la tecla de escape. No usa
+ * historial: cerrarla no puede sacarte de la pantalla.
+ */
+function ampliarFoto(url) {
+  document.querySelector('.lupa')?.remove();
+  const capa = document.createElement('div');
+  capa.className = 'lupa';
+  capa.setAttribute('role', 'dialog');
+  capa.setAttribute('aria-label', 'Foto del producto');
+  capa.innerHTML = `
+    <img src="${url}" alt="">
+    <button class="lupa__cerrar" aria-label="Cerrar">×</button>`;
+  const cerrar = () => { capa.remove(); document.removeEventListener('keydown', porTecla); };
+  const porTecla = (e) => { if (e.key === 'Escape') cerrar(); };
+  capa.addEventListener('click', cerrar);
+  document.addEventListener('keydown', porTecla);
+  document.body.appendChild(capa);
+  capa.querySelector('.lupa__cerrar')?.focus();
+}
+
 /** El icono de cada pestaña, del mismo trazo que el resto de la app. */
 const ICONOS = {
   'Ingredientes': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -561,8 +601,25 @@ function tarjetaVeredicto(v) {
   const VUELTA = 2 * Math.PI * RADIO;
   const lleno = (n / 100) * VUELTA;
 
+  // La foto del envase, fundida hacia abajo, con la nota y el nombre encima.
+  //
+  // La foto y el anillo comparten sitio en vez de sumarse: puestos uno debajo
+  // del otro, la cabecera ocupaba media pantalla y había que hacer scroll
+  // siempre para llegar a la primera pestaña.
+  const foto = fotoDelProducto();
+
   return `
-    <div class="veredicto" data-nivel="${nivel.clave}">
+    <div class="veredicto${foto ? ' veredicto--con-foto' : ''}" data-nivel="${nivel.clave}">
+      ${foto ? `
+        <div class="veredicto__foto">
+          <img src="${foto}" alt="Foto de ${esc(v.nombre)}" loading="lazy">
+          <button class="veredicto__ampliar" data-ampliar="${foto}"
+                  aria-label="Ver la foto en grande">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/>
+            </svg>
+          </button>
+        </div>` : ''}
       <div class="veredicto__anillo">
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle class="veredicto__pista" cx="60" cy="60" r="${RADIO}"/>
@@ -731,6 +788,15 @@ export function resultadoActivo(raiz, { irA }) {
   });
 
   raiz.querySelector('#alternativas')?.addEventListener('click', () => irA('despensa'));
+
+  // Tocar la foto, o su botón, la abre en grande.
+  raiz.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ampliar]') ?? e.target.closest('.veredicto__foto img');
+    if (!b) return;
+    const url = b.dataset?.ampliar
+      ?? raiz.querySelector('[data-ampliar]')?.dataset.ampliar;
+    if (url) ampliarFoto(url);
+  });
 
   const estado = raiz.querySelector('#estadoGuardar');
   const boton = raiz.querySelector('#btnGuardar');
