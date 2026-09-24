@@ -2841,13 +2841,16 @@ input[type="search"]::-webkit-search-results-decoration{
 
 /* --- Los dos botones redondos de cada vía ---------------------------------
    Buscar el alimento y fotografiar el producto, uno al lado del otro. */
+/* Los dos botones redondos van EN FILA: buscar el alimento y fotografiar el
+   producto, uno al lado del otro. La regla vieja traía flex-direction:column
+   de cuando solo había un botón, y al fusionar duplicados ganó esa. */
 .buscar{
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   align-items:flex-start;
+  justify-content:center;
   gap:var(--e5);
   margin:var(--e5) 0 var(--e3);
-  justify-content:center;
 }
 .buscar__uno{display:flex; flex-direction:column; align-items:center; gap:var(--e2); max-width:9rem}
 .buscar__rotulo{
