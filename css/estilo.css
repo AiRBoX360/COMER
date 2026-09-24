@@ -2095,10 +2095,6 @@ body{
 .via__cuerpo .rotulo{text-align:center}
 
 /* El botón de acción: el mismo en las cuatro vías. */
-.buscar{
-  display:flex; flex-direction:column; align-items:center; gap:var(--e2);
-  margin:var(--e5) 0 var(--e3);
-}
 .buscar__boton{
   appearance:none; cursor:pointer;
   width:3.4rem; height:3.4rem; padding:0;
@@ -2113,10 +2109,6 @@ body{
 }
 .buscar__boton:disabled{
   background:var(--carbon-alto); color:var(--ceniza-tenue); cursor:default;
-}
-.buscar__rotulo{
-  font-family:var(--datos); font-size:var(--t0); font-weight:400;
-  letter-spacing:.2em; text-transform:uppercase; color:var(--ceniza-tenue);
 }
 
 /* --- El nivel, en una sola barra -------------------------------------------
@@ -2845,6 +2837,29 @@ input[type="search"]::-webkit-search-results-decoration{
 }
 @keyframes lupa-entra{from{opacity:0} to{opacity:1}}
 @media (prefers-reduced-motion:reduce){ .lupa{animation:none} }
+
+
+/* --- Los dos botones redondos de cada vía ---------------------------------
+   Buscar el alimento y fotografiar el producto, uno al lado del otro. */
+.buscar{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:var(--e5);
+  margin:var(--e5) 0 var(--e3);
+  justify-content:center;
+}
+.buscar__uno{display:flex; flex-direction:column; align-items:center; gap:var(--e2); max-width:9rem}
+.buscar__rotulo{
+  font-family:var(--datos);
+  font-size:var(--t0);
+  font-weight:400;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ceniza-tenue);
+  text-align:center;
+}
+.buscar__boton--hecha{background:var(--acento); color:var(--sobre-acento)}
 
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a

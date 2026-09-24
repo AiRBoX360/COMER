@@ -1,7 +1,6 @@
 import { esc, pendiente } from '../ui.js';
 import { capturar, pedirFoto, aURL } from '../camara.js';
-import { hayRecorte, RECORTE_COMPLETO, analizarProducto } from '../motor.js';
-import { leerTexto, lectorDisponible, porQueNoHayLector, diagnosticarLector, probarArranque } from '../lector.js';
+import { analizarProducto } from '../motor.js';
 import { enCurso, reiniciar, hayAlgoEnCurso, resumenEnCurso, cargarDatosDeFuera } from '../estado.js';
 import { nombrePantalla } from './inicio.js';
 import { buscarPorCodigo } from '../codigobarras.js';
@@ -13,18 +12,6 @@ import { listar } from '../almacen.js';
 import { escanear, hayEscaner } from '../escaner.js';
 import { analizarTabla, analizarIngredientesTexto, validar, validarContraIngredientes, normalizarNutrientes } from '../motor.js';
 
-/**
- * Las tres tomas.
- *
- * El frontal es opcional a propósito: sirve para reconocer el producto de un
- * vistazo en la Despensa, pero no aporta nada al análisis. Exigirlo alargaría
- * el proceso a cambio de nada.
- */
-const TOMAS = [
-  { clave: 'tabla', titulo: 'Tabla nutricional', pista: 'La rejilla de valores por 100 g', obligatoria: true },
-  { clave: 'ingredientes', titulo: 'Lista de ingredientes', pista: 'Donde pone "Ingredientes:"', obligatoria: true },
-  { clave: 'frontal', titulo: 'Frente del envase', pista: 'Para reconocerlo en la Despensa', obligatoria: false },
-];
 
 /** Lo capturado en esta sesión. Se pierde al salir, y es lo correcto: guardar
  *  a medias un análisis sin terminar solo ensuciaría la Despensa. */
@@ -41,87 +28,6 @@ let ultimoCodigo = '';
 
 const ICONO_CAMARA = `<svg viewBox="0 0 24 24" aria-hidden="true" class="toma__icono">
   <path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
-
-/**
- * Recorte con cuatro deslizadores.
- *
- * No se arrastran esquinas con el dedo a propósito. Un deslizador es un
- * control que el navegador ya sabe manejar al tacto, funciona con una sola
- * mano y, sobre todo, su lógica se puede probar fuera del navegador. Los
- * gestos táctiles habría habido que entregarlos sin probar.
- */
-function marcoRecorte(clave, c) {
-  if (!c.recortando) {
-    return `<button class="boton" data-recortar="${clave}" style="width:100%; margin-top:12px">
-      ${hayRecorte(c.recorte) ? 'Cambiar el recorte' : 'Recortar la zona que interesa'}
-    </button>`;
-  }
-  const r = c.recorte;
-  const desl = (eje, etiqueta, valor) => `
-    <label class="desliza">
-      <span>${etiqueta}</span>
-      <input type="range" min="0" max="100" step="1" value="${valor}"
-             data-desliza="${eje}" data-toma="${clave}">
-    </label>`;
-
-  return `
-    <div class="recorte" data-marco="${clave}">
-      <p class="texto" style="font-size:0.92rem; margin-top:12px">Deja dentro solo la tabla o los ingredientes. Todo lo que quede fuera se descarta antes de leer.</p>
-      <div class="recorte__lienzo">
-        <img src="${c.urlCompleta}" alt="Foto completa">
-        <div class="recorte__marco" id="marco_${clave}"
-             style="left:${r.x0}%; top:${r.y0}%; width:${r.x1 - r.x0}%; height:${r.y1 - r.y0}%"></div>
-      </div>
-      ${desl('x0', 'Izquierda', r.x0)}
-      ${desl('x1', 'Derecha', r.x1)}
-      ${desl('y0', 'Arriba', r.y0)}
-      ${desl('y1', 'Abajo', r.y1)}
-      <div class="toma__botones">
-        <button class="boton" data-aplicar-recorte="${clave}">Aplicar</button>
-        <button class="boton" data-quitar-recorte="${clave}">Sin recorte</button>
-      </div>
-    </div>`;
-}
-
-function tarjetaToma(t) {
-  const c = capturas.get(t.clave);
-  if (!c) {
-    return `
-      <div class="toma toma--vacia" data-toma="${t.clave}">
-        ${ICONO_CAMARA}
-        <span class="toma__titulo">${esc(t.titulo)}</span>
-        <span class="toma__pista">${esc(t.pista)}${t.obligatoria ? '' : ' · opcional'}</span>
-        <div class="toma__botones">
-          <button class="boton" data-camara="${t.clave}">Hacer foto</button>
-          <button class="boton" data-galeria="${t.clave}">Elegir una ya hecha</button>
-        </div>
-      </div>`;
-  }
-
-  const estado = c.calidad.repetir ? 'mala' : c.calidad.problemas.length ? 'regular' : 'lista';
-  const dictamen = { mala: 'Conviene repetirla', regular: 'Servirá, pero puede mejorar', lista: 'Buena foto' }[estado];
-  const problemas = c.calidad.problemas
-    .map((p) => `<li><b>${esc(p.mensaje)}</b><br>${esc(p.consejo)}</li>`).join('');
-
-  return `
-    <div class="toma toma--${estado}" data-toma="${t.clave}">
-      <div class="toma__cabecera">
-        <span class="toma__titulo">${esc(t.titulo)}</span>
-        <span class="toma__nota cifra">${c.calidad.puntuacion}/100</span>
-      </div>
-      <div class="toma__imagenes">
-        <figure><img src="${c.urlOriginal}" alt="Tu foto de ${esc(t.titulo)}"><figcaption>${hayRecorte(c.recorte) ? 'Recortada' : 'Tu foto'}</figcaption></figure>
-        <figure><img src="${c.urlPreparada}" alt="Versión preparada para leer"><figcaption>Lista para leer</figcaption></figure>
-      </div>
-      ${marcoRecorte(t.clave, c)}
-      <p class="toma__dictamen toma__dictamen--${estado}">${dictamen}</p>
-      ${problemas ? `<ul class="toma__problemas">${problemas}</ul>` : ''}
-      <div class="toma__botones">
-        <button class="boton" data-camara="${t.clave}">Repetir foto</button>
-        <button class="boton" data-galeria="${t.clave}">Elegir otra</button>
-      </div>
-    </div>`;
-}
 
 // La barra de "lo que tienes a medias" salió de aquí.
 //
@@ -149,8 +55,6 @@ const VIAS = [
     icono: '<path d="M12 20c4.5 0 8-3.6 8-8 0-4-3-8-8-8s-8 4-8 8c0 4.4 3.5 8 8 8Z"/><path d="M12 20V9"/>' },
   { clave: 'texto', titulo: 'Pegar texto',
     icono: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>' },
-  { clave: 'fotos', titulo: 'Hacer fotos',
-    icono: '<path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/>' },
 ];
 
 /** La tarjeta de una vía: círculo verde, nombre, y nada más. */
@@ -179,13 +83,41 @@ function tarjetaVia(via, abiertaAhora) {
 function botonBuscar(id, desactivado = false) {
   return `
     <div class="buscar">
-      <button class="buscar__boton" id="${id}" ${desactivado ? 'disabled' : ''}
-              aria-label="Buscar alimento">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
-        </svg>
+      <div class="buscar__uno">
+        <button class="buscar__boton" id="${id}" ${desactivado ? 'disabled' : ''}
+                aria-label="Buscar alimento">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
+          </svg>
+        </button>
+        <span class="buscar__rotulo">Buscar alimento</span>
+      </div>
+      ${botonFoto()}
+    </div>`;
+}
+
+/**
+ * Hacerle una foto al producto, para que se vea en la Despensa.
+ *
+ * Va al lado del de buscar en las tres vías. La foto se guarda aparte y
+ * aguanta hasta que guardas el análisis, así que da igual si la haces antes o
+ * después de buscar: no se pierde por el camino.
+ *
+ * Esto NO lee la etiqueta. Antes había una vía entera para leer las fotos y
+ * daba más problemas que resultados; para los datos están el código, los
+ * alimentos frescos y el texto pegado, que aciertan mucho más.
+ */
+function botonFoto() {
+  const hecha = capturas.has('frontal');
+  return `
+    <div class="buscar__uno">
+      <button class="buscar__boton${hecha ? ' buscar__boton--hecha' : ''}"
+              id="btnFotoProducto" aria-label="Fotografiar el producto">
+        ${hecha
+          ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+          : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>'}
       </button>
-      <span class="buscar__rotulo">Buscar alimento</span>
+      <span class="buscar__rotulo">${hecha ? 'Foto hecha · cambiar' : 'Fotografiar producto'}</span>
     </div>`;
 }
 
@@ -246,7 +178,6 @@ function bloqueCambio() {
 }
 
 export function analizar() {
-  const listo = TOMAS.filter((t) => t.obligatoria).every((t) => capturas.has(t.clave));
 
   // Con una vía abierta, las otras tres desaparecen: la pantalla se dedica a
   // lo que estás haciendo. Cerrada, se ven las cuatro para elegir.
@@ -291,14 +222,9 @@ export function analizar() {
       <textarea id="pegaIng" class="pegar" rows="6"
                 placeholder="Ingredientes: harina de trigo, azúcar, ..."></textarea>
       ${botonBuscar('btnPegado')}
+      <p class="texto" id="estadoLectura" role="status" aria-live="polite"></p>
       <p class="apunte-via">Copia el texto con el reconocimiento del iPhone: lee mejor que ningún programa.</p>`,
 
-    fotos: `
-      <div id="tomas">${TOMAS.map(tarjetaToma).join('')}</div>
-      ${botonBuscar('btnLeer', !listo)}
-      <p class="texto" id="estadoLectura" role="status" aria-live="polite"></p>
-      <button class="boton" id="btnDiagLector" style="width:100%">Comprobar el lector de fotos</button>
-      <div id="diagLector"></div>`,
   };
 
   const abiertaVia = VIAS.find((v) => v.clave === abierta);
@@ -322,110 +248,9 @@ export function analizar() {
 }
 
 export function analizarActivo(raiz, { repintar, irA }) {
-  // Antes esto se salía si no encontraba las tomas de foto. Con las cuatro
-  // vías desplegadas siempre, la condición nunca se cumplía. Ahora las fotos
-  // solo existen cuando su tarjeta está abierta, así que salirse aquí dejaba
-  // TODA la pantalla sin enganchar: ni el escáner, ni el código, ni las
-  // tarjetas. Cada bloque comprueba lo suyo por su cuenta.
-  const zona = raiz.querySelector('#tomas');
 
-  async function tomar(clave, deGaleria = false) {
-    const fichero = await pedirFoto({ camara: !deGaleria });
-    if (!fichero) return;
-
-    const tarjeta = zona.querySelector(`[data-toma="${clave}"]`);
-    if (tarjeta) tarjeta.classList.add('toma--trabajando');
-    // Un respiro para que el navegador pinte el estado de espera antes de
-    // ponerse con el procesado, que es pesado y en un móvil se nota.
-    await new Promise((r) => setTimeout(r, 30));
-
-    try {
-      const { original, preparada, calidad } = await capturar(fichero);
-      capturas.set(clave, {
-        calidad, preparada, original, fichero,
-        recorte: { ...RECORTE_COMPLETO },
-        recortando: false,
-        // Se guarda también la foto entera para poder enseñar el marco encima
-        // cuando se vaya a recortar.
-        urlCompleta: aURL(original, 0.6),
-        urlOriginal: aURL(original, 0.6),
-        urlPreparada: aURL(preparada, 0.6),
-      });
-    } catch (err) {
-      capturas.delete(clave);
-      alert(`No se ha podido usar esa imagen. ${err.message}`);
-    }
-    repintar();
-  }
-
-  /** Vuelve a procesar la foto con el recorte que haya marcado. */
-  async function aplicarRecorte(clave, recorte) {
-    const c = capturas.get(clave);
-    if (!c) return;
-    const tarjeta = zona.querySelector(`[data-toma="${clave}"]`);
-    if (tarjeta) tarjeta.classList.add('toma--trabajando');
-    await new Promise((r) => setTimeout(r, 30));
-    try {
-      const { original, preparada, calidad } = await capturar(c.fichero, recorte);
-      capturas.set(clave, {
-        ...c, calidad, preparada, original, recorte, recortando: false,
-        urlOriginal: aURL(original, 0.6),
-        urlPreparada: aURL(preparada, 0.6),
-      });
-    } catch (err) {
-      alert(`No se ha podido recortar. ${err.message}`);
-    }
-    repintar();
-  }
-
-  // Mover un deslizador solo mueve el marco. Repintar en cada movimiento
-  // robaría el foco del deslizador a media pasada.
-  zona?.addEventListener('input', (e) => {
-    const eje = e.target.dataset.desliza;
-    if (!eje) return;
-    const clave = e.target.dataset.toma;
-    const c = capturas.get(clave);
-    if (!c) return;
-    c.recorte[eje] = Number(e.target.value);
-    const r = c.recorte;
-    const marco = zona.querySelector(`#marco_${clave}`);
-    if (!marco) return;
-    // Se pinta enderezado aunque los deslizadores estén cruzados.
-    const x0 = Math.min(r.x0, r.x1), x1 = Math.max(r.x0, r.x1);
-    const y0 = Math.min(r.y0, r.y1), y1 = Math.max(r.y0, r.y1);
-    marco.style.left = `${x0}%`;
-    marco.style.top = `${y0}%`;
-    marco.style.width = `${x1 - x0}%`;
-    marco.style.height = `${y1 - y0}%`;
-  });
-
-  zona?.addEventListener('click', (e) => {
-    const abrir = e.target.closest('[data-recortar]');
-    if (abrir) {
-      const c = capturas.get(abrir.dataset.recortar);
-      if (c) { c.recortando = true; repintar(); }
-      return;
-    }
-    const aplicar = e.target.closest('[data-aplicar-recorte]');
-    if (aplicar) {
-      const c = capturas.get(aplicar.dataset.aplicarRecorte);
-      if (c) aplicarRecorte(aplicar.dataset.aplicarRecorte, { ...c.recorte });
-      return;
-    }
-    const quitar = e.target.closest('[data-quitar-recorte]');
-    if (quitar) {
-      aplicarRecorte(quitar.dataset.quitarRecorte, { ...RECORTE_COMPLETO });
-      return;
-    }
-    const galeria = e.target.closest('[data-galeria]');
-    if (galeria) { tomar(galeria.dataset.galeria, true); return; }
-    const camara = e.target.closest('[data-camara]');
-    if (camara) { tomar(camara.dataset.camara, false); return; }
-    const repetir = e.target.closest('[data-repetir]');
-    if (repetir) { tomar(repetir.dataset.repetir, false); return; }
-  });
-
-  const estado = raiz.querySelector('#estadoLectura');
+  // Solo existe en la vía de pegar texto; en las demás no pasa nada.
+  const estado = raiz.querySelector('#estadoLectura') ?? { textContent: '' };
   const resumen = raiz.querySelector('#resumenLectura');
 
 /**
@@ -515,39 +340,6 @@ export function analizarActivo(raiz, { repintar, irA }) {
       ${avisos ? `<div class="pendiente" style="margin-top:12px"><ul style="margin:0;padding-left:1.1em">${avisos}</ul></div>` : ''}`;
   }
 
-  raiz.querySelector('#btnLeer')?.addEventListener('click', async (e) => {
-    const boton = e.target.closest('button');
-    if (boton) boton.disabled = true;
-    estado.textContent = 'Preparando el lector… la primera vez descarga casi nueve megas y puede tardar un par de minutos.';
-    try {
-      for (const clave of ['tabla', 'ingredientes']) {
-        const r = await leerCaptura(clave, (p, s2) => {
-          const FASES = {
-            'cargando el lector': 'Cargando el lector',
-            'arrancando el trabajador': 'Arrancando el lector',
-            'loading tesseract core': 'Descargando el núcleo',
-            'initializing tesseract': 'Arrancando el núcleo',
-            'loading language traineddata': 'Descargando el idioma español',
-            'initializing api': 'Preparando',
-            'recognizing text': 'Leyendo la foto',
-            listo: 'Listo',
-          };
-          estado.textContent = `${FASES[s2] ?? s2} · ${clave} · ${Math.round(p * 100)} %`;
-        });
-        if (!r.ok) { estado.textContent = r.motivo; return; }
-        interpretar(clave, r.texto);
-      }
-      estado.textContent = 'Listo. Revisa lo que ha entendido.';
-      pintarResumen();
-      irAlResumen();
-    } catch (err) {
-      // Nada de quedarse en silencio: si esto revienta, se dice qué reventó.
-      estado.textContent = `Algo ha fallado al leer las fotos: ${err.message}. Pulsa "Comprobar el lector de fotos" para ver qué falta.`;
-    } finally {
-      if (boton) boton.disabled = false;
-    }
-  });
-
   raiz.querySelector('#btnPegado')?.addEventListener('click', () => {
     const t = raiz.querySelector('#pegaTabla').value.trim();
     const i = raiz.querySelector('#pegaIng').value.trim();
@@ -624,6 +416,23 @@ export function analizarActivo(raiz, { repintar, irA }) {
     // encontrado nada. Poniéndolo dentro, todos los caminos lo hacen.
     irAlResumen();
   }
+
+  // La foto del producto. No lee nada: solo se guarda para la Despensa.
+  raiz.querySelector('#btnFotoProducto')?.addEventListener('click', async () => {
+    const fichero = await pedirFoto();
+    if (!fichero) return;
+    try {
+      const { original, preparada, calidad } = await capturar(fichero);
+      capturas.set('frontal', {
+        calidad, preparada, original, fichero,
+        urlOriginal: aURL(original, 0.72),
+        urlPreparada: aURL(preparada, 0.6),
+      });
+      repintar();
+    } catch (err) {
+      alert(`No se ha podido usar la foto. ${err.message}`);
+    }
+  });
 
   raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', () => {
     buscarYCargar(raiz.querySelector('#codigoBarras')?.value ?? '');
@@ -712,43 +521,6 @@ export function analizarActivo(raiz, { repintar, irA }) {
     raiz.querySelector('#buscaFresco')?.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
-  raiz.querySelector('#btnDiagLector')?.addEventListener('click', async (e) => {
-    const caja = raiz.querySelector('#diagLector');
-    e.target.disabled = true;
-    caja.innerHTML = '<p class="texto">Comprobando…</p>';
-    const filas = await diagnosticarLector();
-    const tabla = () => `
-      <div class="tarjeta">
-        <ul class="diagnostico">
-          ${filas.map((f) => `
-            <li><span>${esc(f.fichero)}</span><b class="${f.ok ? 'si' : 'no'}">${esc(f.detalle)}</b></li>`).join('')}
-        </ul>
-      </div>`;
-
-    if (!filas.every((f) => f.ok)) {
-      e.target.disabled = false;
-      caja.innerHTML = tabla() +
-        '<p class="texto" style="margin-top:12px">Lo que sale en naranja es lo que falla. Mándame esta pantalla.</p>';
-      return;
-    }
-
-    // Los ficheros están. Lo que hay que saber es si arranca.
-    caja.innerHTML = tabla() + '<p class="texto" id="faseArranque" role="status" aria-live="polite" style="margin-top:12px">Intentando arrancarlo…</p>';
-    const linea = caja.querySelector('#faseArranque');
-    const r = await probarArranque((p, fase) => {
-      linea.textContent = `${fase ?? 'arrancando'} · ${Math.round(p * 100)} %`;
-    });
-    e.target.disabled = false;
-    caja.innerHTML = tabla() + `
-      <div class="pendiente" style="margin-top:12px; border-left-color:var(--${r.ok ? 'verde-claro' : 'naranja'})">
-        <div>
-          <b>${r.ok ? 'El lector arranca' : 'El lector NO arranca'}</b><br>
-          ${esc(r.mensaje)}<br>
-          <span class="cifra" style="font-size:0.85rem">fase: ${esc(r.fase)} · ${esc(r.segundos)} s</span>
-        </div>
-      </div>`;
-  });
-
   raiz.querySelector('#btnRevisar')?.addEventListener('click', () => irA('revisar'));
 
   pintarResumen();
@@ -776,24 +548,6 @@ export function capturasActuales() {
   return capturas;
 }
 
-/**
- * Lee una captura y la convierte en datos.
- * Devuelve el motivo si no se ha podido, para poder decirlo en pantalla.
- */
-export async function leerCaptura(clave, alProgresar) {
-  const c = capturas.get(clave);
-  if (!c) return { ok: false, motivo: 'No hay foto todavía.' };
-
-  const r = await leerTexto(c.preparada, alProgresar);
-  if (!r) {
-    return {
-      ok: false,
-      motivo: porQueNoHayLector(),
-    };
-  }
-  return { ok: true, texto: r.texto, confianza: r.confianza };
-}
-
 /** Convierte texto suelto en datos, venga de donde venga. */
 export function interpretar(clave, texto) {
   if (clave === 'tabla') {
@@ -817,4 +571,3 @@ export function interpretar(clave, texto) {
   return leido.ingredientes;
 }
 
-export { lectorDisponible };
