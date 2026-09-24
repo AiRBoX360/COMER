@@ -2814,14 +2814,19 @@ input[type="search"]::-webkit-search-results-decoration{
   background:var(--carbon); border-radius:50%;
   margin-top:9.4rem;
 }
-/* Un velo del color del fondo detrás del nombre: invisible sobre foto oscura,
-   y lo que salva el texto sobre una etiqueta blanca. */
+/* El nombre va directo sobre la foto, sin recuadro.
+   
+   Ahí abajo la foto está al 15 %, así que el negro se lee bien. Lo que lo
+   salva sobre una etiqueta clara y con mucho dibujo es un halo del color del
+   fondo, pegado a la letra: hace el mismo trabajo que el recuadro sin dejar
+   una caja blanca en medio de la imagen. */
 .veredicto--con-foto .veredicto__texto{
   position:relative; z-index:1;
-  background:var(--carbon);
-  border-radius:var(--radio-s);
-  padding:var(--e2) var(--e3);
   margin-top:9.4rem;
+  text-shadow:
+    0 0 6px var(--carbon),
+    0 0 14px var(--carbon),
+    0 1px 2px var(--carbon);
 }
 
 /* La foto a pantalla completa. */
