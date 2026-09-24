@@ -5,6 +5,7 @@ import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
+import { buscarPorCodigo } from '../codigobarras.js';
 import { contarGuardado, tocaRecordar, textoRecordatorio } from '../recordatorio.js';
 import { cuantoHaceFalta, cuantoDeAditivos, riesgoMedido } from '../cuanto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas,
@@ -340,6 +341,47 @@ function fotoDelProducto() {
   // —que solo admitía .org— la foto no salía la mitad de las veces.
   if (!/^https:\/\/(images|static)\.openfoodfacts\.(org|net)\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
   return u;
+}
+
+/**
+ * Busca la foto en el catálogo cuando la tarjeta se ha quedado sin ella.
+ *
+ * No bloquea nada: la tarjeta ya está pintada y la foto entra después, si
+ * llega. Sin red o sin código, no pasa nada.
+ */
+async function ponerFotoSiFalta(raiz) {
+  const tarjeta = raiz.querySelector('.veredicto');
+  if (!tarjeta || tarjeta.querySelector('.veredicto__foto')) return;
+  const codigo = enCurso.codigoBarras ?? enCurso.procedencia?.codigoBarras;
+  if (!codigo || !navigator.onLine) return;
+
+  let url = null;
+  try {
+    const r = await buscarPorCodigo(codigo);
+    url = r.ok ? r.producto.imagenUrl : null;
+  } catch { return; }
+  if (!url) return;
+
+  enCurso.fotoUrl = url;
+  if (!fotoDelProducto()) return;      // por si el servidor no es de fiar
+
+  const caja = document.createElement('div');
+  caja.className = 'veredicto__foto';
+  caja.innerHTML = `
+    <img src="${url}" alt="Foto de ${esc(enCurso.nombre ?? 'el producto')}" loading="lazy">
+    <button class="veredicto__ampliar" data-ampliar="${url}"
+            aria-label="Ver la foto en grande">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/>
+      </svg>
+    </button>`;
+  // Si la imagen no llega a cargar, se quita el hueco y no se nota.
+  caja.querySelector('img').addEventListener('error', () => {
+    caja.remove();
+    tarjeta.classList.remove('veredicto--con-foto');
+  });
+  tarjeta.prepend(caja);
+  tarjeta.classList.add('veredicto--con-foto');
 }
 
 /**
@@ -797,6 +839,21 @@ export function resultadoActivo(raiz, { irA }) {
   });
 
   raiz.querySelector('#alternativas')?.addEventListener('click', () => irA('despensa'));
+
+  // Si la foto no llega a cargar, se quita el hueco en vez de dejar un marco
+  // vacío donde debería haber una imagen.
+  raiz.querySelector('.veredicto__foto img')?.addEventListener('error', (e) => {
+    const caja = e.target.closest('.veredicto__foto');
+    caja?.closest('.veredicto')?.classList.remove('veredicto--con-foto');
+    caja?.remove();
+  });
+
+  // Si no hay foto pero sí código, se busca en el catálogo al vuelo.
+  //
+  // Hace falta para todo lo guardado antes de que existiera esto, y como red
+  // de seguridad: cualquier vía que se deje la foto por el camino queda
+  // cubierta aquí.
+  ponerFotoSiFalta(raiz);
 
   // Tocar la foto, o su botón, la abre en grande.
   raiz.addEventListener('click', (e) => {
