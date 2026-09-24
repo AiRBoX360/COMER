@@ -325,11 +325,20 @@ function filaCuanto(f) {
  * abierta.
  */
 function fotoDelProducto() {
+  // La tuya, si acabas de hacerle una foto al frontal.
   const propia = capturasActuales().get('frontal');
-  if (propia?.preparada) return propia.preparada.src ?? null;
+  if (propia?.urlPreparada) return propia.urlPreparada;
+
   const u = enCurso.fotoUrl;
   if (typeof u !== 'string') return null;
-  if (!/^https:\/\/images\.openfoodfacts\.org\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
+
+  // Una foto guardada en el teléfono: la crea la propia app al abrirla.
+  if (u.startsWith('blob:')) return u;
+
+  // Y del catálogo, solo de sus servidores. El catálogo responde unas veces
+  // con images.openfoodfacts.org y otras con .net, y con la primera versión
+  // —que solo admitía .org— la foto no salía la mitad de las veces.
+  if (!/^https:\/\/(images|static)\.openfoodfacts\.(org|net)\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
   return u;
 }
 

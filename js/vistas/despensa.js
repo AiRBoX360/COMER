@@ -528,18 +528,33 @@ function sinFoto(lista) {
 function fotoDeFuera(p) {
   const u = p.entrada?.fotoUrl;
   if (typeof u !== 'string') return null;
-  if (!/^https:\/\/images\.openfoodfacts\.org\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
+  if (!/^https:\/\/(images|static)\.openfoodfacts\.(org|net)\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(u)) return null;
   return u;
 }
 
-/** Recupera un producto guardado al estado en curso para volver a verlo. */
-function volverAVer(p) {
+/**
+ * Recupera un producto guardado al estado en curso para volver a verlo.
+ *
+ * Se lleva también la foto, la marca y el código. Sin eso, al abrir algo de la
+ * Despensa la tarjeta salía sin foto aunque la tuviera guardada.
+ */
+async function volverAVer(p) {
   enCurso.nombre = p.nombre;
   enCurso.categoria = p.categoria;
   enCurso.nutrientes = p.entrada?.nutrientes ?? {};
   enCurso.ingredientes = p.entrada?.ingredientes ?? [];
   enCurso.racionGramos = p.entrada?.racion_declarada_g ?? null;
   enCurso.veredicto = p.veredicto;
+  enCurso.marca = p.marca ?? p.entrada?.marca ?? null;
+  enCurso.codigoBarras = p.codigoBarras ?? p.entrada?.codigoBarras ?? null;
+  enCurso.procedencia = p.entrada?.procedencia
+    ?? (enCurso.codigoBarras ? { codigoBarras: enCurso.codigoBarras } : null);
+
+  // La foto: primero la guardada aquí dentro, y si no, la del catálogo.
+  const frontal = (p.fotos ?? []).find((f) => f.tipo === 'frontal');
+  enCurso.fotoUrl = (frontal ? await urlDeFoto(frontal.idFoto) : null)
+    ?? p.entrada?.fotoUrl ?? null;
+
   window.dispatchEvent(new CustomEvent('comer:ver-resultado'));
 }
 
