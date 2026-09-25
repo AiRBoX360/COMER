@@ -2993,10 +2993,25 @@ input[type="search"]::-webkit-search-results-decoration{
   font-size:var(--t2); line-height:1.2; color:var(--hueso);
 }
 .lado--ambos .lado__uno{border-color:var(--verde-parchis)}
+
+/* Lo que NO tienes pero también funcionaría.
+   Punteado y no amarillo a propósito: el amarillo ya significa "te falta" en
+   esta misma pantalla, y el punteado ya significa "esto no lo tienes" en otros
+   cinco sitios de la app. Además el punteado no depende del color, así que se
+   distingue en los dos temas y con daltonismo. */
+.lado__uno--fuera{
+  border-style:dashed;
+  border-color:var(--ceniza-tenue);
+  background:transparent;
+  color:var(--ceniza);
+}
+.lado--ambos .lado__uno--fuera{border-color:var(--ceniza-tenue)}
+
 .lado__apunte{
   margin:var(--e2) 0 0;
   font-size:var(--t1); line-height:1.45; color:var(--ceniza-tenue);
 }
+.lado__apunte--fuera{margin-top:calc(var(--e2) * -1); margin-bottom:var(--e3)}
 
 @media (prefers-reduced-motion:reduce){ .gana__mas{transition:none} }
 

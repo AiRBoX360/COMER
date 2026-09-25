@@ -31,11 +31,33 @@ export function reiniciarCombinar() {
   abierta = null;
 }
 
-/** Las pastillas de alimentos de un lado. */
-function pastillas(lista) {
-  return `<div class="lado__alimentos">${lista
-    .map((n) => `<span class="lado__uno">${esc(n)}</span>`).join('')}</div>`;
+/**
+ * Las pastillas de alimentos de un lado.
+ *
+ * Primero los tuyos, con borde entero. Detrás, los que no tienes pero también
+ * funcionarían, con borde punteado: el punteado ya significa "esto no lo
+ * tienes" en otros cinco sitios de la app, no depende del color —se ve en los
+ * dos temas y con daltonismo— y no choca con el amarillo, que en esta misma
+ * pantalla significa "te falta".
+ */
+function pastillas(lista, sugeridos = []) {
+  return `<div class="lado__alimentos">${[
+    ...lista.map((n) => `<span class="lado__uno">${esc(n)}</span>`),
+    ...sugeridos.map((n) => `<span class="lado__uno lado__uno--fuera"
+      aria-label="${esc(n)}, no lo tienes en la despensa">${esc(n)}</span>`),
+  ].join('')}</div>`;
 }
+
+/**
+ * Qué hay en cada lado contando las sugerencias.
+ *
+ * Importa para decidir si se pinta el bloque de los dos lados: una combinación
+ * que cumples con un solo alimento que trae las dos cosas —las espinacas traen
+ * hierro y vitamina C— antes no pintaba lados; ahora sí, porque las
+ * sugerencias te dicen con qué ampliarla.
+ */
+const ladoA = (c) => [...c.soloA, ...(c.sugA ?? [])];
+const ladoB = (c) => [...c.soloB, ...(c.sugB ?? [])];
 
 /**
  * Una combinación, plegada.
@@ -60,22 +82,25 @@ function fila(c) {
       <div class="gana__cuerpo">
         <p class="gana__que">${esc(c.queOcurre)}</p>
 
-        ${c.ambos.length ? `
+        ${c.ambos.length || c.sugAmbos?.length ? `
           <div class="lado lado--ambos">
-            <h4>Estos ya traen las dos cosas</h4>
-            ${pastillas(c.ambos)}
-            <p class="lado__apunte">Solos ya se aprovechan mejor. Aun así suman con los de abajo.</p>
+            <h4>Estos traen las dos cosas</h4>
+            ${pastillas(c.ambos, c.sugAmbos)}
+            <p class="lado__apunte">Solos ya se aprovechan mejor.${ladoA(c).length && ladoB(c).length ? ' Aun así suman con los de abajo.' : ''}</p>
           </div>` : ''}
 
-        ${c.soloA.length && c.soloB.length ? `
+        ${ladoA(c).length && ladoB(c).length ? `
           <div class="lado">
             <h4>${c.clase === 'sinergia' ? 'Pon uno de estos' : 'Tienes esto'}</h4>
-            ${pastillas(c.soloA)}
+            ${pastillas(c.soloA, c.sugA)}
           </div>
           <div class="lado lado--con">
             <h4>${c.clase === 'sinergia' ? 'Con uno de estos' : 'Y esto'}</h4>
-            ${pastillas(c.soloB)}
+            ${pastillas(c.soloB, c.sugB)}
           </div>` : ''}
+
+        ${(c.sugA?.length || c.sugB?.length || c.sugAmbos?.length) ? `
+          <p class="lado__apunte lado__apunte--fuera">Los de borde punteado no los tienes en la despensa: con cualquiera de ellos también funciona.</p>` : ''}
 
         <p class="gana__linea"><b>Por qué.</b> ${esc(c.porQue)}</p>
         <p class="gana__linea"><b>Qué hacer.</b> ${esc(c.queHacer)}</p>
@@ -128,7 +153,8 @@ export function combinar() {
   // El buscador filtra por alimento: escribes "lentejas" y ves solo lo suyo.
   const busca = filtro.trim().toLowerCase();
   const tocaA = (c) => !busca
-    || [...c.soloA, ...c.soloB, ...c.ambos, ...(c.ejemplos ?? [])]
+    || [...c.soloA, ...c.soloB, ...c.ambos, ...(c.ejemplos ?? []),
+        ...(c.sugA ?? []), ...(c.sugB ?? [])]
       .some((n) => n.toLowerCase().includes(busca))
     || c.titulo.toLowerCase().includes(busca);
 
@@ -138,7 +164,7 @@ export function combinar() {
 
   return `
     ${nombrePantalla('qué juntar')}
-    <p class="texto">Lo que se potencia entre sí de lo que tienes, y por qué. Abre cualquiera para ver qué alimentos tuyos lo cumplen.</p>
+    <p class="texto">Lo que se potencia entre sí de lo que tienes, y por qué. Abre cualquiera para ver qué alimentos tuyos lo cumplen, y con qué más funcionaría.</p>
 
     <div class="campo">
       <div class="campo__entrada">
@@ -146,12 +172,12 @@ export function combinar() {
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/></svg>
         </span>
         <input id="buscaCombinar" type="search" value="${esc(filtro)}"
-               placeholder="Filtrar por un alimento tuyo" autocomplete="off">
+               placeholder="Filtrar por un alimento" autocomplete="off">
       </div>
     </div>
 
     ${busca && vPuedes.length + vFalta.length + vSeparar.length === 0 ? `
-      <p class="texto">Nada de lo que tienes casa con eso.</p>` : ''}
+      <p class="texto">Nada casa con eso.</p>` : ''}
 
     ${vPuedes.length ? `
       <h2 class="rotulo">Puedes hacerlo ya · ${vPuedes.length}</h2>
