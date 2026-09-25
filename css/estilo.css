@@ -330,7 +330,7 @@ button{touch-action:manipulation}
 .subtitulo + .subtitulo, .titulo + .subtitulo{margin-top:var(--e5)}
 .rotulo{
   font-family:var(--datos); font-weight:600;
-  font-size:var(--t0); letter-spacing:.11em; text-transform:uppercase;
+  font-size:var(--t2); letter-spacing:.11em; text-transform:uppercase;
   color:var(--ceniza-tenue);
   margin:var(--e6) 0 var(--e3);
 }
@@ -2900,10 +2900,105 @@ input[type="search"]::-webkit-search-results-decoration{
 .grupo-tipo{margin-bottom:var(--e4)}
 .grupo-tipo__nombre{
   margin:0 0 var(--e2);
-  font-family:var(--datos); font-size:var(--t1); font-weight:400;
-  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza-tenue);
+  font-family:var(--datos);
+  font-size:var(--t2);
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ceniza);
 }
 .campo--orden{margin-bottom:var(--e4)}
+
+
+/* --- Las combinaciones ganadoras -------------------------------------------
+   Una fila por combinación, no por pareja. Dentro, los dos lados: pon uno de
+   estos con uno de estos. Con cien alimentos eso son 22 nombres en vez de 121
+   parejas. */
+.gana{
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  background:var(--carbon);
+  margin-bottom:var(--e2);
+  overflow:hidden;
+}
+.gana--suma{border-left-color:var(--verde-parchis)}
+.gana--resta{border-left-color:var(--naranja)}
+.gana--falta{border-left-color:var(--amarillo); border-left-style:dashed}
+.gana[open]{border-color:var(--acento)}
+.gana > summary{
+  cursor:pointer; list-style:none;
+  display:flex; align-items:center; gap:var(--e3);
+  min-height:3.4rem;
+  padding:var(--e3) var(--e4);
+}
+.gana > summary::-webkit-details-marker{display:none}
+.gana__signo{
+  flex:none; width:1.8rem; height:1.8rem; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--carbon-alto);
+  font-family:var(--datos); font-size:var(--t3); line-height:1;
+}
+.gana--suma .gana__signo{color:var(--verde-parchis-letra)}
+.gana--resta .gana__signo{color:var(--naranja-letra)}
+.gana--falta .gana__signo{color:var(--amarillo-letra)}
+.gana__cabeza{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.gana__cabeza b{
+  font-family:var(--display); font-weight:600; font-size:var(--t3);
+  line-height:1.25; color:var(--hueso);
+}
+.gana__cabeza small{
+  font-family:var(--datos); font-size:var(--t0);
+  color:var(--ceniza-tenue); line-height:1.3;
+}
+.gana__mas{
+  flex:none; font-family:var(--datos); font-size:var(--t4);
+  color:var(--ceniza-tenue); line-height:1;
+  transition:transform .18s ease;
+}
+.gana[open] .gana__mas{transform:rotate(45deg)}
+.gana__cuerpo{
+  padding:0 var(--e4) var(--e4);
+  border-top:1px solid var(--linea);
+}
+.gana__que{
+  margin:var(--e3) 0 var(--e4);
+  font-size:var(--t3); line-height:1.5; color:var(--hueso);
+}
+.gana__linea{
+  margin:var(--e3) 0 0;
+  font-size:var(--t2); line-height:1.5; color:var(--ceniza);
+}
+.gana__linea b{color:var(--hueso); font-weight:600}
+
+/* Los dos lados: lo que pones y con qué lo pones. */
+.lado{margin-bottom:var(--e3)}
+.lado h4{
+  margin:0 0 var(--e2);
+  font-family:var(--datos); font-size:var(--t1); font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.lado--con h4::before{content:'↓  '; letter-spacing:0}
+.lado--ambos{
+  background:var(--tinte-a);
+  border-radius:var(--radio-s);
+  padding:var(--e3);
+}
+.lado__alimentos{display:flex; flex-wrap:wrap; gap:var(--e2)}
+.lado__uno{
+  display:inline-block;
+  padding:var(--e2) var(--e3);
+  border:1.5px solid var(--acento); border-radius:var(--radio-pastilla);
+  background:var(--carbon);
+  font-size:var(--t2); line-height:1.2; color:var(--hueso);
+}
+.lado--ambos .lado__uno{border-color:var(--verde-parchis)}
+.lado__apunte{
+  margin:var(--e2) 0 0;
+  font-size:var(--t1); line-height:1.45; color:var(--ceniza-tenue);
+}
+
+@media (prefers-reduced-motion:reduce){ .gana__mas{transition:none} }
 
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a
