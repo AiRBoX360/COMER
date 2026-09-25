@@ -1043,9 +1043,6 @@ button{touch-action:manipulation}
 .aviso-fuerte li:last-child{margin-bottom:0}
 .aviso-fuerte b{color:var(--hueso)}
 
-.nivel--1{border-left-color:var(--verde-parchis-letra)}
-.nivel--2{border-left-color:var(--verde-claro-letra)}
-.nivel--3{border-left-color:var(--amarillo-letra)}
 .nivel h3{
   margin:0 0 var(--e2);
   font-family:var(--display); font-weight:600; font-size:var(--t4);
@@ -2863,6 +2860,50 @@ input[type="search"]::-webkit-search-results-decoration{
   text-align:center;
 }
 .buscar__boton--hecha{background:var(--acento); color:var(--sobre-acento)}
+
+
+
+/* --- Los tres grados de "de dónde sale cada cosa" -------------------------
+   Título arriba y explicación debajo, sobre el tinte claro de la app.
+
+   Usaban la clase de los colores del semáforo, así que salían con el verde
+   fuerte de relleno y el texto encima casi no se leía. Y al heredar su
+   maquetación se partían en columnas estrechas que se salían de la caja. */
+.grado{
+  display:block;
+  background:var(--tinte-a);
+  border:1.5px solid var(--linea);
+  border-left:3px solid var(--ceniza-tenue);
+  border-radius:var(--radio);
+  padding:var(--e4);
+  margin-bottom:var(--e4);
+}
+.grado h3{
+  margin:0 0 var(--e3);
+  font-family:var(--display); font-weight:700; font-size:var(--t4);
+  line-height:1.2; color:var(--hueso);
+}
+.grado p{
+  margin:0 0 var(--e3);
+  font-size:var(--t2); line-height:1.6; color:var(--ceniza);
+  overflow-wrap:anywhere;
+}
+.grado p:last-child{margin-bottom:0}
+.grado b{color:var(--hueso)}
+.grado--1{border-left-color:var(--verde-parchis)}
+.grado--2{border-left-color:var(--verde-claro)}
+.grado--3{border-left-color:var(--amarillo)}
+
+
+/* --- La despensa agrupada por tipo de alimento -----------------------------
+   Con la despensa larga buscas "algo de pescado", no un nombre suelto. */
+.grupo-tipo{margin-bottom:var(--e4)}
+.grupo-tipo__nombre{
+  margin:0 0 var(--e2);
+  font-family:var(--datos); font-size:var(--t1); font-weight:400;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ceniza-tenue);
+}
+.campo--orden{margin-bottom:var(--e4)}
 
 /* --- El campo de búsqueda, a prueba de Safari ------------------------------
    El marco interior seguía saliendo en el móvil aunque el borde estuviera a

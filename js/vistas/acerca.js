@@ -37,17 +37,17 @@ export function acerca() {
     <h2 class="subtitulo">De dónde sale cada cosa</h2>
     <p class="texto">Hay tres niveles distintos y conviene no confundirlos. Presentarlos todos con la misma cara de certeza sería la peor forma de engañarte: sin decir ninguna falsedad concreta.</p>
 
-    <div class="nivel nivel--1">
+    <div class="grado grado--1">
       <h3>1 · Comprobado contra su fuente</h3>
       <p>El algoritmo Nutri-Score está validado contra los 15 casos de prueba oficiales de Santé publique France. O da los mismos números que ellos, o la app no se publica.</p>
     </div>
 
-    <div class="nivel nivel--2">
+    <div class="grado grado--2">
       <h3>2 · Normativa que puedes comprobar</h3>
       <p>Qué campos son obligatorios en una etiqueta, los valores de referencia de nutrientes, los 14 alérgenos de declaración obligatoria, los umbrales de "fuente de" y "alto contenido en", y la numeración E de los aditivos. Todo sale de reglamentos europeos, y cada ficha lleva el enlace.</p>
     </div>
 
-    <div class="nivel nivel--3">
+    <div class="grado grado--3">
       <h3>3 · Criterio de esta app</h3>
       <p>El nivel de riesgo de cada aditivo, cuánto pesa cada factor en la nota, y las fichas que explican los ingredientes. Se apoyan en nutrición establecida y en dictámenes de la EFSA y la OMS, pero <b>son una síntesis, no una cita</b>: no hay una fuente concreta detrás de cada número que leas en una ficha de ingrediente.</p>
       <p>Si algo de aquí te parece discutible, probablemente lo sea. Los pesos y los umbrales están todos en un único fichero del código, precisamente para poder cambiarlos.</p>

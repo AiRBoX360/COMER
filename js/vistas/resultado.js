@@ -6,6 +6,7 @@ import { listaExplicada } from './revisar.js';
 import { guardarAnalisis, listar } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
 import { buscarPorCodigo } from '../codigobarras.js';
+import { deducirTipo } from '../tipos.js';
 import { contarGuardado, tocaRecordar, textoRecordatorio } from '../recordatorio.js';
 import { cuantoHaceFalta, cuantoDeAditivos, riesgoMedido } from '../cuanto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas,
@@ -899,6 +900,13 @@ export function resultadoActivo(raiz, { irA }) {
           // Si la foto no se pudo descargar (sin red, o el servidor no deja),
           // se guarda al menos su dirección: la Despensa la enseña de ahí.
           fotoUrl: enCurso.fotoUrl ?? undefined,
+          // Las categorías del catálogo hacen falta para clasificar y para
+          // buscar alternativas.
+          categoriasTags: enCurso.categoriasTags ?? undefined,
+          // Qué clase de alimento es, para ordenar la despensa. Si no se ha
+          // corregido a mano se deduce ahora y queda fijo con el producto.
+          tipo: enCurso.tipo ?? deducirTipo({
+            nombre: enCurso.nombre, categoriasTags: enCurso.categoriasTags }),
         },
         fotos,
       });

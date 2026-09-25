@@ -5,6 +5,7 @@ import { listar, borrar, urlDeFoto, soltarFotos, estadisticas,
 import { enCurso } from '../estado.js';
 import { pedirFichero, pedirFoto, capturar, aBytes } from '../camara.js';
 import { reiniciarCombinar } from './combinar.js';
+import { reiniciarRecetas } from './recetas.js';
 import { copiaHecha, sinCopia, textoRecordatorio } from '../recordatorio.js';
 import { guardarDireccion } from '../almacen.js';
 import { buscarPorCodigo } from '../codigobarras.js';
@@ -457,12 +458,12 @@ export async function despensaActivo(raiz, { repintar }) {
   });
 
   raiz.querySelector('#btnRecetasDespensa')?.addEventListener('click', () => {
-    reiniciarCombinar('recetas');
-    window.dispatchEvent(new CustomEvent('comer:combinar'));
+    reiniciarRecetas();
+    window.dispatchEvent(new CustomEvent('comer:recetas'));
   });
 
   raiz.querySelector('#btnCombinar')?.addEventListener('click', () => {
-    reiniciarCombinar('juntar');
+    reiniciarCombinar();
     window.dispatchEvent(new CustomEvent('comer:combinar'));
   });
 

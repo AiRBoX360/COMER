@@ -6,6 +6,7 @@ import { analizarProducto, analizarIngredientesTexto, revisarVigilancia } from '
 import { enCurso, reiniciar, cargarDatosDeFuera } from '../estado.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { nombrePantalla } from './inicio.js';
+import { botonFoto, engancharFotoProducto } from './analizar.js';
 
 /**
  * Modo supermercado.
@@ -145,12 +146,15 @@ export function supermercado() {
         </div>
 
         <div class="buscar">
-          <button class="buscar__boton" id="btnBuscarSuper" aria-label="Buscar alimento">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
-            </svg>
-          </button>
-          <span class="buscar__rotulo">Buscar alimento</span>
+          <div class="buscar__uno">
+            <button class="buscar__boton" id="btnBuscarSuper" aria-label="Buscar alimento">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
+              </svg>
+            </button>
+            <span class="buscar__rotulo">Buscar alimento</span>
+          </div>
+          ${botonFoto()}
         </div>
 
         <p class="texto" id="estadoSuper" role="status" aria-live="polite">${esc(mensaje)}</p>
@@ -197,6 +201,10 @@ export function supermercadoActivo(raiz, { repintar, irA }) {
     if (p.racionGramos) enCurso.racionGramos = p.racionGramos;
     repintar();
   }
+
+  // La foto del producto, igual que en Analizar: aquí también hace falta,
+  // porque desde el pasillo es justo cuando tienes el envase en la mano.
+  engancharFotoProducto(raiz, repintar);
 
   raiz.querySelector('#btnBuscarSuper')?.addEventListener('click', () => {
     resolver(raiz.querySelector('#codigoSuper')?.value ?? '');

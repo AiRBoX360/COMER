@@ -18,7 +18,8 @@ import { tendencia, tendenciaActiva } from './vistas/tendencia.js';
 import { supermercado, supermercadoActivo } from './vistas/supermercado.js';
 import { conocimiento, conocimientoActivo } from './vistas/conocimiento.js';
 import { despensa, despensaActivo } from './vistas/despensa.js';
-import { combinar, combinarActivo, reiniciarCombinar } from './vistas/combinar.js';
+import { combinar, combinarActivo } from './vistas/combinar.js';
+import { recetas, recetasActivo } from './vistas/recetas.js';
 import {
   almacenamientoDuradero,
   espacioDisponible,
@@ -27,7 +28,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.47.0';
+export const VERSION = '4.51.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -65,8 +66,10 @@ const VISTAS = {
   // Cuelgan de Inicio: son sobre ti, no sobre un producto concreto.
   tendencia: { pinta: tendencia, activa: tendenciaActiva, titulo: 'Tu tendencia', pestana: 'inicio' },
   acerca: { pinta: acerca, activa: acercaActivo, titulo: 'Qué es y qué no es', pestana: 'inicio' },
-  // Qué juntar cuelga de la Despensa: se parte de lo que ya tienes guardado.
+  // Qué juntar y Recetas cuelgan de la Despensa: las dos parten de lo que ya
+  // tienes guardado, pero son pantallas distintas y no se ofrecen entre sí.
   combinar: { pinta: combinar, activa: combinarActivo, titulo: 'Qué juntar', pestana: 'despensa' },
+  recetas: { pinta: recetas, activa: recetasActivo, titulo: 'Recetas', pestana: 'despensa' },
   supermercado: { pinta: supermercado, activa: supermercadoActivo, titulo: 'En el supermercado', pestana: 'analizar' },
 };
 
@@ -295,6 +298,7 @@ window.addEventListener('comer:comparar', () => irA('comparar'));
 window.addEventListener('comer:tendencia', () => irA('tendencia'));
 window.addEventListener('comer:acerca', () => irA('acerca'));
 window.addEventListener('comer:combinar', () => irA('combinar'));
+window.addEventListener('comer:recetas', () => irA('recetas'));
 
 export { irA };
 

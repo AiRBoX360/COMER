@@ -13,6 +13,7 @@
  */
 
 import { nombrePantalla } from './inicio.js';
+import { TIPOS, deducirTipo } from '../tipos.js';
 import { esc } from '../ui.js';
 import { CAMPOS, CATEGORIAS, corregir, enCurso, resumenEnCurso } from '../estado.js';
 import { normalizarNutrientes, validar, validarContraIngredientes, explicarLista,
@@ -127,6 +128,20 @@ function fila(campo, incidencias) {
     </div>`;
 }
 
+/**
+ * El tipo que sale marcado en el desplegable.
+ *
+ * Si ya se corrigió a mano, manda esa corrección. Si no, el que deduce la app
+ * del nombre y del catálogo: así el campo llega relleno y solo hay que tocarlo
+ * cuando se equivoca.
+ */
+function tipoActual() {
+  return enCurso.tipo ?? deducirTipo({
+    nombre: enCurso.nombre,
+    categoriasTags: enCurso.categoriasTags,
+  });
+}
+
 export function revisar() {
   const incidencias = revisarAhora();
   const hayDatos = Object.keys(enCurso.nutrientes).length > 0 || enCurso.ingredientes.length > 0;
@@ -178,6 +193,15 @@ export function revisar() {
           ${CATEGORIAS.map((c) => `<option value="${c.clave}" ${c.clave === enCurso.categoria ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}
         </select>
       </div>
+    </div>
+    <div class="campo">
+      <label class="campo__nombre" for="c_tipo">Tipo de alimento</label>
+      <div class="campo__entrada">
+        <select id="c_tipo" data-texto="tipo">
+          ${TIPOS.map((t) => `<option value="${t.clave}" ${t.clave === tipoActual() ? 'selected' : ''}>${esc(t.nombre)}</option>`).join('')}
+        </select>
+      </div>
+      <p class="apunte-via">Solo sirve para ordenar y agrupar tu despensa. No cambia la nota.</p>
     </div>
     <div class="campo">
       <label class="campo__nombre" for="c_racion">Ración declarada <em class="apunte">opcional</em></label>
@@ -273,6 +297,7 @@ export function revisarActivo(raiz, { repintar, irA }) {
     const texto = e.target.dataset.texto;
     if (texto === 'nombre') enCurso.nombre = e.target.value.trim();
     if (texto === 'categoria') enCurso.categoria = e.target.value;
+    if (texto === 'tipo') enCurso.tipo = e.target.value;
     if (texto === 'racion') enCurso.racionGramos = aNumero(e.target.value);
     if (e.target.id === 'c_ingredientes') {
       enCurso.ingredientes = textoAIngredientes(e.target.value);

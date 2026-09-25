@@ -58,6 +58,9 @@ export async function guardarAnalisis({ veredicto, entrada, fotos = [] }) {
     codigoBarras: entrada?.codigoBarras ?? undefined,
     marca: veredicto.marca,
     categoria: veredicto.categoria,
+    // El tipo vive también arriba: ordenar la despensa no tiene por qué
+    // abrir la entrada entera de cada producto.
+    tipo: entrada?.tipo ?? undefined,
     fechaAnalisis: veredicto.fechaAnalisis,
     puntuacion: veredicto.puntuacion,
     semaforo: veredicto.semaforo,

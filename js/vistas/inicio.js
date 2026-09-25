@@ -1,6 +1,7 @@
 import { vacio, pendiente, esc } from '../ui.js';
 import { estadoInstalacion } from '../diagnostico.js';
 import { reiniciarCombinar } from './combinar.js';
+import { reiniciarRecetas } from './recetas.js';
 
 /**
  * Lo último que se pulsó, para dejarlo marcado en verde.
@@ -160,12 +161,12 @@ export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala
   });
 
   raiz.querySelector('#btnCombinarInicio')?.addEventListener('click', () => {
-    reiniciarCombinar('juntar');
+    reiniciarCombinar();
     irA('combinar');
   });
   raiz.querySelector('#btnRecetas')?.addEventListener('click', () => {
-    reiniciarCombinar('recetas');
-    irA('combinar');
+    reiniciarRecetas();
+    irA('recetas');
   });
 
   // --- Aspecto: claro u oscuro -------------------------------------------

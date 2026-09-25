@@ -19,6 +19,9 @@ export const enCurso = {
   procedencia: null,
   nombre: '',
   categoria: 'general',
+  // Qué clase de alimento es, para ordenar la despensa. NO es lo mismo que
+  // `categoria`, que es la del Nutri-Score y decide cómo se puntúa.
+  tipo: null,
   racionGramos: null,
   /** Cada campo es un Dato: valor, estado y confianza. */
   nutrientes: {},

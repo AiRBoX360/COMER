@@ -107,7 +107,7 @@ function botonBuscar(id, desactivado = false) {
  * daba más problemas que resultados; para los datos están el código, los
  * alimentos frescos y el texto pegado, que aciertan mucho más.
  */
-function botonFoto() {
+export function botonFoto() {
   const hecha = capturas.has('frontal');
   return `
     <div class="buscar__uno">
@@ -418,21 +418,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
   }
 
   // La foto del producto. No lee nada: solo se guarda para la Despensa.
-  raiz.querySelector('#btnFotoProducto')?.addEventListener('click', async () => {
-    const fichero = await pedirFoto();
-    if (!fichero) return;
-    try {
-      const { original, preparada, calidad } = await capturar(fichero);
-      capturas.set('frontal', {
-        calidad, preparada, original, fichero,
-        urlOriginal: aURL(original, 0.72),
-        urlPreparada: aURL(preparada, 0.6),
-      });
-      repintar();
-    } catch (err) {
-      alert(`No se ha podido usar la foto. ${err.message}`);
-    }
-  });
+  engancharFotoProducto(raiz, repintar);
 
   raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', () => {
     buscarYCargar(raiz.querySelector('#codigoBarras')?.value ?? '');
@@ -543,6 +529,31 @@ const UNIDAD = {
 
 /** Lo leído hasta ahora, para que el módulo 7 lo recoja. */
 export const leido = { tabla: null, ingredientes: null };
+
+/**
+ * Engancha el botón de fotografiar el producto.
+ *
+ * Vive aquí porque aquí están las capturas, pero lo usan las tres vías de
+ * Analizar y también el Escaneo rápido: la foto tiene que poder hacerse desde
+ * donde estés, no solo desde una pantalla.
+ */
+export function engancharFotoProducto(raiz, repintar) {
+  raiz.querySelector('#btnFotoProducto')?.addEventListener('click', async () => {
+    const fichero = await pedirFoto();
+    if (!fichero) return;
+    try {
+      const { original, preparada, calidad } = await capturar(fichero);
+      capturas.set('frontal', {
+        calidad, preparada, original, fichero,
+        urlOriginal: aURL(original, 0.72),
+        urlPreparada: aURL(preparada, 0.6),
+      });
+      repintar();
+    } catch (err) {
+      alert(`No se ha podido usar la foto. ${err.message}`);
+    }
+  });
+}
 
 export function capturasActuales() {
   return capturas;
