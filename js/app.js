@@ -28,7 +28,7 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.54.0';
+export const VERSION = '4.56.0';
 
 const CLAVE_ESCALA = 'comer.escala';
 
@@ -291,6 +291,38 @@ window.matchMedia?.('(prefers-color-scheme: light)')
   .addEventListener?.('change', () => { if (tema() === 'sistema') aplicarTema(); });
 
 ponerEscala(escala());
+
+/**
+ * Lo que mide la barra de abajo, medido de verdad.
+ *
+ * El aviso de copia flota encima de ella y tiene que saber dónde empieza. Se
+ * colocaba con un 6,2rem escrito a mano que dejó de cuadrar en cuanto la barra
+ * cambió, y el aviso se metió debajo. Un número a ojo en el sitio equivocado
+ * vuelve a fallar siempre, así que se pregunta.
+ *
+ * Y se vuelve a preguntar cuando cambia: al girar el teléfono, al cambiar el
+ * tamaño de letra o al pasar de nombre a icono. El valor del CSS se queda como
+ * primera aproximación, para el instante antes de la primera medida y para
+ * quien no tenga ResizeObserver.
+ */
+const barraDeAbajo = document.querySelector('.barra');
+let vigilaBarra = null;
+if (barraDeAbajo) {
+  const medirBarra = () => {
+    const alto = barraDeAbajo.offsetHeight;
+    if (alto > 0) document.documentElement.style.setProperty('--alto-barra', `${alto}px`);
+  };
+  medirBarra();
+  if (typeof ResizeObserver === 'function') {
+    // Con el borde incluido, no solo el contenido: lo que crece al girar el
+    // teléfono es el relleno de abajo, la franja del indicador de inicio. Sin
+    // esto no se entera, porque las pestañas de dentro siguen midiendo igual.
+    vigilaBarra = new ResizeObserver(medirBarra);
+    vigilaBarra.observe(barraDeAbajo, { box: 'border-box' });
+  }
+  // Y al girar, que en algunos navegadores no cuenta como cambio de tamaño.
+  window.addEventListener('orientationchange', () => setTimeout(medirBarra, 120));
+}
 
 // Volver a ver un producto guardado, desde la Despensa.
 window.addEventListener('comer:ver-resultado', () => irA('resultado'));

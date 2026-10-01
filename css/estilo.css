@@ -90,11 +90,15 @@
   --tinte-a:rgba(120,179,65,.09);
   --tinte-b:rgba(80,140,200,.07);
   --brillo-tarjeta:rgba(255,255,255,.035);
-  --sombra-barra:0 10px 30px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
+  --sombra-barra:0 -10px 26px -12px rgba(0,0,0,.8), 0 -1px 0 rgba(0,0,0,.25);
   --fondo-barra:rgba(26,30,38,.92);
   --borde-barra:rgba(255,255,255,.07);
   --fondo-cabecera:rgba(16,19,25,.9);
 
+  /* Lo que ocupa la barra de abajo, franja del teléfono incluida. Existe para
+     que nada tenga que adivinarlo con un número a ojo: el aviso de copia se
+     colocaba con 6,2rem escritos a mano y se descolgaba al cambiar la barra. */
+  --alto-barra:calc(3.51rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* --- Tema claro ------------------------------------------------------------
@@ -141,7 +145,7 @@
   --tinte-a:rgba(114,172,60,.10);
   --tinte-b:rgba(80,140,200,.07);
   --brillo-tarjeta:rgba(0,0,0,.02);
-  --sombra-barra:0 6px 22px rgba(26,29,36,.16), 0 1px 4px rgba(26,29,36,.10);
+  --sombra-barra:0 -10px 24px -14px rgba(26,29,36,.45), 0 -1px 0 rgba(26,29,36,.05);
   --fondo-barra:rgba(255,255,255,.94);
   --borde-barra:rgba(26,29,36,.08);
   --fondo-cabecera:rgba(251,250,248,.92);
@@ -528,12 +532,16 @@ button{touch-action:manipulation}
 /* Lo que a mí me parece legible y lo que le parece legible a otro no tienen
    por qué coincidir. En vez de discutirlo, que lo decida quien mira. */
 .escala{
-  display:flex; gap:var(--e2); align-items:center;
+  display:flex; flex-wrap:wrap; gap:var(--e2); align-items:center;
   margin:var(--e5) 0;
 }
-.escala__opciones{display:flex; gap:var(--e2); flex:1}
+/* Los tres botones se salían de la pantalla con la letra en grande: "Grande"
+   escrito en grande ocupa lo que ocupa, y en flex nada encoge por debajo de su
+   contenido salvo que se le diga. Se le dice, y si aun así no caben, pasan a
+   la línea de abajo en vez de desbordar por la derecha. */
+.escala__opciones{display:flex; flex-wrap:wrap; gap:var(--e2); flex:1 1 14rem; min-width:0}
 .escala__boton{
-  appearance:none; cursor:pointer; flex:1;
+  appearance:none; cursor:pointer; flex:1 1 auto; min-width:0;
   background:var(--carbon); color:var(--ceniza);
   border:1.5px solid var(--linea); border-radius:var(--radio-s);
   padding:var(--e3) var(--e2);
@@ -592,7 +600,7 @@ button{touch-action:manipulation}
 
 /* Las dos imágenes lado a lado: lo que hiciste y lo que va a leerse.
    Ver la diferencia explica el procesado mejor que cualquier texto. */
-.toma__imagenes{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2)}
+.toma__imagenes{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--e2)}
 .toma__imagenes figure{margin:0}
 .toma__imagenes img{
   width:100%; aspect-ratio:4/3; object-fit:cover;
@@ -945,7 +953,7 @@ button{touch-action:manipulation}
 }
 
 /* --- Duelo entre dos productos -------------------------------------------- */
-.duelo{display:grid; grid-template-columns:1fr 1fr; gap:var(--e2); margin:var(--e5) 0}
+.duelo{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--e2); margin:var(--e5) 0}
 .duelo__lado{
   background:var(--carbon); border:1.5px solid var(--linea);
   border-radius:var(--radio); padding:var(--e4);
@@ -1193,10 +1201,15 @@ button{touch-action:manipulation}
 .barra__pestana{
   appearance:none; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:0.42rem;
-  /* Pueden encoger, pero nunca por debajo del mínimo que se toca con el dedo
-     menos el hueco: así el conjunto cabe sin que ninguna quede impracticable. */
-  flex:0 1 auto;
-  width:2.75rem; min-width:2.6rem; height:2.75rem; padding:0;
+  /* Se reparten lo que sobra en vez de quedarse en un ancho fijo.
+   *
+   * Antes medían 2,75rem pasara lo que pasara: en una pantalla ancha dejaban
+   * un vacío a los lados, y en una estrecha —o con la letra en grande, que es
+   * lo mismo porque la medida va en rem— no cabían. Con esto la barra se
+   * adapta a la pantalla que haya: las pestañas crecen o encogen juntas y
+   * ninguna baja del mínimo que se toca con el dedo. */
+  flex:1 1 0;
+  min-width:2.6rem; max-width:5.5rem; height:2.75rem; padding:0;
   background:var(--carbon-alto);
   border:0; border-radius:var(--radio-pastilla);
   color:var(--ceniza);
@@ -1220,8 +1233,8 @@ button{touch-action:manipulation}
   /* La activa se queda con lo que sobre, y su nombre se recorta antes que
      desbordar el cuadro. */
   /* La activa no encoge: su nombre es lo que dice dónde estás, y salía
-     cortado como "Analiz…". */
-  width:auto; min-width:0; flex:0 0 auto;
+     cortado como "Analiz…". Las otras cuatro se reparten lo que queda. */
+  width:auto; min-width:0; max-width:none; flex:0 0 auto;
   padding:0 0.75rem 0 0.6rem;
   background:var(--acento); color:var(--sobre-acento);
 }
@@ -1230,14 +1243,39 @@ button{touch-action:manipulation}
 /**
  * Cuando no cabe, el nombre desaparece: no se corta.
  *
- * Salía "Analiz…" y eso no dice nada. La medida va en rem, así que el umbral
- * crece con el tamaño de letra elegido: con el texto en grande, la barra pasa
- * a mostrar solo iconos, que es lo correcto. La pastilla verde sigue diciendo
- * dónde estás.
+ * Salía "Analiz…" y eso no dice nada.
+ *
+ * Se mide la BARRA, no la ventana. Una consulta de ventana escrita en `rem`
+ * parecía crecer con el tamaño de letra elegido y no lo hacía: ahí el `rem`
+ * vale siempre 16 px, el inicial del documento, se ponga lo que se ponga en
+ * la raíz. Resultado: con la letra grande el umbral no llegaba a saltar y el
+ * nombre desbordaba la barra por la derecha en las pantallas de 375 px.
+ *
+ * Midiendo el contenedor en `em` sí se cuenta la letra de verdad, que es lo
+ * que ocupa sitio. El corte está en 19,5: por debajo no caben cinco pestañas
+ * con un nombre al lado. No es un número a ojo, está medido en seis pantallas
+ * por cuatro tamaños de letra por las cinco pestañas —"Resultado" ocupa más
+ * que "Saber"—, y es el primero con el que ninguna de las 120 desborda.
  */
-@media (max-width:20.5rem){
+@container barra (max-width:19.5em){
   .barra__pestana[aria-selected="true"]{width:2.75rem; padding:0}
   .barra__pestana[aria-selected="true"] span{max-width:0; opacity:0}
+}
+
+/* Y en lo más estrecho que existe —un iPhone SE con la letra grande— ni
+   siquiera caben cinco iconos al tamaño de siempre. Se aprietan los huecos
+   antes que dejar que la última pestaña se salga por el borde. */
+@container barra (max-width:15em){
+  .barra{gap:0.15rem; padding-left:0.3rem; padding-right:0.3rem}
+  .barra__pestana{min-width:2.4rem}
+}
+/* Respaldo para quien no entienda las consultas de contenedor: el umbral fijo
+   de antes, que al menos cubre las pantallas más estrechas. */
+@supports not (container-type:inline-size){
+  @media (max-width:25rem){
+    .barra__pestana[aria-selected="true"]{width:2.75rem; padding:0}
+    .barra__pestana[aria-selected="true"] span{max-width:0; opacity:0}
+  }
 }
 .barra__pestana[aria-selected="true"] svg{stroke-width:2.1}
 
@@ -1286,8 +1324,17 @@ button{touch-action:manipulation}
    que el color fuerte es del veredicto se mantiene intacta. */
 body{
   margin:0;
+  /* Anclado a la pantalla, no al documento.
+   *
+   * `inset:0` bastaba con la app instalada, pero abierta desde Safari el alto
+   * de referencia incluye lo que tapa la barra de direcciones, y la nuestra se
+   * quedaba por debajo del borde visible. `dvh` sigue al alto que de verdad se
+   * ve. La línea de antes se queda debajo como respaldo para navegadores que
+   * no entiendan la unidad. */
   position:fixed;
-  inset:0;
+  top:0; left:0; right:0;
+  height:100%;
+  height:100dvh;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -1379,7 +1426,7 @@ body{
 /* Las tres casillas de debajo, con más aire y un punto de color. */
 .resumen{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:var(--e2);
   margin-top:var(--e5);
 }
@@ -1480,7 +1527,7 @@ body{
 
 /* Tres atajos en fila, en voz baja. */
 .atajos{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2);
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--e2);
   margin:var(--e5) 0;
 }
 .atajo{
@@ -1926,7 +1973,7 @@ body{
   letter-spacing:.2em; text-transform:uppercase; text-align:center;
   color:var(--ceniza-tenue);
 }
-.grupo__pastillas{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--e2)}
+.grupo__pastillas{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--e2)}
 
 .pastilla{
   appearance:none; cursor:pointer;
@@ -1981,7 +2028,7 @@ body{
 /* Las dos acciones, en rejilla para que midan exactamente lo mismo aunque una
    parta el título en dos líneas y la otra no. */
 .acciones{
-  display:grid; grid-auto-rows:1fr; gap:var(--e4);
+  display:grid; grid-template-columns:minmax(0,1fr); grid-auto-rows:1fr; gap:var(--e4);
   margin-bottom:var(--e4);
 }
 .acciones .accion{margin:0; height:100%}
@@ -2193,7 +2240,7 @@ body{
    cuando hay algo que filtrar: antes estaban siempre, aunque no hubiera nada
    debajo. */
 .puertas{
-  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e3);
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--e3);
   margin-top:var(--e4);
 }
 .puerta{
@@ -2321,25 +2368,47 @@ body{
   font-variant-numeric:tabular-nums;
 }
 
-/* --- La barra de abajo, más pegada al borde --------------------------------
-   El teléfono reserva una franja para su barra de inicio. Dejarla entera como
-   margen subía la nuestra más de lo necesario: con algo más de la mitad se
-   despeja el indicador y la barra se apoya en el borde. */
+/* --- La barra de abajo, apoyada en el borde --------------------------------
+ *
+ * Cuarto intento, y esta vez cambiando el planteamiento en vez de los números.
+ *
+ * Era una pastilla flotante con un margen de "algo más de la mitad" de la
+ * franja que el teléfono reserva para su indicador de inicio. Ese 0,55 no
+ * tenía arreglo posible: con menos, los botones caen bajo la rayita del
+ * iPhone y dejan de poder pulsarse; con más, la barra sube y queda un hueco
+ * de aire debajo. Cualquier número está mal, porque lo que estaba mal era
+ * pedirle a un solo margen que hiciera las dos cosas.
+ *
+ * Ahora las hace por separado: el FONDO llega hasta el borde físico de la
+ * pantalla, y son los BOTONES los que se apartan del indicador, con relleno
+ * por dentro. Así la barra está pegada abajo del todo y se sigue pulsando
+ * bien. Y en un teléfono sin indicador —o en el ordenador— la franja vale
+ * cero y no sobra nada.
+ */
 .barra{
   flex:none;
-  margin:0 auto;
-  margin-bottom:max(0.35rem, calc(env(safe-area-inset-bottom) * 0.55));
-  max-width:calc(100vw - 1.2rem);
+  width:100%;
   min-width:0;
   display:flex;
   align-items:center;
   gap:0.24rem;
-  padding:0.38rem;
+  /* Para poder preguntar por SU ancho, no por el de la ventana. Y con la letra
+     fijada a 1rem, un `em` de la consulta es un `rem`: así el umbral se lee. */
+  container-type:inline-size;
+  container-name:barra;
+  font-size:1rem;
+  /* Los lados también respetan la zona segura: en horizontal, la muesca del
+     iPhone se come una esquina. */
+  padding:0.38rem
+          max(0.5rem, env(safe-area-inset-right, 0px))
+          calc(0.38rem + env(safe-area-inset-bottom, 0px))
+          max(0.5rem, env(safe-area-inset-left, 0px));
   background:var(--fondo-barra);
   backdrop-filter:blur(20px) saturate(140%);
   -webkit-backdrop-filter:blur(20px) saturate(140%);
-  border:1px solid var(--borde-barra);
-  border-radius:var(--radio-pastilla);
+  border:0;
+  border-top:1px solid var(--borde-barra);
+  border-radius:0;
   box-shadow:var(--sombra-barra);
 }
 
@@ -2447,9 +2516,9 @@ body{
 
 /* --- La tabla nutricional, en casillas ------------------------------------- */
 .tabla-nut{
-  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--e2);
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--e2);
 }
-@media (min-width:26rem){ .tabla-nut{grid-template-columns:repeat(3,1fr)} }
+@media (min-width:26rem){ .tabla-nut{grid-template-columns:repeat(3,minmax(0,1fr))} }
 
 .casilla{
   display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -2753,7 +2822,7 @@ input[type="search"]::-webkit-search-results-decoration{
 .aviso-flotante{
   position:fixed; z-index:50;
   left:var(--e4); right:var(--e4);
-  bottom:calc(6.2rem + env(safe-area-inset-bottom, 0px));
+  bottom:calc(var(--alto-barra) + 0.75rem);
   max-width:34rem; margin:0 auto;
   background:var(--carbon);
   border:1.5px solid var(--amarillo); border-radius:var(--radio);
@@ -2763,6 +2832,11 @@ input[type="search"]::-webkit-search-results-decoration{
 }
 .aviso-flotante p{margin:0 0 var(--e3); font-size:var(--t2); line-height:1.5; color:var(--ceniza)}
 .aviso-flotante p b{color:var(--hueso)}
+.aviso-flotante__estado{
+  font-family:var(--datos); font-size:var(--t1) !important;
+  color:var(--hueso) !important;
+}
+.aviso-flotante__estado[hidden]{display:none}
 .aviso-flotante__botones{display:flex; gap:var(--e2)}
 .aviso-flotante__botones .boton{flex:1}
 .aviso-flotante [data-aviso="copia"]{background:var(--acento); color:var(--sobre-acento); font-weight:600}

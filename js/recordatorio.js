@@ -8,12 +8,20 @@
  * Así que se dice justo después de guardar un producto, que es el momento en
  * el que acabas de añadir algo que perderías.
  *
- * Con moderación: cada diez productos guardados desde la última copia. Ni cada
- * vez, que se convierte en ruido y se ignora, ni nunca.
+ * Con moderación: cada diez productos guardados DESDE LA ÚLTIMA COPIA. La
+ * cuenta no se reinicia por cambiar de día ni por cerrar la app: si hiciste la
+ * copia con quince productos, el aviso vuelve al llegar a veinticinco, los
+ * escanees de golpe o a lo largo de un mes.
+ *
+ * Y si lo apartas con "más tarde", no vuelve al producto siguiente: vuelve
+ * diez productos después. Un aviso que sale cada vez deja de ser un aviso.
  */
 
 const CLAVE_DESDE = 'catario.copia.desde';
 const CLAVE_FECHA = 'catario.copia.fecha';
+/** En qué cuenta se avisó por última vez. Sin esto, pasados los diez el aviso
+ *  saltaría con cada producto guardado. */
+const CLAVE_AVISADO = 'catario.copia.avisado';
 /** Cada cuántos productos guardados se recuerda. */
 export const CADA = 10;
 
@@ -34,12 +42,25 @@ export function contarGuardado() {
 /** Se llama al hacer una copia: la cuenta vuelve a cero. */
 export function copiaHecha() {
   poner(CLAVE_DESDE, 0);
+  poner(CLAVE_AVISADO, 0);
   poner(CLAVE_FECHA, Date.now());
 }
 
-/** ¿Toca recordarlo? */
+/**
+ * ¿Toca recordarlo?
+ *
+ * Diez más desde el último aviso, no "diez o más": si lo apartaste con nueve
+ * sin copia y guardas uno, el aviso saltaría otra vez, y al siguiente, y al
+ * siguiente. Se cuenta desde donde se avisó, así que apartarlo da otros diez
+ * productos de tregua, y la tregua sobrevive a cerrar la app.
+ */
 export function tocaRecordar() {
-  return leer(CLAVE_DESDE) >= CADA;
+  return leer(CLAVE_DESDE) - leer(CLAVE_AVISADO) >= CADA;
+}
+
+/** Se llama al enseñar el aviso: marca desde dónde contar los diez siguientes. */
+export function avisoMostrado() {
+  poner(CLAVE_AVISADO, leer(CLAVE_DESDE));
 }
 
 /** Cuántos productos llevas sin guardar copia. */

@@ -3,11 +3,12 @@ import { enCurso, reiniciar } from '../estado.js';
 import { analizarProducto, revisarVigilancia, queBuscarEnLugarDe, buscarAlternativas } from '../motor.js';
 import { vigilanciaActiva } from './tendencia.js';
 import { listaExplicada } from './revisar.js';
-import { guardarAnalisis, listar } from '../almacen.js';
+import { guardarAnalisis, listar, descargarCopia } from '../almacen.js';
 import { descargarFotoProducto } from '../fotoproducto.js';
 import { buscarPorCodigo } from '../codigobarras.js';
 import { deducirTipo } from '../tipos.js';
-import { contarGuardado, tocaRecordar, textoRecordatorio } from '../recordatorio.js';
+import { contarGuardado, tocaRecordar, textoRecordatorio,
+         avisoMostrado, copiaHecha } from '../recordatorio.js';
 import { cuantoHaceFalta, cuantoDeAditivos, riesgoMedido } from '../cuanto.js';
 import { alternativasDeFuera, porQueNoHayAlternativas,
          diagnosticoAlternativas } from '../alternativasfuera.js';
@@ -16,7 +17,7 @@ import { dondeComprarlo, textoDondeComprarlo,
          porQueNoConstaOrigen } from '../donde.js';
 import { capturasActuales } from './analizar.js';
 import { aBytes } from '../camara.js';
-import { refrescarDespensa } from './despensa.js';
+import { refrescarDespensa, abrirCopiaAlEntrar } from './despensa.js';
 import { refrescarConocimiento } from './conocimiento.js';
 import { refrescarComparador } from './comparar.js';
 import { nombrePantalla } from './inicio.js';
@@ -201,30 +202,62 @@ function bloqueProcedencia() {
  * pantalla: quedaba fuera de la vista y no lo veía nadie. Ahora flota encima
  * de todo hasta que lo atiendes o lo apartas.
  */
-function mostrarAvisoCopia() {
+export function mostrarAvisoCopia() {
   document.querySelector('.aviso-flotante')?.remove();
+  avisoMostrado();
   const aviso = document.createElement('div');
   aviso.className = 'aviso-flotante';
   aviso.setAttribute('role', 'alertdialog');
   aviso.setAttribute('aria-label', 'Conviene guardar una copia');
   aviso.innerHTML = `
     <p><b>Conviene guardar una copia.</b> ${esc(textoRecordatorio())}</p>
+    <p class="aviso-flotante__estado" role="status" aria-live="polite" hidden></p>
     <div class="aviso-flotante__botones">
       <button class="boton" data-aviso="luego">Más tarde</button>
       <button class="boton boton--lleno" data-aviso="copia">Hacer copia</button>
     </div>`;
   document.body.appendChild(aviso);
-  aviso.addEventListener('click', (e) => {
+
+  const estado = aviso.querySelector('.aviso-flotante__estado');
+  const decir = (t) => { estado.hidden = false; estado.textContent = t; };
+
+  aviso.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-aviso]');
     if (!b) return;
+
+    if (b.dataset.aviso === 'luego') { aviso.remove(); return; }
+
+    // El botón HACE la copia, aquí mismo.
+    //
+    // Antes llevaba a la Despensa y abría la sección con un temporizador de
+    // 150 ms. Al entrar, la Despensa recarga la lista y se repinta —acabas de
+    // guardar un producto, así que siempre ha cambiado—, y ese repintado
+    // borraba la sección recién abierta. O sea: le dabas a "Hacer copia" y
+    // aterrizabas en la Despensa sin copia y sin nada abierto.
+    if (b.disabled) return;
+    b.disabled = true;
+    decir('Preparando la copia…');
+    try {
+      const r = await descargarCopia();
+      copiaHecha();
+      decir(`Copia guardada: ${r.productos} producto(s), ${r.kb} KB.`);
+      b.remove();
+      aviso.querySelector('[data-aviso="luego"]').textContent = 'Cerrar';
+    } catch (err) {
+      // Si falla, se ofrece el camino largo en vez de dejarte con el error.
+      b.disabled = false;
+      decir(`No se ha podido guardar aquí. ${err.message}`);
+      b.textContent = 'Ir a la Despensa';
+      b.dataset.aviso = 'despensa';
+    }
+  });
+
+  // El camino largo, solo si la copia directa ha fallado.
+  aviso.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-aviso="despensa"]')) return;
     aviso.remove();
-    if (b.dataset.aviso !== 'copia') return;
+    abrirCopiaAlEntrar();
     irA('despensa');
-    // Se abre la sección de la copia, para no dejarte buscándola.
-    setTimeout(() => {
-      const sec = document.querySelector('[data-seccion="copia"]');
-      if (sec) { sec.open = true; sec.scrollIntoView({ block: 'center' }); }
-    }, 150);
   });
 }
 

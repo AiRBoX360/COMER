@@ -235,7 +235,7 @@ export function despensa() {
           <button class="boton" id="btnExportar">Guardar copia</button>
           <button class="boton" id="btnImportar">Restaurar copia</button>
         </div>
-        <p class="texto" id="estadoCopia" role="status" aria-live="polite" style="margin-top:12px; font-size:var(--t2)"></p>`)}
+        <p class="texto" id="estadoCopia" role="status" aria-live="polite" style="margin-top:12px; font-size:var(--t2)"></p>`, abrirCopia)}
     </div>
   `;
 }
@@ -319,6 +319,14 @@ export async function despensaActivo(raiz, { repintar }) {
       repintar();
       return;
     }
+  }
+
+  // Se viene del aviso de copia: la sección ya está pintada abierta, solo
+  // queda llevar la vista hasta ella. Aquí y no antes, porque este punto es el
+  // pintado definitivo: el de arriba se descarta si la lista ha cambiado.
+  if (abrirCopia) {
+    abrirCopia = false;
+    raiz.querySelector('[data-seccion="copia"]')?.scrollIntoView({ block: 'center' });
   }
 
   // Las fotos se piden después de pintar: así la lista aparece enseguida y las
@@ -558,6 +566,18 @@ async function volverAVer(p) {
 
   window.dispatchEvent(new CustomEvent('comer:ver-resultado'));
 }
+
+/**
+ * Entrar directamente a la sección de la copia.
+ *
+ * Lo usa el aviso de "conviene guardar una copia" cuando la copia directa
+ * falla. Es una bandera y no un temporizador a propósito: al entrar, la
+ * Despensa recarga la lista y se repinta, y un `open` puesto a mano desde
+ * fuera desaparecía en ese repintado. La bandera sobrevive porque la lee la
+ * propia función que pinta.
+ */
+let abrirCopia = false;
+export function abrirCopiaAlEntrar() { abrirCopia = true; }
 
 /** Fuerza a releer de la base la próxima vez. */
 export function refrescarDespensa() {
