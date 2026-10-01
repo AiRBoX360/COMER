@@ -3,7 +3,7 @@
  * Guarda una copia de la app para que abra sin cobertura, que en un
  * supermercado con sotano pasa mas de lo que parece.
  */
-const CACHE = 'catario-v4.56.0';
+const CACHE = 'catario-v4.58.0';
 
 const ARCHIVOS = [
   './',
@@ -29,6 +29,7 @@ const ARCHIVOS = [
   './js/elegirdespensa.js',
   './js/tipos.js',
   './js/ganadoras.js',
+  './js/version.js',
   './js/vistas/comparar.js',
   './js/vistas/acerca.js',
   './js/vistas/tendencia.js',

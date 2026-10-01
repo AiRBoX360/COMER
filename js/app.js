@@ -28,7 +28,10 @@ import {
   estadoInstalacion,
 } from './diagnostico.js';
 
-export const VERSION = '4.56.0';
+// Se importa además de reexportarse: `export ... from` no trae el nombre al
+// ámbito de este fichero, y aquí dentro también se usa.
+import { VERSION } from './version.js';
+export { VERSION };
 
 const CLAVE_ESCALA = 'comer.escala';
 

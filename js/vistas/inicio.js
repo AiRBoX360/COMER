@@ -1,5 +1,7 @@
 import { vacio, pendiente, esc } from '../ui.js';
 import { estadoInstalacion } from '../diagnostico.js';
+import { VERSION } from '../version.js';
+import { VERSION_ALGORITMO } from '../motor.js';
 import { reiniciarCombinar } from './combinar.js';
 import { reiniciarRecetas } from './recetas.js';
 
@@ -141,6 +143,12 @@ export function inicio({ irA }) {
       <h2 class="rotulo">Qué es y qué no es</h2>
       <button class="boton" id="btnAcerca" style="width:100%">Leer de dónde salen las valoraciones</button>
 
+      <h2 class="rotulo">Versión</h2>
+      <div class="version">
+        <p class="version__linea"><span>Catario</span><b>${esc(VERSION)}</b></p>
+        <p class="version__linea"><span>Criterio de valoración</span><b>${esc(VERSION_ALGORITMO)}</b></p>
+        <p class="version__apunte">El criterio es lo que decide la nota. Cuando cambia, la Despensa avisa de que hay productos por volver a valorar.</p>
+      </div>
 
     </details>
   `;
