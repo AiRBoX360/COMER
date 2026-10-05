@@ -308,12 +308,58 @@ ponerEscala(escala());
  * primera aproximación, para el instante antes de la primera medida y para
  * quien no tenga ResizeObserver.
  */
+/**
+ * El alto que de verdad tiene la pantalla, no el que dice la ventana.
+ *
+ * Instalada en la pantalla de inicio, la app de AiRBoX360 reservaba abajo el
+ * hueco de la barra de Safari aunque no hubiera ninguna barra: la ventana
+ * seguía midiendo como si el navegador estuviera ahí. Él lo vio comparando las
+ * dos capturas y tenía razón.
+ *
+ * `lvh` es, por definición, el alto con las barras del navegador retraídas. No
+ * hay forma de leerlo sin medirlo, así que se mide con una sonda invisible y
+ * se usa la mayor de las dos cifras. Donde `lvh` no exista, la sonda da cero y
+ * manda la ventana de siempre.
+ */
+function altoDeVerdad() {
+  let lvh = 0;
+  try {
+    const sonda = document.createElement('div');
+    sonda.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:100lvh;'
+      + 'visibility:hidden;pointer-events:none';
+    document.documentElement.appendChild(sonda);
+    lvh = sonda.getBoundingClientRect().height;
+    sonda.remove();
+  } catch { /* sin sonda, manda la ventana */ }
+  // Nunca más alto que la pantalla física: si `lvh` se fuera de madre, la
+  // barra acabaría fuera de la vista, que es peor que el hueco.
+  const fisico = window.screen?.height || Infinity;
+  return Math.min(Math.max(window.innerHeight || 0, lvh || 0), fisico);
+}
+
 const barraDeAbajo = document.querySelector('.barra');
 let vigilaBarra = null;
 if (barraDeAbajo) {
   const medirBarra = () => {
     const alto = barraDeAbajo.offsetHeight;
     if (alto > 0) document.documentElement.style.setProperty('--alto-barra', `${alto}px`);
+
+    /* Y si la barra no llega al borde de la ventana, se baja hasta él.
+     *
+     * Esto es una red, no un arreglo: la barra debería llegar sola. En el
+     * iPhone de AiRBoX360 se quedaba a 59 puntos del canto mientras el fondo
+     * de la app sí tocaba el último píxel, y ninguna combinación de anclajes
+     * lo resolvía a ciegas. En vez de seguir adivinando por qué, se mide la
+     * distancia que falta y se corrige esa misma cantidad.
+     *
+     * Cuando la barra ya llega —que es lo normal— la corrección vale cero y
+     * esto no hace absolutamente nada. */
+    const r = barraDeAbajo.getBoundingClientRect();
+    const falta = Math.round(altoDeVerdad() - r.bottom);
+    // Un tope por si la medida saliera disparatada: más de media pantalla de
+    // corrección no es una corrección, es un error de medida.
+    const corrige = falta > 0 && falta < altoDeVerdad() / 2 ? falta : 0;
+    document.documentElement.style.setProperty('--correccion-barra', `${corrige}px`);
   };
   medirBarra();
   if (typeof ResizeObserver === 'function') {
@@ -323,6 +369,10 @@ if (barraDeAbajo) {
     vigilaBarra = new ResizeObserver(medirBarra);
     vigilaBarra.observe(barraDeAbajo, { box: 'border-box' });
   }
+  // Al cambiar el tamaño de la ventana: el desfase entre la barra y el borde
+  // puede aparecer o desaparecer ahí, y el observador de la barra no se entera
+  // porque la barra mide lo mismo.
+  window.addEventListener('resize', () => setTimeout(medirBarra, 60));
   // Y al girar, que en algunos navegadores no cuenta como cambio de tamaño.
   window.addEventListener('orientationchange', () => setTimeout(medirBarra, 120));
 }

@@ -2515,7 +2515,10 @@ body{
    * absoluto, y nada se desplaza con el contenido porque quien se desplaza es
    * `.principal`, no el cuerpo. */
   position:absolute;
-  left:0; right:0; bottom:0;
+  left:0; right:0;
+  /* La corrección la mide app.js: lo que le falte a la barra para tocar el
+     borde de la ventana. Cuando llega sola —lo normal— vale cero. */
+  bottom:calc(0px - var(--correccion-barra, 0px));
   z-index:40;
   isolation:isolate;
   display:flex;

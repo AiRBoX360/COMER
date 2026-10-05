@@ -6,4 +6,4 @@
  * carga app— que funciona por los pelos y se rompe el día que alguien mueve una
  * línea. Un dato suelto no necesita arrastrar la aplicación entera detrás.
  */
-export const VERSION = '4.64.0';
+export const VERSION = '4.66.0';

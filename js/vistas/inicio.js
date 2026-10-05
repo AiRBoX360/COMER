@@ -179,6 +179,18 @@ function medirPantalla() {
   }
 }
 
+/** `lvh`: el alto de la pantalla con las barras del navegador retraídas. */
+function medirLvh() {
+  try {
+    const sonda = document.createElement('div');
+    sonda.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:100lvh;visibility:hidden;pointer-events:none';
+    document.documentElement.appendChild(sonda);
+    const alto = Math.round(sonda.getBoundingClientRect().height);
+    sonda.remove();
+    return alto;
+  } catch { return 0; }
+}
+
 function medirloTodo() {
   const estilo = (el, pseudo) =>
     (typeof window.getComputedStyle === 'function' ? window.getComputedStyle(el, pseudo) : null);
@@ -201,6 +213,7 @@ function medirloTodo() {
   return [
     ['Ventana', `${Math.round(window.innerWidth)} × ${Math.round(window.innerHeight)}`],
     ['Pantalla', `${Math.round(window.screen?.width ?? 0)} × ${Math.round(window.screen?.height ?? 0)}`],
+    ['Alto con barras ocultas', `${medirLvh()} px`],
     ['Visible', window.visualViewport
       ? `${Math.round(window.visualViewport.width)} × ${Math.round(window.visualViewport.height)}`
       : 'no lo dice'],
@@ -208,6 +221,8 @@ function medirloTodo() {
     ['Cuerpo acaba a', `${Math.round(window.innerHeight - cuerpo.bottom)} px del final`],
     ['Barra acaba a', r ? `${Math.round(window.innerHeight - (r.bottom - aire))} px del final` : '—'],
     ['Lo fijo acaba a', `${fijoAbajo} px del final`],
+    ['Corrección aplicada',
+      (estilo(document.documentElement)?.getPropertyValue('--correccion-barra') || '0px').trim()],
     ['Instalada', instalada ? 'sí' : 'no, desde el navegador'],
     ['Píxeles por punto', String(window.devicePixelRatio ?? 1)],
   ];
