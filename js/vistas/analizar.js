@@ -25,6 +25,30 @@ const capturas = new Map();
  * que el escáner había leído mal cuando en realidad había acertado.
  */
 let ultimoCodigo = '';
+/**
+ * Si ya hay un producto cargado y su resumen pintado más abajo.
+ *
+ * El botón de la lupa cambia con esto: antes de buscar dice "Buscar alimento"
+ * y busca; una vez hay resultado dice "Ver resultado" y te lleva a él. Era el
+ * paso que faltaba: el resultado aparece abajo y había que ir a buscarlo a
+ * mano, sin nada que dijera que estaba ahí.
+ *
+ * Se deduce de los datos en vez de llevar una bandera aparte, que habría que
+ * acordarse de apagar en cada camino —al guardar, al empezar de nuevo, al
+ * cambiar de vía— y un día no se apagaría.
+ */
+const hayResultado = () => Boolean(leido.tabla || leido.ingredientes);
+
+/**
+ * Cómo ha ido la última búsqueda, para que sobreviva a los repintados.
+ *
+ * Se escribía directamente en el nodo, y encontrar un producto repinta la
+ * pantalla entera: el "Encontrado: …" se borraba en el mismo instante en que
+ * se escribía. Guardado aquí, lo pinta la plantilla.
+ *
+ * `cara`: 'no' en rojo, 'si' en verde, vacío para los avisos de paso.
+ */
+let estadoBusca = { texto: '', cara: '' };
 
 const ICONO_CAMARA = `<svg viewBox="0 0 24 24" aria-hidden="true" class="toma__icono">
   <path d="M3 8h3l1.5-2.5h9L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
@@ -81,16 +105,22 @@ function tarjetaVia(via, abiertaAhora) {
  * por dentro. Eso no se ve y no tiene por qué unificarse.
  */
 function botonBuscar(id, desactivado = false) {
+  // Con un resultado ya cargado, el botón deja de buscar y pasa a llevarte a
+  // él: la flecha en vez de la lupa, y el nombre dice a dónde vas.
+  const ver = hayResultado();
+  const rotulo = ver ? 'Ver resultado' : 'Buscar alimento';
   return `
     <div class="buscar">
       <div class="buscar__uno">
-        <button class="buscar__boton" id="${id}" ${desactivado ? 'disabled' : ''}
-                aria-label="Buscar alimento">
+        <button class="buscar__boton${ver ? ' buscar__boton--ver' : ''}" id="${id}"
+                ${desactivado ? 'disabled' : ''} aria-label="${rotulo}">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>
+            ${ver
+              ? '<path d="M12 4v13"/><path d="M6.5 11.5L12 17l5.5-5.5"/>'
+              : '<circle cx="11" cy="11" r="6.6"/><path d="M15.8 15.8L20 20"/>'}
           </svg>
         </button>
-        <span class="buscar__rotulo">Buscar alimento</span>
+        <span class="buscar__rotulo">${rotulo}</span>
       </div>
       ${botonFoto()}
     </div>`;
@@ -197,7 +227,16 @@ export function analizar() {
         </div>
       </div>
       ${botonBuscar('btnBuscarCodigo')}
-      <p class="texto" id="estadoCodigo" role="status" aria-live="polite"></p>
+      ${(() => {
+        // El mensaje se borra solo cuando deja de tener sentido: al volver a
+        // Analizar con todo limpio —tras guardar un producto, por ejemplo— un
+        // "Encontrado: …" de hace tres productos sería mentira. El aviso de
+        // que algo NO está se queda, porque ese sigue siendo cierto.
+        const vale = estadoBusca.cara === 'no' || hayResultado() || hayAlgoEnCurso();
+        if (!vale) estadoBusca = { texto: '', cara: '' };
+        return `<p class="texto${estadoBusca.cara ? ` estado-busca estado-busca--${estadoBusca.cara}` : ''}"
+         id="estadoCodigo" role="status" aria-live="polite">${esc(estadoBusca.texto)}</p>`;
+      })()}
       <p class="apunte-via">Consulta Open Food Facts. Es la única parte de la app que sale a internet, y solo viaja el número.</p>`,
 
     fresco: `
@@ -244,6 +283,11 @@ export function analizar() {
       REVISAR Y CORREGIR
       <small>Comprueba las cifras antes de analizar</small>
     </button>
+
+    ${hayResultado() || hayAlgoEnCurso() ? `
+      <button class="boton boton--descartar" id="btnEmpezarDeNuevo">
+        Descartar y empezar con otro producto
+      </button>` : ''}
   `;
 }
 
@@ -263,12 +307,22 @@ export function analizarActivo(raiz, { repintar, irA }) {
    * Se perdió al rehacer la pantalla, y se llamaba desde cuatro sitios: buscar
    * por código reventaba en el momento de encontrar el producto.
    */
+  /**
+   * Lleva la vista al principio del resultado.
+   *
+   * Antes desplazaba hasta el BOTÓN de revisar, que está al final del resumen:
+   * aterrizabas en el último renglón y tenías que subir a mano para leer lo
+   * que acababa de encontrar. Ahora va al encabezado, que es donde empieza.
+   */
   function irAlResumen() {
     const boton = raiz.querySelector('#btnRevisar');
-    if (boton) {
-      boton.style.display = '';
-      boton.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (boton) boton.style.display = '';
+    const principio = raiz.querySelector('#resumenLectura');
+    if (!principio || !principio.firstElementChild) {
+      boton?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
     }
+    principio.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   /** Cifra con coma decimal, que es como se escribe en español. */
@@ -351,6 +405,11 @@ export function analizarActivo(raiz, { repintar, irA }) {
     irAlResumen();
   });
 
+  // Descartar lo cargado sin salir de Analizar.
+  //
+  // El código llevaba tiempo aquí pero el botón no se pintaba en ninguna
+  // pantalla: no había forma de empezar otro producto salvo guardando el
+  // anterior o cerrando la app. Solo sale cuando hay algo que descartar.
   raiz.querySelector('#btnEmpezarDeNuevo')?.addEventListener('click', () => {
     if (!confirm('¿Descartar lo que hay cargado y empezar con otro producto?')) return;
     reiniciar();
@@ -358,6 +417,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     leido.tabla = null;
     leido.ingredientes = null;
     ultimoCodigo = '';
+    estadoBusca = { texto: '', cara: '' };
     repintar();
   });
 
@@ -371,13 +431,34 @@ export function analizarActivo(raiz, { repintar, irA }) {
 
   const estadoCodigo = raiz.querySelector('#estadoCodigo');
 
+  /**
+   * El estado de la búsqueda, con su cara.
+   *
+   * Que no se encuentre un producto es lo más importante que puede decir esta
+   * pantalla: significa que hay que meterlo a mano. Salía con la misma pinta
+   * gris que cualquier otra frase y se leía como un comentario al margen.
+   *
+   * `cara`: 'no' en rojo, 'si' en verde, o nada para los avisos de paso.
+   */
+  function decirEstado(texto, cara = '') {
+    estadoBusca = { texto, cara };
+    // Se busca el nodo cada vez, no el de cuando se enganchó: tras un
+    // repintado aquel ya no está en la pantalla.
+    const nodo = document.querySelector('#estadoCodigo');
+    if (!nodo) return;
+    nodo.textContent = texto;
+    nodo.className = cara ? `texto estado-busca estado-busca--${cara}` : 'texto';
+  }
+
   /** Busca y carga un producto por su código, venga de la cámara o tecleado. */
   async function buscarYCargar(codigo) {
     ultimoCodigo = String(codigo ?? '').replace(/\D/g, '');
-    estadoCodigo.textContent = 'Consultando…';
+    decirEstado('Consultando…');
     const r = await buscarPorCodigo(codigo);
 
-    if (!r.ok) { estadoCodigo.textContent = r.mensaje; return; }
+    // Sin repintar: el repintado rehace el HTML y se llevaría por delante el
+    // mensaje que se acaba de escribir, que es justo lo que hay que leer.
+    if (!r.ok) { decirEstado(r.mensaje, 'no'); return; }
 
     const p = r.producto;
     // Un código de barras identifica un producto entero, así que sustituye lo
@@ -403,9 +484,10 @@ export function analizarActivo(raiz, { repintar, irA }) {
     if (p.ingredientesTexto) interpretar('ingredientes', p.ingredientesTexto);
     leido.tabla = { nutrientes: p.nutrientes, avisos: p.avisos, base: 'por_100' };
 
-    estadoCodigo.textContent =
+    decirEstado(
       `Código ${p.codigo} · Encontrado: ${p.nombre}${p.marca ? ` · ${p.marca}` : ''}. ` +
-      (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.');
+      (p.faltan.length ? `Faltan ${p.faltan.length} dato(s), complétalos abajo.` : 'Revísalo contra el envase.'),
+      'si');
     await avisarSiCambio(codigo);
     repintar();
     // El desplazamiento va AQUÍ dentro, no en quien llama.
@@ -421,6 +503,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
   engancharFotoProducto(raiz, repintar);
 
   raiz.querySelector('#btnBuscarCodigo')?.addEventListener('click', () => {
+    if (hayResultado()) { irAlResumen(); return; }
     buscarYCargar(raiz.querySelector('#codigoBarras')?.value ?? '');
   });
 
@@ -431,19 +514,19 @@ export function analizarActivo(raiz, { repintar, irA }) {
   raiz.querySelector('#btnEscanear')?.addEventListener('click', async () => {
     if (escaneando) return;
     if (!(await hayEscaner())) {
-      estadoCodigo.textContent = 'El lector de códigos no está instalado en esta copia de la app. Teclea el número a mano, que funciona igual.';
+      decirEstado('El lector de códigos no está instalado en esta copia de la app. Teclea el número a mano, que funciona igual.', 'no');
       return;
     }
     escaneando = true;
     zonaCamara.hidden = false;
-    const r = await escanear({ video, alEstado: (t) => { estadoCodigo.textContent = t; } });
+    const r = await escanear({ video, alEstado: (t) => { decirEstado(t); } });
     zonaCamara.hidden = true;
     video.srcObject = null;
     escaneando = false;
-    if (!r.ok) { estadoCodigo.textContent = r.mensaje; return; }
+    if (!r.ok) { decirEstado(r.mensaje, 'no'); return; }
     const caja = raiz.querySelector('#codigoBarras');
     if (caja) caja.value = r.codigo;
-    estadoCodigo.textContent = `Código leído: ${r.codigo}. Consultando…`;
+    decirEstado(`Código leído: ${r.codigo}. Consultando…`);
     await buscarYCargar(r.codigo);
     // El código leído se queda a la vista: así se puede comprobar contra el
     // envase, que es lo primero que hace cualquiera cuando algo no cuadra.
@@ -455,7 +538,7 @@ export function analizarActivo(raiz, { repintar, irA }) {
     video.srcObject?.getTracks().forEach((t) => t.stop());
     zonaCamara.hidden = true;
     escaneando = false;
-    estadoCodigo.textContent = '';
+    decirEstado('');
   });
 
   // --- Alimentos frescos ---------------------------------------------------
