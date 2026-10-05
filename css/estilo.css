@@ -592,6 +592,17 @@ button{touch-action:manipulation}
   font-family:var(--datos); font-variant-numeric:tabular-nums;
   color:var(--hueso); font-weight:600;
 }
+.diag__texto{
+  margin:var(--e3) 0 0;
+  padding:var(--e3);
+  background:var(--carbon-alto);
+  border-radius:var(--radio-xs);
+  font-family:var(--datos); font-size:var(--t1); line-height:1.5;
+  color:var(--hueso);
+  white-space:pre-wrap; word-break:break-word;
+  user-select:text; -webkit-user-select:text;
+}
+
 .version__apunte{
   margin:var(--e3) 0 0;
   font-size:var(--t1); line-height:1.45; color:var(--ceniza-tenue);
@@ -2492,11 +2503,18 @@ body{
    * queda FUERA del marco y no dentro, que es lo que hacía que los botones se
    * quedaran arriba con una banda de color vacía debajo.
    *
-   * Y va clavada al borde del viewport en vez de ser la última fila de una
-   * columna: siendo lo segundo dependía de que el cuerpo llegara al borde de
-   * la pantalla, y en el iPhone no llegaba —quedaban 36 puntos de fondo
-   * asomando por debajo—. */
-  position:fixed;
+   * Y va anclada AL CUERPO de la app, no al viewport.
+   *
+   * Con `position:fixed` el ancla es el viewport, y en el iPhone ese viewport
+   * no llega al borde físico: medido sobre una captura, la barra se quedaba a
+   * 59 puntos del canto mientras el fondo de la app sí llegaba al último
+   * píxel. Es decir, el cuerpo alcanza el borde y el viewport de los elementos
+   * fijos no. Así que el ancla pasa a ser el cuerpo, que es quien sí llega.
+   *
+   * `body` es `position:fixed`, de modo que ya hace de referencia para un hijo
+   * absoluto, y nada se desplaza con el contenido porque quien se desplaza es
+   * `.principal`, no el cuerpo. */
+  position:absolute;
   left:0; right:0; bottom:0;
   z-index:40;
   isolation:isolate;

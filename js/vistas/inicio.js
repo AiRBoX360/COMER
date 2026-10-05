@@ -143,6 +143,13 @@ export function inicio({ irA }) {
       <h2 class="rotulo">Qué es y qué no es</h2>
       <button class="boton" id="btnAcerca" style="width:100%">Leer de dónde salen las valoraciones</button>
 
+      <h2 class="rotulo">Diagnóstico de pantalla</h2>
+      <div class="version">
+        <p class="version__apunte" style="margin:0 0 var(--e3)">Lo que mide tu teléfono de verdad. Sirve para arreglar lo que se ve mal sin tener que adivinarlo.</p>
+        <div id="diagPantalla"></div>
+        <button class="boton" id="btnCopiarDiag" style="width:100%; margin-top:var(--e3)">Copiar para enviar</button>
+      </div>
+
       <h2 class="rotulo">Versión</h2>
       <div class="version">
         <p class="version__linea"><span>Catario</span><b>${esc(VERSION)}</b></p>
@@ -154,7 +161,86 @@ export function inicio({ irA }) {
   `;
 }
 
+/**
+ * Lo que mide el teléfono de verdad.
+ *
+ * Existe porque la barra de abajo llevaba una docena de versiones saliendo mal
+ * en el iPhone y bien en todo lo que yo podía probar. Cada arreglo era una
+ * conjetura sobre qué veía ese móvil. Con estos seis números no hay nada que
+ * conjeturar: dicen dónde acaba la pantalla, dónde acaba el cuerpo de la app y
+ * dónde acaba la barra, que es justo lo que no cuadraba.
+ */
+function medirPantalla() {
+  try { return medirloTodo(); } catch (err) {
+    // Un diagnóstico que tumba la pantalla de Inicio sería peor que no
+    // tenerlo: esto se mira una vez al año y el resto del tiempo tiene que
+    // estarse quieto.
+    return [['No se ha podido medir', String(err?.message ?? err).slice(0, 60)]];
+  }
+}
+
+function medirloTodo() {
+  const estilo = (el, pseudo) =>
+    (typeof window.getComputedStyle === 'function' ? window.getComputedStyle(el, pseudo) : null);
+
+  const sonda = document.createElement('div');
+  sonda.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
+  document.body.appendChild(sonda);
+  const franja = Math.round(sonda.getBoundingClientRect().height);
+  const fijoAbajo = Math.round(window.innerHeight - sonda.getBoundingClientRect().bottom);
+  sonda.remove();
+
+  const cuerpo = document.body.getBoundingClientRect();
+  const barra = document.querySelector('.barra');
+  const r = barra?.getBoundingClientRect();
+  const aire = (barra && parseFloat(estilo(barra, '::before')?.bottom)) || 0;
+
+  const instalada = window.matchMedia?.('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+
+  return [
+    ['Ventana', `${Math.round(window.innerWidth)} × ${Math.round(window.innerHeight)}`],
+    ['Pantalla', `${Math.round(window.screen?.width ?? 0)} × ${Math.round(window.screen?.height ?? 0)}`],
+    ['Visible', window.visualViewport
+      ? `${Math.round(window.visualViewport.width)} × ${Math.round(window.visualViewport.height)}`
+      : 'no lo dice'],
+    ['Franja de abajo', `${franja} px`],
+    ['Cuerpo acaba a', `${Math.round(window.innerHeight - cuerpo.bottom)} px del final`],
+    ['Barra acaba a', r ? `${Math.round(window.innerHeight - (r.bottom - aire))} px del final` : '—'],
+    ['Lo fijo acaba a', `${fijoAbajo} px del final`],
+    ['Instalada', instalada ? 'sí' : 'no, desde el navegador'],
+    ['Píxeles por punto', String(window.devicePixelRatio ?? 1)],
+  ];
+}
+
 export function inicioActivo(raiz, { irA, pintarDiagnostico, escala, ponerEscala, deslizarActivado, ponerDeslizar, tema, ponerTema }) {
+  // El diagnóstico se pinta al abrir Preferencias, con la pantalla ya montada:
+  // medir antes daría las posiciones a medio colocar.
+  const zonaDiag = raiz.querySelector('#diagPantalla');
+  if (zonaDiag) {
+    const pintar = () => {
+      zonaDiag.innerHTML = medirPantalla()
+        .map(([k, v]) => `<p class="version__linea"><span>${esc(k)}</span><b>${esc(v)}</b></p>`)
+        .join('');
+    };
+    setTimeout(pintar, 60);
+    raiz.querySelector('.ajustes')?.addEventListener('toggle', () => setTimeout(pintar, 60));
+
+    raiz.querySelector('#btnCopiarDiag')?.addEventListener('click', async () => {
+      const texto = ['Catario ' + VERSION, ...medirPantalla().map(([k, v]) => `${k}: ${v}`)].join('\n');
+      const boton = raiz.querySelector('#btnCopiarDiag');
+      try {
+        await navigator.clipboard.writeText(texto);
+        boton.textContent = 'Copiado. Pégalo en el chat.';
+      } catch {
+        // Sin permiso para el portapapeles: al menos que se pueda leer y
+        // seleccionar a mano, que es peor pero funciona.
+        zonaDiag.innerHTML += `<pre class="diag__texto">${esc(texto)}</pre>`;
+        boton.textContent = 'Cópialo de aquí abajo';
+      }
+    });
+  }
+
   const btn = raiz.querySelector('#btnAnalizar');
   if (btn) btn.addEventListener('click', () => irA('analizar'));
   raiz.querySelector('#btnSupermercado')?.addEventListener('click', () => irA('supermercado'));
