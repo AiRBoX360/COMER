@@ -354,7 +354,14 @@ if (barraDeAbajo) {
      *
      * Cuando la barra ya llega —que es lo normal— la corrección vale cero y
      * esto no hace absolutamente nada. */
-    const r = barraDeAbajo.getBoundingClientRect();
+    /* Se mide el CUERPO, no la barra, y se estira el cuerpo.
+     *
+     * Bajando la barra se salía del cuerpo, y el cuerpo lleva `overflow:hidden`:
+     * recortaba lo que sobresalía. En la pantalla de AiRBoX360 se veía la barra
+     * bien colocada pero cortada por la mitad, con los últimos 59 puntos a
+     * oscuras. El hueco nunca estuvo en la barra: el cuerpo de la app no
+     * llegaba al borde, y la barra, que va pegada a él, tampoco podía. */
+    const r = document.body.getBoundingClientRect();
     const falta = Math.round(altoDeVerdad() - r.bottom);
     // Un tope por si la medida saliera disparatada: más de media pantalla de
     // corrección no es una corrección, es un error de medida.

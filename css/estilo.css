@@ -1398,6 +1398,13 @@ body{
    * franja del fondo asomando por debajo de la barra. */
   position:fixed;
   inset:0;
+  /* Y si el cuerpo no llega al borde de la pantalla, se estira hasta él.
+   *
+   * La corrección la mide app.js. Va aquí y no en la barra porque este
+   * elemento lleva `overflow:hidden`: una barra empujada más abajo que el
+   * cuerpo se recortaba, y se veía bien colocada pero cortada por la mitad.
+   * Cuando el cuerpo llega solo —lo normal— la corrección vale cero. */
+  bottom:calc(0px - var(--correccion-barra, 0px));
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -2515,10 +2522,7 @@ body{
    * absoluto, y nada se desplaza con el contenido porque quien se desplaza es
    * `.principal`, no el cuerpo. */
   position:absolute;
-  left:0; right:0;
-  /* La corrección la mide app.js: lo que le falte a la barra para tocar el
-     borde de la ventana. Cuando llega sola —lo normal— vale cero. */
-  bottom:calc(0px - var(--correccion-barra, 0px));
+  left:0; right:0; bottom:0;
   z-index:40;
   isolation:isolate;
   display:flex;
