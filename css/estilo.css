@@ -102,6 +102,10 @@
      mismo a los lados que por abajo— y el relleno entre el marco y los
      botones. Son los dos números que le dan su aspecto. */
   --aire-barra:0.7rem;
+  /* Abajo, menos aire que a los lados: en el iPhone instalado iOS solo da 793
+     puntos de los 852 de pantalla, así que cada punto de abajo es un punto que
+     se pierde. Lo justo para que siga leyéndose como un marco despegado. */
+  --aire-abajo:0.42rem;
   --dentro-barra:0.34rem;
   /* Lo que ocupa en total. Es solo el valor de partida: app.js mide la barra
      de verdad y lo corrige. */
@@ -2538,7 +2542,7 @@ body{
      esquina al girarlo; abajo el aire es el mismo que a los lados. */
   padding:var(--dentro-barra)
           calc(var(--aire-barra) + var(--dentro-barra) + env(safe-area-inset-right, 0px))
-          calc(var(--aire-barra) + var(--dentro-barra))
+          calc(var(--aire-abajo) + var(--dentro-barra))
           calc(var(--aire-barra) + var(--dentro-barra) + env(safe-area-inset-left, 0px));
   background:transparent;
   border:0;
@@ -2549,7 +2553,7 @@ body{
   top:0;
   left:calc(var(--aire-barra) + env(safe-area-inset-left, 0px));
   right:calc(var(--aire-barra) + env(safe-area-inset-right, 0px));
-  bottom:var(--aire-barra);
+  bottom:var(--aire-abajo);
   background:var(--fondo-barra);
   backdrop-filter:blur(20px) saturate(140%);
   -webkit-backdrop-filter:blur(20px) saturate(140%);

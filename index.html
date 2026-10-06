@@ -12,7 +12,14 @@
 
 <!-- iOS: sin estas dos líneas la app abre con la barra de Safari encima -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Antes iba en "black-translucent", que mete el contenido debajo de la barra
+     de estado. En el iPhone de AiRBoX360, instalada en la pantalla de inicio,
+     la ventana medía 793 puntos de los 852 de pantalla: 59 justos, que es lo
+     que mide esa barra de estado. Sin el modo traslúcido, iOS da el viewport
+     ya colocado y la app alcanza el borde de abajo.
+     Para que iOS lo relea hay que borrar el icono y volver a añadirlo: la
+     configuración se congela al instalar. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Comer">
 <link rel="apple-touch-icon" href="./iconos/icono-180.png">
 <link rel="icon" href="./iconos/favicon.png" type="image/png">

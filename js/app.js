@@ -311,47 +311,32 @@ ponerEscala(escala());
 /**
  * Dónde está el borde de abajo que SE VE.
  *
- * El iPhone de AiRBoX360, instalado en la pantalla de inicio, lo dejó claro de
- * una vez: la ventana dice 852 puntos de alto y lo visible son 793. Hay 59 que
- * la app cree tener y que no se ven nunca. Yo venía usando lo que decía la
- * ventana, así que la barra caía siempre dentro de esa franja ciega, y daba lo
- * mismo cómo la anclara.
+ * Los números del iPhone de AiRBoX360, instalado en la pantalla de inicio:
  *
- * `visualViewport` sí sabe lo que se ve. Se toma lo menor entre eso y la
- * ventana, con dos cautelas:
+ *   la ventana dice ........ 793
+ *   lo visible es .......... 793
+ *   `lvh` dice ............. 852
  *
- *   · con el teclado abierto `visualViewport` se encoge un tercio o más de la
- *     pantalla. Eso no es el borde: es el teclado, y seguirlo haría saltar la
- *     barra cada vez que se escribe un código. Por encima del 15 % se ignora
- *   · `lvh` —el alto con las barras del navegador retraídas— sirve para el
- *     caso contrario, cuando la ventana se queda corta
+ * `lvh` miente. En teoría es el alto con las barras del navegador retraídas;
+ * ahí devuelve la pantalla física, 59 puntos más de los que iOS le da a la
+ * app. Yo tomaba el mayor de las tres cifras, así que empujé el cuerpo 59
+ * hacia abajo y la barra se fue FUERA de la pantalla. Peor que el problema.
+ *
+ * Se queda la menor de las dos que sí se pueden comprobar: lo que mide la
+ * ventana y lo que `visualViewport` dice que se ve. `lvh` no vuelve a entrar
+ * en la cuenta.
  */
-function medirLvh() {
-  try {
-    const sonda = document.createElement('div');
-    sonda.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:100lvh;'
-      + 'visibility:hidden;pointer-events:none';
-    document.documentElement.appendChild(sonda);
-    const alto = sonda.getBoundingClientRect().height;
-    sonda.remove();
-    return alto;
-  } catch { return 0; }
-}
-
 function bordeDeAbajo() {
   const ventana = window.innerHeight || 0;
   const visible = window.visualViewport?.height || 0;
+  if (!visible) return ventana;
 
-  // Si la ventana se queda corta, `lvh` la corrige hacia arriba.
-  let alto = Math.max(ventana, medirLvh() || 0);
-
-  // Y si lo visible es menos que la ventana, manda lo visible: ahí está el
-  // borde de verdad. Salvo que la diferencia sea del tamaño de un teclado.
+  // Con el teclado abierto `visualViewport` se encoge un tercio o más de la
+  // pantalla. Eso no es el borde: es el teclado, y seguirlo haría saltar la
+  // barra cada vez que se escribe un código.
   const ciego = ventana - visible;
-  if (visible > 0 && ciego > 0 && ciego <= ventana * 0.15) alto = Math.min(alto, visible);
-
-  // Nunca más que la pantalla física.
-  return Math.min(alto, window.screen?.height || Infinity);
+  if (ciego > ventana * 0.15) return ventana;
+  return Math.min(ventana, visible);
 }
 
 const barraDeAbajo = document.querySelector('.barra');

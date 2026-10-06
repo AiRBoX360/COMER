@@ -214,6 +214,8 @@ function medirloTodo() {
     ['Ventana', `${Math.round(window.innerWidth)} × ${Math.round(window.innerHeight)}`],
     ['Pantalla', `${Math.round(window.screen?.width ?? 0)} × ${Math.round(window.screen?.height ?? 0)}`],
     ['Alto con barras ocultas', `${medirLvh()} px`],
+    ['Le falta a la ventana',
+      `${Math.max(0, Math.round((window.screen?.height ?? 0) - window.innerHeight))} px de pantalla`],
     ['Visible', window.visualViewport
       ? `${Math.round(window.visualViewport.width)} × ${Math.round(window.visualViewport.height)}`
       : 'no lo dice'],
